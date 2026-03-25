@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>zh_CN</string>
+    <key>CFBundleDisplayName</key>
+    <string>草包</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>草包</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>LSRequiresIPhoneOS</key>
+    <true/>
+    
+    <!-- Scene Configuration -->
+    <key>UIApplicationSceneManifest</key>
+    <dict>
+        <key>UIApplicationSupportsMultipleScenes</key>
+        <false/>
+        <key>UISceneConfigurations</key>
+        <dict/>
+    </dict>
+    
+    <!-- Launch Screen -->
+    <key>UILaunchScreen</key>
+    <dict>
+        <key>UIColorName</key>
+        <string>SystemBackgroundColor</string>
+    </dict>
+    
+    <!-- Device Capabilities -->
+    <key>UIRequiredDeviceCapabilities</key>
+    <array>
+        <string>armv7</string>
+    </array>
+    
+    <!-- Supported Orientations -->
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+    <key>UISupportedInterfaceOrientations~ipad</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+    
+    <!-- ================================================== -->
+    <!-- 隐私权限描述 - 符合 Apple App Store 审核指南 5.1.1 -->
+    <!-- ================================================== -->
+    
+    <!-- 麦克风权限 -->
+    <key>NSMicrophoneUsageDescription</key>
+    <string>草包需要使用麦克风进行语音对话，让您的双手解放，更便捷地与AI交流。</string>
+    
+    <!-- 语音识别权限 -->
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>草包需要语音识别功能来理解您的语音输入，实现语音对话功能。</string>
+    
+    <!-- 相机权限 -->
+    <key>NSCameraUsageDescription</key>
+    <string>草包需要使用相机拍摄图片进行AI分析，支持多模态对话功能。</string>
+    
+    <!-- 相册权限 -->
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>草包需要访问相册来选择图片进行AI分析，支持多模态对话功能。</string>
+    
+    <!-- Face ID 权限 (可选，用于快速登录) -->
+    <key>NSFaceIDUsageDescription</key>
+    <string>草包使用 Face ID 进行快速身份验证，保护您的账号安全。</string>
+    
+    <!-- 蓝牙权限 (用于可能的周边设备) -->
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>草包需要蓝牙权限连接外部音频设备，提供更好的语音体验。</string>
+    
+    <!-- ================================================== -->
+    <!-- 合规配置 -->
+    <!-- ================================================== -->
+    
+    <!-- 不使用加密导出 (符合美国出口合规) -->
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
+    
+    <!-- App Category -->
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.productivity</string>
+    
+    <!-- ================================================== -->
+    <!-- 网络安全配置 - 符合《网络安全法》 -->
+    <!-- ================================================== -->
+    
+    <!-- App Transport Security -->
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <false/>
+        <key>NSExceptionDomains</key>
+        <dict>
+            <!-- 生产环境 -->
+            <key>caobao.chat</key>
+            <dict>
+                <key>NSExceptionAllowsInsecureHTTPLoads</key>
+                <true/>
+                <key>NSIncludesSubdomains</key>
+                <true/>
+                <key>NSExceptionRequiresForwardSecrecy</key>
+                <false/>
+            </dict>
+            <!-- 预发布环境 -->
+            <key>caobao.coze.site</key>
+            <dict>
+                <key>NSExceptionAllowsInsecureHTTPLoads</key>
+                <false/>
+                <key>NSIncludesSubdomains</key>
+                <true/>
+            </dict>
+            <!-- 开发环境 (coze.site 有有效 SSL) -->
+            <key>coze.site</key>
+            <dict>
+                <key>NSExceptionAllowsInsecureHTTPLoads</key>
+                <false/>
+                <key>NSIncludesSubdomains</key>
+                <true/>
+            </dict>
+            <!-- 本地开发 -->
+            <key>localhost</key>
+            <dict>
+                <key>NSExceptionAllowsInsecureHTTPLoads</key>
+                <true/>
+            </dict>
+        </dict>
+    </dict>
+    
+    <!-- ================================================== -->
+    <!-- 数据收集声明 - 用于 App Store 审核表单 -->
+    <!-- 注意：此部分需要在 App Store Connect 中配置 -->
+    <!-- 收集的数据： -->
+    <!-- - 用户ID (用于账号管理) -->
+    <!-- - 对话记录 (用于提供AI服务) -->
+    <!-- - 设备信息 (用于服务优化) -->
+    <!-- - 使用日志 (用于安全审计) -->
+    <!-- 不收集的数据： -->
+    <!-- - 精确位置 -->
+    <!-- - 通讯录 -->
+    <!-- - 健康数据 -->
+    <!-- - 财务信息 -->
+    <!-- ================================================== -->
+</dict>
+</plist>
