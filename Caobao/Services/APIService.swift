@@ -3,29 +3,12 @@ import Alamofire
 
 // MARK: - API Configuration
 struct APIConfig {
-    // API 服务器
-    struct Server {
-        // 主服务器 - 当前沙箱环境
-        static let primary = "https://497e37c9-8c1b-42f1-b312-7b3023324915.dev.coze.site"
-        // 沙箱生产环境
-        static let sandbox = "https://caobao.coze.site"
-        // 腾讯云服务器
-        static let tencent = "https://caobao.chat"
-        // 备用地址（直连IP）
-        static let fallback = "http://49.235.213.222:5000"
-        // 当前使用的服务器
-        static let current = tencent  // 生产环境: https://caobao.chat
-    }
+    // API 服务器 - 只使用 caobao.chat
+    static let serverURL = "https://caobao.chat"
     
     // 当前使用的 API 基础 URL
     static var baseURL: String {
-        // 优先检查环境变量覆盖
-        if let domain = ProcessInfo.processInfo.environment["API_BASE_URL"] {
-            print("🌐 使用环境变量 API: \(domain)")
-            return "\(domain)/api"
-        }
-        
-        return "\(Server.current)/api"
+        return "\(serverURL)/api"
     }
     
     // 是否为生产环境
@@ -36,7 +19,7 @@ struct APIConfig {
         print("""
         ===== API 配置 =====
         环境: 生产
-        服务器: \(Server.current)
+        服务器: \(serverURL)
         API: \(baseURL)
         ====================
         """)
@@ -69,25 +52,17 @@ class APIService {
         print("🔍 开始网络诊断...")
         APIConfig.printConfiguration()
         
-        let servers = [
-            ("主服务器(沙箱)", APIConfig.Server.primary),
-            ("腾讯云服务器", APIConfig.Server.tencent),
-            ("备用IP", APIConfig.Server.fallback),
-        ]
+        let url = "\(APIConfig.baseURL)/auth/guest/create"
+        print("📡 测试服务器: \(url)")
         
-        for (name, server) in servers {
-            let url = "\(server)/api/auth/guest/create"
-            print("📡 测试 \(name): \(url)")
-            
-            do {
-                let response = try await session.request(url, method: .post)
-                    .validate()
-                    .serializingString()
-                    .value
-                print("✅ \(name) 连接成功: \(response.prefix(100))...")
-            } catch {
-                print("❌ \(name) 连接失败: \(error.localizedDescription)")
-            }
+        do {
+            let response = try await session.request(url, method: .post)
+                .validate()
+                .serializingString()
+                .value
+            print("✅ 服务器连接成功: \(response.prefix(100))...")
+        } catch {
+            print("❌ 服务器连接失败: \(error.localizedDescription)")
         }
         
         print("🔍 网络诊断完成")

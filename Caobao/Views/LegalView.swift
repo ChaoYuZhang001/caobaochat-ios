@@ -81,8 +81,7 @@ enum LegalType: String, Identifiable, CaseIterable {
     /// H5 页面 URL（优先使用）
     /// 注意：法律文档是 H5 页面，路径不带 /api 前缀
     var webURL: URL? {
-        // 使用服务器地址（不带 /api）
-        let serverURL = APIConfig.Server.current
+        let serverURL = APIConfig.serverURL
         
         switch self {
         case .agreement:
