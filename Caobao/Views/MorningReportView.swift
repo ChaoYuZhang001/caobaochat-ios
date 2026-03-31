@@ -258,15 +258,36 @@ struct MorningReportView: View {
             
             ForEach(news.prefix(3), id: \.title) { item in
                 VStack(alignment: .leading, spacing: 4) {
+                    // 来源标签
+                    if let source = item.source, !source.isEmpty {
+                        Text(source)
+                            .font(.caption2)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.blue)
+                            .clipShape(Capsule())
+                    }
+                    
                     Text(item.title ?? "")
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundStyle(.primary)
+                    
                     if let summary = item.summary, !summary.isEmpty {
                         Text(summary)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .lineLimit(2)
+                    }
+                    
+                    // 毒舌点评
+                    if let comment = item.comment, !comment.isEmpty {
+                        Text("\(comment)")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                            .italic()
                     }
                 }
                 .padding(.vertical, 4)
