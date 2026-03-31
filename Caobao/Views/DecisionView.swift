@@ -118,6 +118,11 @@ struct DecisionView: View {
     
     // MARK: - Actions
     private func makeDecision() {
+        // 验证问题不为空
+        guard !question.trimmingCharacters(in: .whitespaces).isEmpty else {
+            return
+        }
+        
         // 收缩键盘
         isInputFocused = false
         loading = true
@@ -132,13 +137,13 @@ struct DecisionView: View {
                     options: optionsToSend
                 )
                 await MainActor.run {
-                    if response.success, let recommendation = response.recommendation {
+                    if response.success, let decision = response.decision {
                         result = DecisionResult(
-                            decision: recommendation,
-                            reason: response.reasons?.joined(separator: "\n") ?? response.finalWord ?? "",
-                            warnings: response.warnings,
-                            alternatives: response.alternatives,
-                            finalWord: response.finalWord
+                            decision: decision,
+                            reason: response.reasoning ?? response.finalAdvice ?? "",
+                            warnings: response.warning != nil ? [response.warning!] : nil,
+                            alternatives: nil,
+                            finalWord: response.finalAdvice
                         )
                     } else if let error = response.error {
                         // 显示错误提示
@@ -149,6 +154,7 @@ struct DecisionView: View {
             } catch {
                 await MainActor.run {
                     loading = false
+                    print("决策请求失败: \(error.localizedDescription)")
                 }
             }
         }

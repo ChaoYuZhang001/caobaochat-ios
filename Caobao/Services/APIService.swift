@@ -1275,19 +1275,28 @@ struct RoastResponse: Codable {
 
 struct DecisionResponse: Codable {
     let success: Bool
-    let recommendation: String?
-    let reasons: [String]?
-    let warnings: [String]?
-    let alternatives: [String]?
-    let finalWord: String?
+    let decision: String?
+    let confidence: Int?
+    let reasoning: String?
+    let pros: [String]?
+    let cons: [String]?
+    let alternativeView: String?
+    let finalAdvice: String?
+    let warning: String?
     let question: String?
     let options: [String]?
-    let timestamp: String?
+    let decidedAt: String?
     let error: String?
     
     // 兼容旧代码的便捷属性
-    var decision: String? { recommendation }
-    var reason: String? { reasons?.joined(separator: "\n") ?? finalWord }
+    var recommendation: String? { decision }
+    var reasons: [String]? {
+        var arr: [String] = []
+        if let r = reasoning { arr.append(r) }
+        if let w = warning { arr.append(w) }
+        return arr.isEmpty ? nil : arr
+    }
+    var finalWord: String? { finalAdvice }
 }
 
 struct RateResponse: Codable {
