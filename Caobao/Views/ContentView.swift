@@ -43,84 +43,8 @@ struct ImagePicker: UIViewControllerRepresentable {
     }
 }
 
-// MARK: - Speech Manager
-class SpeechManager: NSObject {
-    static let shared = SpeechManager()
-    
-    private var audioEngine: AVAudioEngine?
-    private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
-    private var recognitionTask: SFSpeechRecognitionTask?
-    private let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "zh-CN"))
-    
-    private override init() {
-        super.init()
-    }
-    
-    func requestAuthorization() {
-        SFSpeechRecognizer.requestAuthorization { _ in }
-        AVAudioSession.sharedInstance().requestRecordPermission { _ in }
-    }
-    
-    func startRecording(completion: @escaping (Result<String, Error>) -> Void) {
-        guard SFSpeechRecognizer.authorizationStatus() == .authorized else {
-            SFSpeechRecognizer.requestAuthorization { _ in }
-            completion(.failure(NSError(domain: "Speech", code: -1, userInfo: [NSLocalizedDescriptionKey: "语音识别未授权"])))
-            return
-        }
-        
-        stopRecording()
-        
-        audioEngine = AVAudioEngine()
-        recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
-        
-        guard let audioEngine = audioEngine, let recognitionRequest = recognitionRequest else {
-            completion(.failure(NSError(domain: "Speech", code: -2, userInfo: [NSLocalizedDescriptionKey: "初始化失败"])))
-            return
-        }
-        
-        recognitionRequest.shouldReportPartialResults = true
-        
-        try? AVAudioSession.sharedInstance().setCategory(.record, mode: .measurement, options: .duckOthers)
-        try? AVAudioSession.sharedInstance().setActive(true, options: .notifyOthersOnDeactivation)
-        
-        recognitionTask = speechRecognizer?.recognitionTask(with: recognitionRequest) { result, error in
-            if let result = result, result.isFinal {
-                completion(.success(result.bestTranscription.formattedString))
-            }
-            if let error = error {
-                completion(.failure(error))
-            }
-        }
-        
-        let inputNode = audioEngine.inputNode
-        let recordingFormat = inputNode.outputFormat(forBus: 0)
-        
-        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { buffer, _ in
-            recognitionRequest.append(buffer)
-        }
-        
-        do {
-            try audioEngine.start()
-        } catch {
-            completion(.failure(error))
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 10) { [weak self] in
-            self?.stopRecording()
-        }
-    }
-    
-    func stopRecording() {
-        audioEngine?.stop()
-        audioEngine?.inputNode.removeTap(onBus: 0)
-        recognitionRequest?.endAudio()
-        recognitionTask?.cancel()
-        audioEngine = nil
-        recognitionRequest = nil
-        recognitionTask = nil
-        try? AVAudioSession.sharedInstance().setActive(false)
-    }
-}
+
+
 #endif
 
 // MARK: - Media Type
