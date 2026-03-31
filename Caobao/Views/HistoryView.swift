@@ -149,6 +149,7 @@ struct ConversationDetailView: View {
         ScrollView {
             LazyVStack(spacing: 12) {
                 ForEach(conversation.messages) { message in
+                    #if os(iOS)
                     MessageBubble(
                         message: message,
                         userSettings: UserSettings(),
@@ -158,6 +159,25 @@ struct ConversationDetailView: View {
                         onRegenerate: {},
                         onDelete: {}
                     )
+                    #else
+                    // macOS 简化版消息显示
+                    HStack(alignment: .top, spacing: 8) {
+                        if message.role == "user" {
+                            Spacer()
+                            Text(message.content)
+                                .padding(12)
+                                .background(Color.accentColor.opacity(0.1))
+                                .cornerRadius(12)
+                        } else {
+                            Text(message.content)
+                                .padding(12)
+                                .background(Color(nsColor: .controlBackgroundColor))
+                                .cornerRadius(12)
+                            Spacer()
+                        }
+                    }
+                    .padding(.horizontal)
+                    #endif
                 }
             }
             .padding()
