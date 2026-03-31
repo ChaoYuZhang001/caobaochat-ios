@@ -16,7 +16,7 @@ struct HistoryView: View {
             }
             .navigationTitle("历史记录")
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .automatic) {
                     Button {
                         clearHistory()
                     } label: {
@@ -142,8 +142,6 @@ struct ConversationRowView: View {
 }
 
 // MARK: - Conversation Detail View
-// MARK: - Conversation Detail View (iOS only)
-#if os(iOS)
 struct ConversationDetailView: View {
     let conversation: Conversation
     
@@ -165,10 +163,11 @@ struct ConversationDetailView: View {
             .padding()
         }
         .navigationTitle(conversation.title)
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
     }
 }
-#endif
 
 // MARK: - Conversation Model
 struct Conversation: Identifiable, Codable, Hashable {
