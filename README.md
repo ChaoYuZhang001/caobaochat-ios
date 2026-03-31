@@ -63,11 +63,8 @@ Caobao/
 │   ├── FeaturesView.swift       # 功能页
 │   ├── ProfileView.swift        # 个人中心
 │   ├── SettingsView.swift       # 设置页
-│   │
-│   ├── Components/              # 公共组件
-│   │   ├── CommonViews.swift    # 公共 UI 组件
-│   │   └── MessageBubble.swift  # 消息气泡组件
-│   │
+│   ├── CommonViews.swift        # 公共 UI 组件
+│   ├── MessageBubble.swift      # 消息气泡组件
 │   ├── MorningReportView.swift  # 晨报
 │   ├── EveningReportView.swift  # 晚报
 │   ├── RoastView.swift          # 吐槽
