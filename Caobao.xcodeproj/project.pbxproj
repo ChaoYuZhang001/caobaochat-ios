@@ -31,6 +31,8 @@
 		A1000021 /* QuoteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000021; };
 		A1000022 /* RoastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000022; };
 		A1000023 /* CommonViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000023; };
+		A1000024 /* MessageBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000024; };
+		A1000025 /* MediaLinkDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000025; };
 
 		A1000026 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = E2000001; };
 		A1000027 /* FortuneData.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000027; };
@@ -72,6 +74,8 @@
 		B1000019 /* NicknameData.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000028; };
 		B1000020 /* FavoriteItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000042; };
 		B1000021 /* CommonViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000023; };
+		B1000022 /* MessageBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000024; };
+		B1000023 /* MediaLinkDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000025; };
 		
 		// watchOS Target (新增)
 		C1000001 /* CaobaoWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000001; };
@@ -109,8 +113,10 @@
 		A2000021 /* QuoteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteView.swift; sourceTree = "<group>"; };
 		A2000022 /* RoastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoastView.swift; sourceTree = "<group>"; };
 		A2000023 /* CommonViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommonViews.swift; sourceTree = "<group>"; };
-		A2000024 /* NicknameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NicknameView.swift; sourceTree = "<group>"; };
-		A2000026 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A2000024 /* MessageBubble.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageBubble.swift; sourceTree = "<group>"; };
+		A2000025 /* MediaLinkDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaLinkDetector.swift; sourceTree = "<group>"; };
+		A2000026 /* NicknameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NicknameView.swift; sourceTree = "<group>"; };
+		A2000027 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A2000027 /* FortuneData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FortuneData.swift; sourceTree = "<group>"; };
 		A2000028 /* NicknameData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NicknameData.swift; sourceTree = "<group>"; };
 		A2000029 /* RateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RateView.swift; sourceTree = "<group>"; };
@@ -249,7 +255,8 @@
 				A2000021 /* QuoteView.swift */,
 				A2000022 /* RoastView.swift */,
 				A2000023 /* CommonViews.swift */,
-				A2000024 /* NicknameView.swift */,
+				A2000024 /* MessageBubble.swift */,
+				A2000026 /* NicknameView.swift */,
 				A2000029 /* RateView.swift */,
 				A2000030 /* MorningReportView.swift */,
 				A2000031 /* EveningReportView.swift */,
@@ -287,6 +294,7 @@
 			isa = PBXGroup;
 			children = (
 				A2000013 /* User.swift */,
+				A2000025 /* MediaLinkDetector.swift */,
 				A2000027 /* FortuneData.swift */,
 				A2000028 /* NicknameData.swift */,
 				A2000042 /* FavoriteItem.swift */,
@@ -455,7 +463,9 @@
 				A1000021 /* QuoteView.swift in Sources */,
 				A1000022 /* RoastView.swift in Sources */,
 				A1000023 /* CommonViews.swift in Sources */,
-				A1000024 /* NicknameView.swift in Sources */,
+				A1000024 /* MessageBubble.swift in Sources */,
+				A1000025 /* MediaLinkDetector.swift in Sources */,
+				A1000026 /* NicknameView.swift in Sources */,
 				A1000027 /* FortuneData.swift in Sources */,
 				A1000028 /* NicknameData.swift in Sources */,
 				A1000029 /* RateView.swift in Sources */,
@@ -498,6 +508,8 @@
 				B1000019 /* NicknameData.swift in Sources */,
 				B1000020 /* FavoriteItem.swift in Sources */,
 				B1000021 /* CommonViews.swift in Sources */,
+				B1000022 /* MessageBubble.swift in Sources */,
+				B1000023 /* MediaLinkDetector.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
