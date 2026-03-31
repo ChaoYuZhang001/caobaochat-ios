@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		// iOS Target (现有)
 		A1000001 /* CaobaoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001; };
 		A1000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000002; };
 		A1000003 /* FortuneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000003; };
@@ -49,9 +50,34 @@
 		A1000040 /* StatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000041; };
 		A1000041 /* FavoriteItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000042; };
 		A1000042 /* SpeechManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000043; };
+		
+		// macOS Target (新增)
+		B1000001 /* CaobaoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001; };
+		B1000002 /* MacContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000012; };
+		B1000003 /* ChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000006; };
+		B1000004 /* APIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000007; };
+		B1000005 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000009; };
+		B1000006 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000013; };
+		B1000007 /* FortuneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000003; };
+		B1000008 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000004; };
+		B1000009 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000005; };
+		B1000010 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000015; };
+		B1000011 /* Assets-macOS.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B2000001; };
+		B1000012 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = B1000001; };
+		
+		// watchOS Target (新增)
+		C1000001 /* CaobaoWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000001; };
+		C1000002 /* WatchContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000002; };
+		C1000003 /* WatchFortuneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000003; };
+		C1000004 /* WatchNewsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000004; };
+		C1000005 /* WatchRoastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000005; };
+		C1000006 /* WatchDecisionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000006; };
+		C1000007 /* WatchAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000007; };
+		C1000008 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C2000008; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		// iOS 文件 (现有)
 		A2000001 /* CaobaoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaobaoApp.swift; sourceTree = "<group>"; };
 		A2000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A2000003 /* FortuneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FortuneView.swift; sourceTree = "<group>"; };
@@ -97,6 +123,25 @@
 		A2000043 /* SpeechManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechManager.swift; sourceTree = "<group>"; };
 
 		A3000001 /* Caobao.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Caobao.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		
+		// macOS 文件 (新增)
+		B2000001 /* Assets-macOS.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Assets-macOS.xcassets"; sourceTree = "<group>"; };
+		B2000002 /* Info-macOS.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info-macOS.plist"; sourceTree = "<group>"; };
+		B3000001 /* Caobao-macOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Caobao-macOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		
+		// watchOS 文件 (新增)
+		C2000001 /* CaobaoWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaobaoWatchApp.swift; sourceTree = "<group>"; };
+		C2000002 /* WatchContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchContentView.swift; sourceTree = "<group>"; };
+		C2000003 /* WatchFortuneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchFortuneView.swift; sourceTree = "<group>"; };
+		C2000004 /* WatchNewsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchNewsView.swift; sourceTree = "<group>"; };
+		C2000005 /* WatchRoastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchRoastView.swift; sourceTree = "<group>"; };
+		C2000006 /* WatchDecisionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchDecisionView.swift; sourceTree = "<group>"; };
+		C2000007 /* WatchAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchAPIService.swift; sourceTree = "<group>"; };
+		C2000008 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		C2000009 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		C3000001 /* Caobao-watchOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Caobao-watchOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+
+		B1000001 /* Alamofire */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Alamofire; path = Frameworks/Alamofire.framework; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -108,6 +153,21 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B4000001 /* Frameworks (macOS) */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B1000012 /* Alamofire in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C4000001 /* Frameworks (watchOS) */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -116,6 +176,7 @@
 			children = (
 				A5000002 /* Caobao */,
 				A5000003 /* Products */,
+				A5000009 /* Caobao-watchOS */,
 			);
 			sourceTree = "<group>";
 		};
@@ -129,7 +190,9 @@
 				A5000006 /* Services */,
 				A5000008 /* DesignSystem */,
 				A2000008 /* Assets.xcassets */,
+				B2000001 /* Assets-macOS.xcassets */,
 				A2000026 /* Info.plist */,
+				B2000002 /* Info-macOS.plist */,
 				A2000033 /* Caobao.entitlements */,
 			);
 			path = Caobao;
@@ -139,8 +202,26 @@
 			isa = PBXGroup;
 			children = (
 				A3000001 /* Caobao.app */,
+				B3000001 /* Caobao-macOS.app */,
+				C3000001 /* Caobao-watchOS.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		A5000009 /* Caobao-watchOS */ = {
+			isa = PBXGroup;
+			children = (
+				C2000001 /* CaobaoWatchApp.swift */,
+				C2000002 /* WatchContentView.swift */,
+				C2000003 /* WatchFortuneView.swift */,
+				C2000004 /* WatchNewsView.swift */,
+				C2000005 /* WatchRoastView.swift */,
+				C2000006 /* WatchDecisionView.swift */,
+				C2000007 /* WatchAPIService.swift */,
+				C2000008 /* Assets.xcassets */,
+				C2000009 /* Info.plist */,
+			);
+			path = "Caobao-watchOS";
 			sourceTree = "<group>";
 		};
 		A5000004 /* Views */ = {
@@ -222,28 +303,59 @@
 /* Begin PBXNativeTarget section */
 		A6000001 /* Caobao */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A7000001 /* Build configuration list for PBXNativeTarget "Caobao" */;
+			buildConfigurationList = A7000001;
 			buildPhases = (
-				A6000002 /* Sources */,
+				A8000001 /* Sources */,
 				A4000001 /* Frameworks */,
-				A6000003 /* Resources */,
+				A8000002 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			name = Caobao;
-			packageProductDependencies = (
-				B1000001 /* Alamofire */,
-			);
 			productName = Caobao;
-			productReference = A3000001 /* Caobao.app */;
+			productReference = A3000001;
 			productType = "com.apple.product-type.application";
+		};
+		B6000001 /* Caobao-macOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B7000001;
+			buildPhases = (
+				B8000001 /* Sources */,
+				B4000001 /* Frameworks */,
+				B8000002 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Caobao-macOS";
+			productName = "Caobao-macOS";
+			productReference = B3000001;
+			productType = "com.apple.product-type.application";
+		};
+		C6000001 /* Caobao-watchOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C7000001;
+			buildPhases = (
+				C8000001 /* Sources */,
+				C4000001 /* Frameworks */,
+				C8000002 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Caobao-watchOS";
+			productName = "Caobao-watchOS";
+			productReference = C3000001;
+			productType = "com.apple.product-type.application.watchapp2";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		A8000001 /* Project object */ = {
+		A6000000 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
@@ -253,32 +365,37 @@
 					A6000001 = {
 						CreatedOnToolsVersion = 15.0;
 					};
+					B6000001 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+					C6000001 = {
+						CreatedOnToolsVersion = 15.0;
+					};
 				};
 			};
-			buildConfigurationList = A7000002 /* Build configuration list for PBXProject "Caobao" */;
+			buildConfigurationList = A7000002;
 			compatibilityVersion = "Xcode 14.0";
-			developmentRegion = zh-Hans;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				zh-Hans,
 				en,
 				Base,
+				"zh-Hans",
 			);
 			mainGroup = A5000001;
-			packageReferences = (
-				B2000001 /* XCRemoteSwiftPackageReference "Alamofire" */,
-			);
-			productRefGroup = A5000003 /* Products */;
+			productRefGroup = A5000003;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				A6000001 /* Caobao */,
+				B6000001 /* Caobao-macOS */,
+				C6000001 /* Caobao-watchOS */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		A6000003 /* Resources */ = {
+		A8000002 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -286,10 +403,26 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B8000002 /* Resources (macOS) */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B1000011 /* Assets-macOS.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C8000002 /* Resources (watchOS) */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C1000008 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		A6000002 /* Sources */ = {
+		A8000001 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -333,6 +466,37 @@
 				A1000040 /* StatsView.swift in Sources */,
 				A1000041 /* FavoriteItem.swift in Sources */,
 				A1000042 /* SpeechManager.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B8000001 /* Sources (macOS) */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B1000001 /* CaobaoApp.swift in Sources */,
+				B1000002 /* MacContentView.swift in Sources */,
+				B1000003 /* ChatViewModel.swift in Sources */,
+				B1000004 /* APIService.swift in Sources */,
+				B1000005 /* AuthService.swift in Sources */,
+				B1000006 /* User.swift in Sources */,
+				B1000007 /* FortuneView.swift in Sources */,
+				B1000008 /* HistoryView.swift in Sources */,
+				B1000009 /* ProfileView.swift in Sources */,
+				B1000010 /* SettingsView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C8000001 /* Sources (watchOS) */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C1000001 /* CaobaoWatchApp.swift in Sources */,
+				C1000002 /* WatchContentView.swift in Sources */,
+				C1000003 /* WatchFortuneView.swift in Sources */,
+				C1000004 /* WatchNewsView.swift in Sources */,
+				C1000005 /* WatchRoastView.swift in Sources */,
+				C1000006 /* WatchDecisionView.swift in Sources */,
+				C1000007 /* WatchAPIService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -458,7 +622,7 @@
 			};
 			name = Release;
 		};
-		A9000003 /* Debug */ = {
+		A9000003 /* Debug (iOS) */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -496,7 +660,7 @@
 			};
 			name = Debug;
 		};
-		A9000004 /* Release */ = {
+		A9000004 /* Release (iOS) */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -534,6 +698,120 @@
 			};
 			name = Release;
 		};
+		B9000003 /* Debug (macOS) */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon-macOS";
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Caobao/Caobao.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Caobao/Info-macOS.plist";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = caobao.chat.mac;
+				PRODUCT_NAME = "草包";
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		B9000004 /* Release (macOS) */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon-macOS";
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Caobao/Caobao.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Caobao/Info-macOS.plist";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = caobao.chat.mac;
+				PRODUCT_NAME = "草包";
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		C9000003 /* Debug (watchOS) */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Caobao-watchOS/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = caobao.chat.watchkitapp;
+				PRODUCT_NAME = "草包";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 9.0;
+			};
+			name = Debug;
+		};
+		C9000004 /* Release (watchOS) */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Caobao-watchOS/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = caobao.chat.watchkitapp;
+				PRODUCT_NAME = "草包";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 9.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -542,6 +820,24 @@
 			buildConfigurations = (
 				A9000003 /* Debug */,
 				A9000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B7000001 /* Build configuration list for PBXNativeTarget "Caobao-macOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B9000003 /* Debug */,
+				B9000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C7000001 /* Build configuration list for PBXNativeTarget "Caobao-watchOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C9000003 /* Debug */,
+				C9000004 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -556,25 +852,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		B2000001 /* XCRemoteSwiftPackageReference "Alamofire" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/Alamofire/Alamofire.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 5.8.0;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		B1000001 /* Alamofire */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = B2000001 /* XCRemoteSwiftPackageReference "Alamofire" */;
-			productName = Alamofire;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
-	rootObject = A8000001 /* Project object */;
+	rootObject = A6000000;
 }
