@@ -1135,35 +1135,78 @@ class APIService {
                     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
                     if let token = token { request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
                     request.httpBody = try? JSONSerialization.data(withJSONObject: parameters)
+                    
+                    print("📤 发送对话请求: \(url.absoluteString)")
+                    print("📤 参数: \(parameters)")
+                    
                     let (bytes, response) = try await URLSession.shared.bytes(for: request)
-                    guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                    
+                    guard let httpResponse = response as? HTTPURLResponse else {
+                        print("❌ 响应类型错误")
                         continuation.finish()
                         return
                     }
+                    
+                    print("📥 HTTP 状态码: \(httpResponse.statusCode)")
+                    
+                    guard httpResponse.statusCode == 200 else {
+                        print("❌ HTTP 错误: \(httpResponse.statusCode)")
+                        continuation.finish()
+                        return
+                    }
+                    
                     var buffer = Data()
                     for try await byte in bytes {
                         buffer.append(byte)
                         if byte == 0x0A {
                             if let line = String(data: buffer, encoding: .utf8) {
                                 let trimmedLine = line.trimmingCharacters(in: .whitespacesAndNewlines)
+                                
                                 if trimmedLine.hasPrefix("data: ") {
                                     let jsonStr = String(trimmedLine.dropFirst(6))
-                                    if jsonStr == "[DONE]" { continuation.finish(); return }
-                                    guard let jsonData = jsonStr.data(using: .utf8) else { continue }
-                                    if let resp = try? JSONDecoder().decode(OpenAIStreamResponse.self, from: jsonData),
-                                       let content = resp.choices.first?.delta.content {
-                                        continuation.yield(ChatStreamEvent(content: content, type: "content", model: nil, error: nil))
-                                    } else if let event = try? JSONDecoder().decode(ChatStreamEvent.self, from: jsonData),
-                                              let content = event.content, !content.isEmpty {
-                                        continuation.yield(event)
+                                    
+                                    if jsonStr == "[DONE]" {
+                                        print("✅ 流式传输完成")
+                                        continuation.finish()
+                                        return
+                                    }
+                                    
+                                    guard let jsonData = jsonStr.data(using: .utf8) else {
+                                        print("❌ 无法转换为 Data: \(jsonStr.prefix(50))")
+                                        buffer.removeAll()
+                                        continue
+                                    }
+                                    
+                                    // 尝试解析为 ChatStreamEvent
+                                    if let event = try? JSONDecoder().decode(ChatStreamEvent.self, from: jsonData) {
+                                        if let content = event.content, !content.isEmpty {
+                                            print("✅ 解析成功 content: \(content.prefix(30))")
+                                            continuation.yield(event)
+                                        } else if event.type != nil {
+                                            print("📋 收到类型事件: \(event.type ?? "unknown")")
+                                        }
+                                    } else {
+                                        // 尝试解析为 OpenAI 格式
+                                        if let resp = try? JSONDecoder().decode(OpenAIStreamResponse.self, from: jsonData),
+                                           let content = resp.choices.first?.delta.content {
+                                            print("✅ OpenAI 格式解析成功: \(content.prefix(30))")
+                                            continuation.yield(ChatStreamEvent(content: content, type: "content", model: nil, error: nil))
+                                        } else {
+                                            print("⚠️ 无法解析: \(jsonStr.prefix(100))")
+                                        }
                                     }
                                 }
                             }
                             buffer.removeAll()
                         }
                     }
+                    
+                    print("✅ 流读取完成")
                     continuation.finish()
-                } catch { continuation.finish(throwing: error) }
+                } catch {
+                    print("❌ 流式错误: \(error.localizedDescription)")
+                    continuation.finish(throwing: error)
+                }
             }
         }
     }
@@ -1189,32 +1232,72 @@ class APIService {
                     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
                     if let token = token { request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
                     request.httpBody = try? JSONSerialization.data(withJSONObject: parameters)
+                    
+                    print("📤 发送图片对话请求: \(url.absoluteString)")
+                    
                     let (bytes, response) = try await URLSession.shared.bytes(for: request)
-                    guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else { continuation.finish(); return }
+                    
+                    guard let httpResponse = response as? HTTPURLResponse else {
+                        print("❌ 响应类型错误")
+                        continuation.finish()
+                        return
+                    }
+                    
+                    print("📥 HTTP 状态码: \(httpResponse.statusCode)")
+                    
+                    guard httpResponse.statusCode == 200 else {
+                        print("❌ HTTP 错误: \(httpResponse.statusCode)")
+                        continuation.finish()
+                        return
+                    }
+                    
                     var buffer = Data()
                     for try await byte in bytes {
                         buffer.append(byte)
                         if byte == 0x0A {
                             if let line = String(data: buffer, encoding: .utf8) {
                                 let trimmedLine = line.trimmingCharacters(in: .whitespacesAndNewlines)
+                                
                                 if trimmedLine.hasPrefix("data: ") {
                                     let jsonStr = String(trimmedLine.dropFirst(6))
-                                    if jsonStr == "[DONE]" { continuation.finish(); return }
-                                    guard let jsonData = jsonStr.data(using: .utf8) else { continue }
-                                    if let resp = try? JSONDecoder().decode(OpenAIStreamResponse.self, from: jsonData),
-                                       let content = resp.choices.first?.delta.content {
-                                        continuation.yield(ChatStreamEvent(content: content, type: "content", model: nil, error: nil))
-                                    } else if let event = try? JSONDecoder().decode(ChatStreamEvent.self, from: jsonData),
-                                              let content = event.content, !content.isEmpty {
-                                        continuation.yield(event)
+                                    
+                                    if jsonStr == "[DONE]" {
+                                        print("✅ 流式传输完成")
+                                        continuation.finish()
+                                        return
+                                    }
+                                    
+                                    guard let jsonData = jsonStr.data(using: .utf8) else {
+                                        buffer.removeAll()
+                                        continue
+                                    }
+                                    
+                                    // 尝试解析为 ChatStreamEvent
+                                    if let event = try? JSONDecoder().decode(ChatStreamEvent.self, from: jsonData) {
+                                        if let content = event.content, !content.isEmpty {
+                                            print("✅ 解析成功 content: \(content.prefix(30))")
+                                            continuation.yield(event)
+                                        }
+                                    } else {
+                                        // 尝试解析为 OpenAI 格式
+                                        if let resp = try? JSONDecoder().decode(OpenAIStreamResponse.self, from: jsonData),
+                                           let content = resp.choices.first?.delta.content {
+                                            print("✅ OpenAI 格式解析成功: \(content.prefix(30))")
+                                            continuation.yield(ChatStreamEvent(content: content, type: "content", model: nil, error: nil))
+                                        }
                                     }
                                 }
                             }
                             buffer.removeAll()
                         }
                     }
+                    
+                    print("✅ 流读取完成")
                     continuation.finish()
-                } catch { continuation.finish(throwing: error) }
+                } catch {
+                    print("❌ 流式错误: \(error.localizedDescription)")
+                    continuation.finish(throwing: error)
+                }
             }
         }
     }
