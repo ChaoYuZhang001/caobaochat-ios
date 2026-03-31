@@ -152,9 +152,9 @@ class ChatViewModel: ObservableObject {
             let token = self.authService.token
             
             do {
-                let stream = APIService.shared.chatStream(
+                let stream = APIService.shared.chatStreamV2(
                     userId: userId,
-                    prompt: prompt,
+                    message: prompt,
                     sessionId: self.currentSessionId,
                     token: token
                 )
@@ -239,7 +239,7 @@ class ChatViewModel: ObservableObject {
             let token = self.authService.token
             
             do {
-                let stream = APIService.shared.chatStreamWithImage(
+                let stream = APIService.shared.chatStreamWithImageV2(
                     userId: userId,
                     prompt: "请分析这张图片",
                     imageURI: imageURI,
@@ -371,7 +371,7 @@ class ChatViewModel: ObservableObject {
             guard let self = self else { return }
             
             do {
-                let stream = APIService.shared.chatStream(
+                let stream = APIService.shared.chatStreamV2(
                     userId: userId,
                     prompt: userPrompt,
                     sessionId: self.currentSessionId
