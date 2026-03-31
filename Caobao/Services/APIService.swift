@@ -1113,6 +1113,137 @@ class APIService {
 }
 
 // MARK: - Models
+
+    // MARK: - Chat Stream V2 (使用 /api/v1/chat/completions 端点)
+    func chatStreamV2(
+        userId: String,
+        message: String,
+        sessionId: String? = nil,
+        attachments: [Attachment]? = nil,
+        token: String? = nil
+    ) -> AsyncThrowingStream<ChatStreamEvent, Error> {
+        AsyncThrowingStream { continuation in
+            Task {
+                do {
+                    let parameters: [String: Any] = [
+                        "message": message,
+                        "stream": true,
+                        "sessionId": sessionId ?? UUID().uuidString,
+                        "model": "deepseek-chat",
+                        "attachments": attachments?.map { ["type": $0.type, "url": $0.url] } ?? []
+                    ]
+                    let url = URL(string: "\(APIConfig.baseURL)/api/v1/chat/completions")!
+                    var request = URLRequest(url: url)
+                    request.httpMethod = "POST"
+                    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                    if let token = token { request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
+                    request.httpBody = try? JSONSerialization.data(withJSONObject: parameters)
+                    let (bytes, response) = try await URLSession.shared.bytes(for: request)
+                    guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                        continuation.finish()
+                        return
+                    }
+                    var buffer = Data()
+                    for try await byte in bytes {
+                        buffer.append(byte)
+                        if byte == 0x0A {
+                            if let line = String(data: buffer, encoding: .utf8) {
+                                let trimmedLine = line.trimmingCharacters(in: .whitespacesAndNewlines)
+                                if trimmedLine.hasPrefix("data: ") {
+                                    let jsonStr = String(trimmedLine.dropFirst(6))
+                                    if jsonStr == "[DONE]" { continuation.finish(); return }
+                                    guard let jsonData = jsonStr.data(using: .utf8) else { continue }
+                                    if let resp = try? JSONDecoder().decode(OpenAIStreamResponse.self, from: jsonData),
+                                       let content = resp.choices.first?.delta.content {
+                                        continuation.yield(ChatStreamEvent(content: content, type: "content", model: nil, error: nil))
+                                    } else if let event = try? JSONDecoder().decode(ChatStreamEvent.self, from: jsonData),
+                                              let content = event.content, !content.isEmpty {
+                                        continuation.yield(event)
+                                    }
+                                }
+                            }
+                            buffer.removeAll()
+                        }
+                    }
+                    continuation.finish()
+                } catch { continuation.finish(throwing: error) }
+            }
+        }
+    }
+
+    func chatStreamWithImageV2(
+        userId: String,
+        prompt: String,
+        imageURI: String,
+        sessionId: String?,
+        token: String? = nil
+    ) -> AsyncThrowingStream<ChatStreamEvent, Error> {
+        AsyncThrowingStream { continuation in
+            Task {
+                do {
+                    let parameters: [String: Any] = [
+                        "message": prompt, "stream": true,
+                        "sessionId": sessionId ?? UUID().uuidString, "model": "deepseek-chat",
+                        "attachments": [["type": "image", "url": imageURI]]
+                    ]
+                    let url = URL(string: "\(APIConfig.baseURL)/api/v1/chat/completions")!
+                    var request = URLRequest(url: url)
+                    request.httpMethod = "POST"
+                    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                    if let token = token { request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
+                    request.httpBody = try? JSONSerialization.data(withJSONObject: parameters)
+                    let (bytes, response) = try await URLSession.shared.bytes(for: request)
+                    guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else { continuation.finish(); return }
+                    var buffer = Data()
+                    for try await byte in bytes {
+                        buffer.append(byte)
+                        if byte == 0x0A {
+                            if let line = String(data: buffer, encoding: .utf8) {
+                                let trimmedLine = line.trimmingCharacters(in: .whitespacesAndNewlines)
+                                if trimmedLine.hasPrefix("data: ") {
+                                    let jsonStr = String(trimmedLine.dropFirst(6))
+                                    if jsonStr == "[DONE]" { continuation.finish(); return }
+                                    guard let jsonData = jsonStr.data(using: .utf8) else { continue }
+                                    if let resp = try? JSONDecoder().decode(OpenAIStreamResponse.self, from: jsonData),
+                                       let content = resp.choices.first?.delta.content {
+                                        continuation.yield(ChatStreamEvent(content: content, type: "content", model: nil, error: nil))
+                                    } else if let event = try? JSONDecoder().decode(ChatStreamEvent.self, from: jsonData),
+                                              let content = event.content, !content.isEmpty {
+                                        continuation.yield(event)
+                                    }
+                                }
+                            }
+                            buffer.removeAll()
+                        }
+                    }
+                    continuation.finish()
+                } catch { continuation.finish(throwing: error) }
+            }
+        }
+    }
+
+}
+
+// OpenAI 格式流式响应（用于 chatStreamV2）
+struct OpenAIStreamResponse: Codable {
+    let choices: [OpenAIChoice]
+}
+
+struct OpenAIChoice: Codable {
+    let delta: OpenAIDelta
+    let finishReason: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case delta
+        case finishReason = "finish_reason"
+    }
+}
+
+struct OpenAIDelta: Codable {
+    let content: String?
+    let role: String?
+}
+
 struct ChatStreamEvent: Codable {
     let content: String?
     let type: String?
