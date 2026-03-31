@@ -6,6 +6,8 @@ import AppKit
 // MARK: - Mac Content View (三栏布局)
 struct MacContentView: View {
     @EnvironmentObject var appState: AppState
+    @StateObject private var chatViewModel = ChatViewModel()
+    @State private var selectedFeature: MacFeature = .chat
     @State private var selectedConversation: Conversation?
     @State private var showSettings = false
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
@@ -13,11 +15,19 @@ struct MacContentView: View {
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
             // 左侧边栏 - 功能导航
-            SidebarView(selectedTab: $appState.selectedTab, selectedConversation: $selectedConversation)
-                .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 280)
+            MacSidebarView(
+                selectedFeature: $selectedFeature,
+                selectedConversation: $selectedConversation,
+                conversations: chatViewModel.conversations
+            )
+            .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 280)
         } detail: {
             // 右侧内容区
-            DetailView(selectedTab: appState.selectedTab, conversation: selectedConversation)
+            MacDetailView(
+                selectedFeature: selectedFeature,
+                conversation: selectedConversation,
+                chatViewModel: chatViewModel
+            )
         }
         .toolbar {
             ToolbarItemGroup {
@@ -27,98 +37,158 @@ struct MacContentView: View {
                     Label("新对话", systemImage: "square.and.pencil")
                 }
                 
-                #if os(macOS)
                 Spacer()
                 
                 Button {
-                    // 设置
+                    showSettings = true
                 } label: {
                     Image(systemName: "gear")
                 }
-                #endif
             }
+        }
+        .sheet(isPresented: $showSettings) {
+            SettingsView()
+                .frame(width: 500, height: 600)
         }
         .onReceive(NotificationCenter.default.publisher(for: .newChat)) { _ in
             selectedConversation = nil
-            appState.selectedTab = .chat
+            selectedFeature = .chat
+        }
+        .task {
+            // 登录后自动同步云端数据
+            if AuthService.shared.isLoggedIn {
+                await chatViewModel.syncFromCloud()
+            }
         }
     }
 }
 
-// MARK: - Sidebar View
-struct SidebarView: View {
-    @Binding var selectedTab: AppTab
+// MARK: - Mac Feature Enum
+enum MacFeature: String, CaseIterable, Identifiable {
+    case chat = "自由对话"
+    case fortune = "今日运势"
+    case analyze = "图片分析"
+    case quote = "毒舌金句"
+    case roast = "吐槽大会"
+    case nickname = "毒舌昵称"
+    case rate = "犀利评分"
+    case decision = "决策助手"
+    case morningReport = "早报"
+    case eveningReport = "晚报"
+    case favorites = "收藏"
+    case history = "历史"
+    case profile = "我的"
+    
+    var id: String { rawValue }
+    
+    var icon: String {
+        switch self {
+        case .chat: return "message.fill"
+        case .fortune: return "star.fill"
+        case .analyze: return "photo.fill"
+        case .quote: return "quote.bubble.fill"
+        case .roast: return "flame.fill"
+        case .nickname: return "person.crop.circle.badge.plus"
+        case .rate: return "star.leadinghalf.filled"
+        case .decision: return "questionmark.circle.fill"
+        case .morningReport: return "sun.max.fill"
+        case .eveningReport: return "moon.fill"
+        case .favorites: return "heart.fill"
+        case .history: return "clock.fill"
+        case .profile: return "person.fill"
+        }
+    }
+    
+    var iconColor: Color {
+        switch self {
+        case .chat: return .green
+        case .fortune: return .orange
+        case .analyze: return .blue
+        case .quote: return .purple
+        case .roast: return .red
+        case .nickname: return .pink
+        case .rate: return .yellow
+        case .decision: return .cyan
+        case .morningReport: return .orange
+        case .eveningReport: return .indigo
+        case .favorites: return .red
+        case .history: return .gray
+        case .profile: return .green
+        }
+    }
+}
+
+// MARK: - Mac Sidebar View
+struct MacSidebarView: View {
+    @Binding var selectedFeature: MacFeature
     @Binding var selectedConversation: Conversation?
-    @State private var conversations: [Conversation] = []
+    let conversations: [Conversation]
     
     var body: some View {
         List {
-            // 功能导航
-            Section("功能") {
-                ForEach(AppTab.allCases, id: \.self) { tab in
-                    Label(tab.rawValue, systemImage: tab.icon)
-                        .tag(tab)
-                        .selectionDisabled(tab == .chat)
+            // 核心功能
+            Section("核心功能") {
+                ForEach([MacFeature.chat, .fortune, .analyze]) { feature in
+                    MacFeatureRow(feature: feature, isSelected: selectedFeature == feature)
                         .onTapGesture {
-                            selectedTab = tab
+                            selectedFeature = feature
+                            selectedConversation = nil
                         }
-                        .listRowBackground(selectedTab == tab ? Color.accentColor.opacity(0.2) : Color.clear)
                 }
             }
             
-            // 最近对话
-            Section("最近对话") {
-                ForEach(conversations) { conv in
-                    ConversationRow(conversation: conv, isSelected: selectedConversation?.id == conv.id)
+            // 毒舌特色
+            Section("毒舌特色") {
+                ForEach([MacFeature.quote, .roast, .nickname, .rate]) { feature in
+                    MacFeatureRow(feature: feature, isSelected: selectedFeature == feature)
                         .onTapGesture {
-                            selectedConversation = conv
-                            selectedTab = .chat
+                            selectedFeature = feature
+                            selectedConversation = nil
                         }
-                        .contextMenu {
-                            Button(role: .destructive) {
-                                conversations.removeAll { $0.id == conv.id }
-                            } label: {
-                                Label("删除", systemImage: "trash")
-                            }
+                }
+            }
+            
+            // 智能助手
+            Section("智能助手") {
+                ForEach([MacFeature.decision, .morningReport, .eveningReport]) { feature in
+                    MacFeatureRow(feature: feature, isSelected: selectedFeature == feature)
+                        .onTapGesture {
+                            selectedFeature = feature
+                            selectedConversation = nil
+                        }
+                }
+            }
+            
+            // 其他
+            Section("其他") {
+                ForEach([MacFeature.favorites, .history, .profile]) { feature in
+                    MacFeatureRow(feature: feature, isSelected: selectedFeature == feature)
+                        .onTapGesture {
+                            selectedFeature = feature
+                            selectedConversation = nil
                         }
                 }
             }
         }
         .listStyle(.sidebar)
         .navigationTitle("草包")
-        .task {
-            loadConversations()
-        }
-    }
-    
-    private func loadConversations() {
-        if let data = UserDefaults.standard.data(forKey: "conversationHistory"),
-           let saved = try? JSONDecoder().decode([Conversation].self, from: data) {
-            conversations = saved
-        }
     }
 }
 
-// MARK: - Conversation Row
-struct ConversationRow: View {
-    let conversation: Conversation
+// MARK: - Mac Feature Row
+struct MacFeatureRow: View {
+    let feature: MacFeature
     let isSelected: Bool
     
     var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "message")
-                .foregroundStyle(.secondary)
+        HStack(spacing: 10) {
+            Image(systemName: feature.icon)
+                .foregroundStyle(feature.iconColor)
+                .frame(width: 20)
             
-            VStack(alignment: .leading, spacing: 2) {
-                Text(conversation.title)
-                    .font(.headline)
-                    .lineLimit(1)
-                
-                Text(conversation.preview)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
+            Text(feature.rawValue)
+                .font(.body)
+                .foregroundStyle(.primary)
         }
         .padding(.vertical, 4)
         .padding(.horizontal, 8)
@@ -127,22 +197,37 @@ struct ConversationRow: View {
     }
 }
 
-// MARK: - Detail View
-struct DetailView: View {
-    let selectedTab: AppTab
+// MARK: - Mac Detail View
+struct MacDetailView: View {
+    let selectedFeature: MacFeature
     let conversation: Conversation?
+    @ObservedObject var chatViewModel: ChatViewModel
     
     var body: some View {
         Group {
-            switch selectedTab {
+            switch selectedFeature {
             case .chat:
-                if let conv = conversation {
-                    ConversationDetailView(conversation: conv)
-                } else {
-                    ChatView()
-                }
+                ChatView()
             case .fortune:
                 FortuneView()
+            case .analyze:
+                AnalyzeView()
+            case .quote:
+                QuoteView()
+            case .roast:
+                RoastView()
+            case .nickname:
+                NicknameView()
+            case .rate:
+                RateView()
+            case .decision:
+                DecisionView()
+            case .morningReport:
+                MorningReportView()
+            case .eveningReport:
+                EveningReportView()
+            case .favorites:
+                FavoritesView()
             case .history:
                 HistoryView()
             case .profile:
@@ -150,31 +235,6 @@ struct DetailView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-}
-
-// MARK: - Conversation Detail View (Mac)
-struct ConversationDetailView: View {
-    let conversation: Conversation
-    
-    var body: some View {
-        ScrollView {
-            LazyVStack(spacing: 12) {
-                ForEach(conversation.messages) { message in
-                    MessageBubble(
-                        message: message,
-                        userSettings: UserSettings(),
-                        onCopy: {},
-                        onLike: {},
-                        onDislike: {},
-                        onRegenerate: {},
-                        onDelete: {}
-                    )
-                }
-            }
-            .padding()
-        }
-        .navigationTitle(conversation.title)
     }
 }
 

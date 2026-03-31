@@ -2,6 +2,12 @@ import Foundation
 import SwiftUI
 import AuthenticationServices
 
+// MARK: - Notification Names
+extension Notification.Name {
+    static let loginSuccess = Notification.Name("loginSuccess")
+    static let logoutSuccess = Notification.Name("logoutSuccess")
+}
+
 // MARK: - Auth Service
 class AuthService: ObservableObject {
     static let shared = AuthService()
@@ -43,6 +49,8 @@ class AuthService: ObservableObject {
                     UserDefaults.standard.set(userData, forKey: userKey)
                 }
             }
+            // 发送登录成功通知，触发云端同步
+            NotificationCenter.default.post(name: .loginSuccess, object: nil)
         } else {
             throw AuthError.loginFailed(response.error ?? "登录失败")
         }
@@ -83,6 +91,8 @@ class AuthService: ObservableObject {
                     UserDefaults.standard.set(userData, forKey: userKey)
                 }
             }
+            // 发送登录成功通知，触发云端同步
+            NotificationCenter.default.post(name: .loginSuccess, object: nil)
         } else {
             throw AuthError.loginFailed(response.error ?? "Apple 登录失败")
         }
@@ -96,6 +106,8 @@ class AuthService: ObservableObject {
         isLoggedIn = false
         UserDefaults.standard.removeObject(forKey: tokenKey)
         UserDefaults.standard.removeObject(forKey: userKey)
+        // 发送登出通知
+        NotificationCenter.default.post(name: .logoutSuccess, object: nil)
     }
     
     // MARK: - Guest Upgrade

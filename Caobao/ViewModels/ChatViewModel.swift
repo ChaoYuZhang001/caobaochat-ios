@@ -5,6 +5,7 @@ import SwiftUI
 @MainActor
 class ChatViewModel: ObservableObject {
     @Published var messages: [ChatMessage] = []
+    @Published var conversations: [Conversation] = []  // 对话列表（用于 Mac 侧边栏）
     @Published var inputText: String = ""
     @Published var isLoading: Bool = false
     @Published var error: String?
@@ -20,6 +21,38 @@ class ChatViewModel: ObservableObject {
     private var currentTask: Task<Void, Never>?
     private var syncTask: Task<Void, Never>?
     private let authService = AuthService.shared
+    
+    // MARK: - Init
+    init() {
+        // 监听登录成功通知，自动同步云端数据
+        NotificationCenter.default.addObserver(
+            forName: .loginSuccess,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                print("🔔 收到登录成功通知，开始同步云端数据...")
+                await self?.syncFromCloud()
+            }
+        }
+        
+        // 监听登出通知，清空本地数据
+        NotificationCenter.default.addObserver(
+            forName: .logoutSuccess,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                print("🔔 收到登出通知，清空本地数据...")
+                self?.messages = []
+                self?.conversations = []
+            }
+        }
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
     
     // MARK: - Sync with Cloud
     /// 从云端同步聊天记录
