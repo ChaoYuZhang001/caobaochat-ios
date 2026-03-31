@@ -472,11 +472,6 @@ struct AvatarPickerView: View {
         .buttonStyle(.plain)
     }
 }
-
-    ProfileView()
-        .environmentObject(AppState())
-}
-
 // MARK: - Guest Upgrade Sheet
 #if os(iOS) || os(macOS)
 struct GuestUpgradeSheet: View {
