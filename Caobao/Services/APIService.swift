@@ -14,7 +14,7 @@ struct APIConfig {
         // 备用地址（直连IP）
         static let fallback = "http://49.235.213.222:5000"
         // 当前使用的服务器
-        static let current = primary
+        static let current = tencent  // 生产环境: https://caobao.chat
     }
     
     // 当前使用的 API 基础 URL

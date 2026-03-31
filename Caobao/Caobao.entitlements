@@ -6,5 +6,10 @@
 	<array>
 		<string>Default</string>
 	</array>
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>webcredentials:caobao.chat</string>
+		<string>applinks:caobao.chat</string>
+	</array>
 </dict>
 </plist>
