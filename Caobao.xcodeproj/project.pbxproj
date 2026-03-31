@@ -62,8 +62,12 @@
 		B1000008 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000004; };
 		B1000009 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000005; };
 		B1000010 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000015; };
-		B1000011 /* Assets-macOS.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B2000001; };
+		B1000011 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000008; };
 		B1000012 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = E2000002; };
+		B1000013 /* FortuneData.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000027; };
+		B1000014 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000032; };
+		B1000015 /* LegalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000016; };
+		B1000016 /* AIDeclarationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000035; };
 		
 		// watchOS Target (新增)
 		C1000001 /* CaobaoWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000001; };
@@ -125,7 +129,7 @@
 		A3000001 /* Caobao.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Caobao.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		
 		// macOS 文件 (新增)
-		B2000001 /* Assets-macOS.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Assets-macOS.xcassets"; sourceTree = "<group>"; };
+
 		B2000002 /* Info-macOS.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info-macOS.plist"; sourceTree = "<group>"; };
 		B3000001 /* Caobao-macOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Caobao-macOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		
@@ -189,7 +193,6 @@
 				A5000006 /* Services */,
 				A5000008 /* DesignSystem */,
 				A2000008 /* Assets.xcassets */,
-				B2000001 /* Assets-macOS.xcassets */,
 				A2000026 /* Info.plist */,
 				B2000002 /* Info-macOS.plist */,
 				A2000033 /* Caobao.entitlements */,
@@ -409,7 +412,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B1000011 /* Assets-macOS.xcassets in Resources */,
+				B1000011 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -485,6 +488,10 @@
 				B1000008 /* HistoryView.swift in Sources */,
 				B1000009 /* ProfileView.swift in Sources */,
 				B1000010 /* SettingsView.swift in Sources */,
+				B1000013 /* FortuneData.swift in Sources */,
+				B1000014 /* DesignSystem.swift in Sources */,
+				B1000015 /* LegalView.swift in Sources */,
+				B1000016 /* AIDeclarationView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
