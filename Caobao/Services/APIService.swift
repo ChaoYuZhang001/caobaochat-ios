@@ -1080,7 +1080,7 @@ class APIService {
     
     /// 删除收藏
     func deleteFavorite(id: Int) async throws {
-        try await withCheckedThrowingContinuation { continuation in
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             session.request(
                 "\(APIConfig.baseURL)/favorites?id=\(id)",
                 method: .delete
