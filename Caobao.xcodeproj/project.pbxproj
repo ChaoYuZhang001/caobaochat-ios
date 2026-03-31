@@ -69,6 +69,7 @@
 		B1000015 /* LegalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000016; };
 		B1000016 /* AIDeclarationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000035; };
 		B1000017 /* WebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000034; };
+		B1000018 /* FeedbackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000038; };
 		
 		// watchOS Target (新增)
 		C1000001 /* CaobaoWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000001; };
@@ -494,6 +495,7 @@
 				B1000015 /* LegalView.swift in Sources */,
 				B1000016 /* AIDeclarationView.swift in Sources */,
 				B1000017 /* WebView.swift in Sources */,
+				B1000018 /* FeedbackView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

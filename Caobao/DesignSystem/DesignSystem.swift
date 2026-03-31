@@ -15,6 +15,17 @@ public extension Color {
         return Color(.secondarySystemBackground)
         #endif
     }
+    
+    /// 跨平台系统背景色
+    static var caobaoSystemBackground: Color {
+        #if os(iOS)
+        return Color(.systemBackground)
+        #elseif os(macOS)
+        return Color(nsColor: .windowBackgroundColor)
+        #else
+        return Color(.secondarySystemBackground)
+        #endif
+    }
 }
 
 // MARK: - 颜色系统

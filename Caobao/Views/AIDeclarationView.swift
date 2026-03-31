@@ -37,9 +37,11 @@ struct AIDeclarationView: View {
             }
             .background(Color.caobaoGroupedBackground)
             .navigationTitle("AI 使用声明")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .automatic) {
                     Button("关闭") {
                         dismiss()
                     }
@@ -90,7 +92,7 @@ struct AIDeclarationView: View {
             }
         }
         .padding()
-        .background(Color(.systemBackground))
+        .background(Color.caobaoSystemBackground)
         .cornerRadius(12)
     }
     
@@ -128,7 +130,7 @@ struct AIDeclarationView: View {
             }
         }
         .padding()
-        .background(Color(.systemBackground))
+        .background(Color.caobaoSystemBackground)
         .cornerRadius(12)
     }
     
@@ -157,7 +159,7 @@ struct AIDeclarationView: View {
             }
         }
         .padding()
-        .background(Color(.systemBackground))
+        .background(Color.caobaoSystemBackground)
         .cornerRadius(12)
     }
     
@@ -185,7 +187,7 @@ struct AIDeclarationView: View {
             }
         }
         .padding()
-        .background(Color(.systemBackground))
+        .background(Color.caobaoSystemBackground)
         .cornerRadius(12)
     }
     
@@ -233,7 +235,7 @@ struct AIDeclarationView: View {
             .buttonStyle(.plain)
         }
         .padding()
-        .background(Color(.systemBackground))
+        .background(Color.caobaoSystemBackground)
         .cornerRadius(12)
     }
     
