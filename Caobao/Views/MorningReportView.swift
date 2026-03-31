@@ -374,7 +374,7 @@ struct MorningReportView: View {
                     .font(.headline)
                     .foregroundStyle(.primary)
             }
-            Text(""\(content)"")
+            Text("\"\(content)\"")
                 .font(.subheadline)
                 .foregroundStyle(.primary)
                 .italic()
@@ -456,7 +456,7 @@ struct MorningReportView: View {
                     .font(.headline)
                     .foregroundStyle(.white)
             }
-            Text(""\(quote)"")
+            Text("\"\(quote)\"")
                 .font(.headline)
                 .foregroundStyle(.white)
                 .multilineTextAlignment(.center)

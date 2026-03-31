@@ -468,7 +468,7 @@ struct EveningReportView: View {
                     .font(.headline)
                     .foregroundStyle(.primary)
             }
-            Text(""\(content)"")
+            Text("\"\(content)\"")
                 .font(.subheadline)
                 .foregroundStyle(.primary)
                 .italic()
@@ -504,7 +504,7 @@ struct EveningReportView: View {
                             .lineLimit(2)
                     }
                     if let comment = item.comment, !comment.isEmpty {
-                        Text(""\(comment)"")
+                        Text("\"\(comment)\"")
                             .font(.caption)
                             .foregroundStyle(.purple)
                             .italic()
@@ -535,7 +535,7 @@ struct EveningReportView: View {
                     .font(.headline)
                     .foregroundStyle(.white)
             }
-            Text(""\(quote)"")
+            Text("\"\(quote)\"")
                 .font(.headline)
                 .foregroundStyle(.white)
                 .multilineTextAlignment(.center)
