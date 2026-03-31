@@ -19,9 +19,11 @@ struct MorningReportView: View {
                 ScrollView {
                     VStack(spacing: 16) {
                         if isLoading {
-                            loadingView
+                            LoadingView(message: "正在生成今日早报...")
                         } else if let error = error {
-                            errorView(error)
+                            ErrorView(message: error) {
+                                Task { await loadReport() }
+                            }
                         } else if let notAvailable = notAvailable {
                             notAvailableView(notAvailable)
                         } else if let report = report {
@@ -49,35 +51,6 @@ struct MorningReportView: View {
         .task {
             await loadReport()
         }
-    }
-    
-    // MARK: - Loading View
-    private var loadingView: some View {
-        VStack(spacing: 16) {
-            ProgressView()
-                .scaleEffect(1.5)
-            Text("正在生成今日早报...")
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, minHeight: 300)
-    }
-    
-    // MARK: - Error View
-    private func errorView(_ error: String) -> some View {
-        VStack(spacing: 16) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 48))
-                .foregroundStyle(.red)
-            Text(error)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-            Button("重试") {
-                Task { await loadReport() }
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(.caobaoPrimary)
-        }
-        .frame(maxWidth: .infinity, minHeight: 300)
     }
     
     // MARK: - Not Available View (无聊天时的兜底内容)
