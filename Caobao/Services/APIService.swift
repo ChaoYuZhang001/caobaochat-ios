@@ -340,9 +340,24 @@ class APIService {
         AsyncThrowingStream { continuation in
             Task {
                 do {
+                    // 将 iOS 强度映射到后端参数
+                    // intensity: mild/medium/spicy -> mode: gentle/normal/fierce, intensity: 2/3/4
+                    let modeMap: [String: String] = [
+                        "mild": "gentle",
+                        "medium": "normal",
+                        "spicy": "fierce"
+                    ]
+                    let intensityNumMap: [String: Int] = [
+                        "mild": 2,
+                        "medium": 3,
+                        "spicy": 4
+                    ]
+                    
                     let parameters: [String: Any] = [
                         "content": content,
-                        "intensity": intensity
+                        "mode": modeMap[intensity] ?? "normal",
+                        "intensity": intensityNumMap[intensity] ?? 3,
+                        "stream": true  // 启用流式输出
                     ]
                     
                     let url = URL(string: "\(APIConfig.baseURL)/caobao/roast")!

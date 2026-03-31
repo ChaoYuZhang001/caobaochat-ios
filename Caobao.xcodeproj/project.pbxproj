@@ -48,6 +48,8 @@
 		A1000039 /* OfficialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000040; };
 		A1000040 /* StatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000041; };
 		A1000041 /* FavoriteItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000042; };
+		A1000042 /* APIService+Chat.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000044; };
+
 		A1000042 /* SpeechManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000043; };
 /* End PBXBuildFile section */
 
@@ -95,6 +97,8 @@
 		A2000041 /* StatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsView.swift; sourceTree = "<group>"; };
 		A2000042 /* FavoriteItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoriteItem.swift; sourceTree = "<group>"; };
 		A2000043 /* SpeechManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechManager.swift; sourceTree = "<group>"; };
+		A2000044 /* APIService+Chat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "APIService+Chat.swift"; sourceTree = "<group>"; };
+
 		A3000001 /* Caobao.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Caobao.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -193,6 +197,7 @@
 				A2000009 /* AuthService.swift */,
 				A2000025 /* SpeechService.swift */,
 				A2000043 /* SpeechManager.swift */,
+				A2000044 /* APIService+Chat.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -331,6 +336,7 @@
 				A1000039 /* OfficialView.swift in Sources */,
 				A1000040 /* StatsView.swift in Sources */,
 				A1000041 /* FavoriteItem.swift in Sources */,
+				A1000042 /* APIService+Chat.swift in Sources */,
 				A1000042 /* SpeechManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
