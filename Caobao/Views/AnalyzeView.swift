@@ -218,7 +218,9 @@ struct AnalyzeView: View {
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $showingCamera) {
-                CameraView(image: $selectedImage)
+                ImagePicker(sourceType: .camera) { image in
+                    selectedImage = image
+                }
             }
             #endif
         }
@@ -276,41 +278,6 @@ struct AnalyzeView: View {
         }
     }
 }
-
-// MARK: - Camera View (iOS)
-#if os(iOS)
-struct CameraView: UIViewControllerRepresentable {
-    @Binding var image: UIImage?
-    
-    func makeUIViewController(context: Context) -> UIImagePickerController {
-        let picker = UIImagePickerController()
-        picker.sourceType = .camera
-        picker.delegate = context.coordinator
-        return picker
-    }
-    
-    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
-    
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
-    
-    class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-        let parent: CameraView
-        
-        init(_ parent: CameraView) {
-            self.parent = parent
-        }
-        
-        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
-            if let image = info[.originalImage] as? UIImage {
-                parent.image = image
-            }
-            picker.dismiss(animated: true)
-        }
-    }
-}
-#endif
 
 #Preview {
     AnalyzeView()
