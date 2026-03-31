@@ -297,9 +297,15 @@ struct AboutView: View {
                 .foregroundColor(.secondary)
             
             HStack(spacing: 16) {
-                Link("用户协议", destination: URL(string: "https://caobao.ai/legal/agreement")!)
-                Link("隐私政策", destination: URL(string: "https://caobao.ai/legal/privacy")!)
-                Link("意见反馈", destination: URL(string: "https://caobao.ai/feedback")!)
+                NavigationLink("用户协议") {
+                    LegalView(type: .agreement)
+                }
+                NavigationLink("隐私政策") {
+                    LegalView(type: .privacy)
+                }
+                NavigationLink("意见反馈") {
+                    FeedbackView()
+                }
             }
             .font(.caption)
             .foregroundColor(.green)
