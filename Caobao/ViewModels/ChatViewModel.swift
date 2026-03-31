@@ -373,7 +373,7 @@ class ChatViewModel: ObservableObject {
             do {
                 let stream = APIService.shared.chatStreamV2(
                     userId: userId,
-                    prompt: userPrompt,
+                    message: userPrompt,
                     sessionId: self.currentSessionId
                 )
                 
