@@ -625,7 +625,7 @@ struct ChatView: View {
                     #else
                     .frame(width: 32, height: 32)
                     #endif
-                    .background(viewModel.inputText.isEmpty ? Color.gray : Color.green)
+                    .background(viewModel.inputText.isEmpty ? Color.gray : Color.blue)
                     .clipShape(Circle())
             }
             .disabled(viewModel.inputText.isEmpty || viewModel.isLoading)
@@ -793,9 +793,35 @@ struct MessageBubble: View {
                         .font(.body)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 10)
-                        .background(message.role == .user ? Color.green : Color(.systemBackground))
+                        .background(message.role == .user ? Color.blue : Color(.systemBackground))
                         .foregroundStyle(message.role == .user ? .white : .primary)
-                        .clipShape(RoundedRectangle(cornerRadius: 18))
+                        
+                        .clipShape(
+                            RoundedRectangle(cornerRadius: 18)
+                                .inset(by: 0.5)
+                        )
+                        // H5 风格：用户消息右上角直角，AI 消息左上角直角
+                        .overlay(
+                            GeometryReader { geo in
+                                if message.role == .user {
+                                    // 用户消息右上角直角
+                                    Path { path in
+                                        path.move(to: CGPoint(x: geo.size.width - 18, y: 0))
+                                        path.addLine(to: CGPoint(x: geo.size.width, y: 0))
+                                        path.addLine(to: CGPoint(x: geo.size.width, y: 18))
+                                    }
+                                    .fill(Color.blue)
+                                } else {
+                                    // AI 消息左上角直角
+                                    Path { path in
+                                        path.move(to: CGPoint(x: 18, y: 0))
+                                        path.addLine(to: CGPoint(x: 0, y: 0))
+                                        path.addLine(to: CGPoint(x: 0, y: 18))
+                                    }
+                                    .fill(Color(.systemBackground))
+                                }
+                            }
+                        )
                 }
                 
                 // 媒体内容（图片、视频、音频）
