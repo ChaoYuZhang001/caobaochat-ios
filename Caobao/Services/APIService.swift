@@ -706,7 +706,11 @@ class APIService {
         confirmation: String,
         reason: String?
     ) async throws -> DeleteAccountResponse {
-        try await withCheckedThrowingContinuation { continuation in
+        print("🔄 开始注销账号...")
+        print("📍 API URL: \(APIConfig.baseURL)/auth/delete-account")
+        print("🔑 Token: \(token.prefix(20))...")
+        
+        return try await withCheckedThrowingContinuation { continuation in
             let parameters: [String: Any] = [
                 "confirmation": confirmation,
                 "reason": reason ?? ""
@@ -724,13 +728,61 @@ class APIService {
                 encoding: JSONEncoding.default,
                 headers: headers
             )
-            .validate()
-            .responseDecodable(of: DeleteAccountResponse.self) { response in
-                switch response.result {
-                case .success(let result):
-                    continuation.resume(returning: result)
-                case .failure(let error):
+            .response { response in
+                // 打印原始响应
+                if let data = response.data {
+                    print("📥 注销响应: \(String(data: data, encoding: .utf8) ?? "无法解码")")
+                }
+                
+                // 检查 HTTP 状态码
+                if let statusCode = response.response?.statusCode {
+                    print("📥 HTTP 状态码: \(statusCode)")
+                    
+                    if statusCode == 401 {
+                        // 未授权 - token 可能无效
+                        continuation.resume(returning: DeleteAccountResponse(
+                            success: false,
+                            message: nil,
+                            error: "登录已过期，请重新登录后再试",
+                            deletedAt: nil
+                        ))
+                        return
+                    }
+                }
+                
+                // 尝试解码
+                if let data = response.data {
+                    if let result = try? JSONDecoder().decode(DeleteAccountResponse.self, from: data) {
+                        continuation.resume(returning: result)
+                        return
+                    }
+                    
+                    // 尝试解析通用响应
+                    if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                        let success = json["success"] as? Bool ?? false
+                        let message = json["message"] as? String
+                        let error = json["error"] as? String
+                        
+                        continuation.resume(returning: DeleteAccountResponse(
+                            success: success,
+                            message: message,
+                            error: error,
+                            deletedAt: nil
+                        ))
+                        return
+                    }
+                }
+                
+                // 如果都失败了，返回错误
+                if let error = response.error {
                     continuation.resume(throwing: error)
+                } else {
+                    continuation.resume(returning: DeleteAccountResponse(
+                        success: false,
+                        message: nil,
+                        error: "注销失败，请稍后重试",
+                        deletedAt: nil
+                    ))
                 }
             }
         }
@@ -1129,7 +1181,8 @@ class APIService {
                         "model": "deepseek-chat",
                         "attachments": attachments?.map { ["type": $0.type, "url": $0.url] } ?? []
                     ]
-                    let url = URL(string: "\(APIConfig.baseURL)/api/v1/chat/completions")!
+                    // 注意: baseURL 已包含 /api，所以直接拼接 /v1/chat/completions
+                    let url = URL(string: "\(APIConfig.baseURL)/v1/chat/completions")!
                     var request = URLRequest(url: url)
                     request.httpMethod = "POST"
                     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -1226,7 +1279,8 @@ class APIService {
                         "sessionId": sessionId ?? UUID().uuidString, "model": "deepseek-chat",
                         "attachments": [["type": "image", "url": imageURI]]
                     ]
-                    let url = URL(string: "\(APIConfig.baseURL)/api/v1/chat/completions")!
+                    // 注意: baseURL 已包含 /api，所以直接拼接 /v1/chat/completions
+                    let url = URL(string: "\(APIConfig.baseURL)/v1/chat/completions")!
                     var request = URLRequest(url: url)
                     request.httpMethod = "POST"
                     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -1503,17 +1557,42 @@ struct AuthResponse: Codable {
     let session: Session?
     let error: String?
     let message: String?  // 升级成功时的消息
+    let isGuest: Bool?    // 游客登录标识
     
-    // 便捷访问 token
+    // 便捷访问 token - 优先从 session.token 获取，否则尝试从顶级 token 字段获取
     var token: String? {
-        session?.token
+        session?.token ?? session?.id  // 兼容后端返回 session.id 作为 token 的情况
     }
     
     struct Session: Codable {
         let id: String
-        let token: String
+        let token: String?
         let refreshToken: String?
         let expiresAt: Int?
+        
+        enum CodingKeys: String, CodingKey {
+            case id
+            case token
+            case refreshToken
+            case expiresAt
+        }
+        
+        // 自定义解码，处理可选字段
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            id = try container.decode(String.self, forKey: .id)
+            token = try container.decodeIfPresent(String.self, forKey: .token)
+            refreshToken = try container.decodeIfPresent(String.self, forKey: .refreshToken)
+            expiresAt = try container.decodeIfPresent(Int.self, forKey: .expiresAt)
+        }
+        
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(id, forKey: .id)
+            try container.encodeIfPresent(token, forKey: .token)
+            try container.encodeIfPresent(refreshToken, forKey: .refreshToken)
+            try container.encodeIfPresent(expiresAt, forKey: .expiresAt)
+        }
     }
 }
 

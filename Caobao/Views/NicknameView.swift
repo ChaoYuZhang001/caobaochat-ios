@@ -176,12 +176,18 @@ struct NicknameView: View {
                 await MainActor.run {
                     if response.success, let nicknames = response.nicknames {
                         result = nicknames
+                    } else {
+                        // 显示后端返回的错误信息
+                        let errorMsg = response.error ?? "生成失败，请重试"
+                        print("❌ 昵称生成失败: \(errorMsg)")
                     }
                     loading = false
                 }
             } catch {
                 await MainActor.run {
                     loading = false
+                    print("❌ 昵称生成异常: \(error.localizedDescription)")
+                    // 可以添加 alert 或 toast 提示用户
                 }
             }
         }

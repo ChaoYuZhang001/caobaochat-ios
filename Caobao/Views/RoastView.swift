@@ -7,6 +7,7 @@ struct RoastView: View {
     @State private var loading = false
     @State private var result = ""
     @State private var copied = false
+    @State private var errorMessage: String?
     
     private let intensities = [
         ("mild", "温和", "🌶️", "点到为止"),
@@ -113,6 +114,20 @@ struct RoastView: View {
                         .disabled(loading || content.isEmpty)
                         .opacity(content.isEmpty ? 0.5 : 1)
                         
+                        // 错误提示
+                        if let error = errorMessage {
+                            HStack {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(.orange)
+                                Text(error)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding()
+                            .background(Color.orange.opacity(0.1))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
+                        
                         // 吐槽结果
                         if !result.isEmpty {
                             VStack(alignment: .leading, spacing: 12) {
@@ -134,12 +149,42 @@ struct RoastView: View {
                                     }
                                 }
                                 
+                                // 格式化显示结果
                                 ScrollView {
-                                    Text(result)
-                                        .font(.body)
-                                        .lineSpacing(6)
+                                    VStack(alignment: .leading, spacing: 12) {
+                                        ForEach(formatResult(result), id: \.self) { paragraph in
+                                            if paragraph.hasPrefix("【") && paragraph.hasSuffix("】") {
+                                                // 标题
+                                                Text(paragraph)
+                                                    .font(.headline)
+                                                    .foregroundStyle(.red)
+                                            } else if paragraph.hasPrefix("•") || paragraph.hasPrefix("-") || paragraph.hasPrefix("·") {
+                                                // 列表项
+                                                HStack(alignment: .top, spacing: 8) {
+                                                    Text("•")
+                                                        .foregroundStyle(.green)
+                                                    Text(paragraph.dropFirst())
+                                                        .font(.body)
+                                                }
+                                            } else if paragraph.hasPrefix("👉") {
+                                                // 强调项
+                                                HStack(alignment: .top, spacing: 8) {
+                                                    Text("👉")
+                                                    Text(paragraph.dropFirst(2))
+                                                        .font(.body)
+                                                        .fontWeight(.medium)
+                                                }
+                                            } else {
+                                                // 普通段落
+                                                Text(paragraph)
+                                                    .font(.body)
+                                                    .lineSpacing(6)
+                                            }
+                                        }
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .leading)
                                 }
-                                .frame(maxHeight: 300)
+                                .frame(maxHeight: 400)
                             }
                             .padding()
                             .background(Color(.systemBackground))
@@ -156,10 +201,30 @@ struct RoastView: View {
         }
     }
     
+    // MARK: - Format Result
+    /// 格式化吐槽结果
+    private func formatResult(_ text: String) -> [String] {
+        // 按换行分割
+        var paragraphs = text.components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+        
+        // 如果没有明显的分段，尝试按句号分割
+        if paragraphs.count == 1 && paragraphs.first?.count ?? 0 > 100 {
+            paragraphs = text.components(separatedBy: "。")
+                .map { $0.trimmingCharacters(in: .whitespaces) }
+                .filter { !$0.isEmpty }
+                .map { $0 + "。" }
+        }
+        
+        return paragraphs
+    }
+    
     // MARK: - Actions
     private func startRoast() {
         loading = true
         result = ""
+        errorMessage = nil
         
         Task {
             do {
@@ -173,11 +238,14 @@ struct RoastView: View {
                 
                 await MainActor.run {
                     loading = false
+                    if result.isEmpty {
+                        errorMessage = "吐槽生成失败，请重试"
+                    }
                 }
             } catch {
                 await MainActor.run {
                     loading = false
-                    result = "吐槽失败，请重试"
+                    errorMessage = "吐槽失败: \(error.localizedDescription)"
                 }
             }
         }
