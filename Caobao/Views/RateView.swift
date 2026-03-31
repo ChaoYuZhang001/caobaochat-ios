@@ -187,57 +187,97 @@ struct RateView: View {
             // 分数展示
             ZStack {
                 Circle()
-                    .stroke(scoreColor(result.score).opacity(0.2), lineWidth: 12)
+                    .stroke(scoreColor(result.overallScore).opacity(0.2), lineWidth: 12)
                     .frame(width: 140, height: 140)
                 
                 Circle()
-                    .trim(from: 0, to: CGFloat(result.score) / 100)
-                    .stroke(scoreColor(result.score), style: StrokeStyle(lineWidth: 12, lineCap: .round))
+                    .trim(from: 0, to: CGFloat(result.overallScore) / 100)
+                    .stroke(scoreColor(result.overallScore), style: StrokeStyle(lineWidth: 12, lineCap: .round))
                     .frame(width: 140, height: 140)
                     .rotationEffect(.degrees(-90))
-                    .animation(.spring, value: result.score)
+                    .animation(.spring, value: result.overallScore)
                 
                 VStack {
-                    Text("\(result.score)")
+                    Text("\(result.overallScore)")
                         .font(.system(size: 42, weight: .bold))
-                        .foregroundStyle(scoreColor(result.score))
-                    Text(scoreLabel(result.score))
+                        .foregroundStyle(scoreColor(result.overallScore))
+                    Text(scoreLabel(result.overallScore))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
             }
             .padding(.top, 20)
             
-            // 扣分项
-            if let deductions = result.deductions, !deductions.isEmpty {
+            // 评价对象
+            if !result.item.isEmpty {
+                Text("评价：\(result.item)")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .padding(.bottom, 8)
+            }
+            
+            // 维度评分
+            if let dimensions = result.dimensions, !dimensions.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("维度评分")
+                        .font(.headline)
+                    
+                    ForEach(dimensions, id: \.name) { dim in
+                        HStack {
+                            Text(dim.name)
+                                .font(.subheadline)
+                            Spacer()
+                            Text("\(dim.score)分")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundStyle(scoreColor(dim.score))
+                        }
+                        Text(dim.comment)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+                .background(Color.purple.opacity(0.1))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+            
+            // 缺点
+            if let cons = result.cons, !cons.isEmpty {
                 resultCard(
-                    title: "扣分项",
+                    title: "缺点",
                     icon: "hand.thumbsdown.fill",
                     color: .red,
-                    items: deductions,
+                    items: cons,
                     prefix: "−"
                 )
             }
             
-            // 加分项
-            if let additions = result.additions, !additions.isEmpty {
+            // 优点
+            if let pros = result.pros, !pros.isEmpty {
                 resultCard(
-                    title: "加分项",
+                    title: "优点",
                     icon: "hand.thumbsup.fill",
                     color: .green,
-                    items: additions,
+                    items: pros,
                     prefix: "+"
                 )
             }
             
             // 毒舌点评
-            if let comment = result.comment {
+            if let comment = result.overallComment {
                 commentCard(title: "毒舌点评", icon: "bubble.left.and.bubble.right.fill", color: .purple, content: comment)
             }
             
+            // 最终结论
+            if let verdict = result.verdict {
+                commentCard(title: "最终结论", icon: "flame.fill", color: .red, content: verdict)
+            }
+            
             // 改进建议
-            if let suggestion = result.suggestion {
-                commentCard(title: "改进建议", icon: "lightbulb.fill", color: .orange, content: suggestion)
+            if let recommendation = result.recommendation {
+                commentCard(title: "改进建议", icon: "lightbulb.fill", color: .orange, content: recommendation)
             }
             
             // 操作按钮
@@ -329,12 +369,15 @@ struct RateView: View {
     }
     
     private func shareText(_ result: RateResult) -> String {
-        var text = "【毒舌评分】\(result.score)分\n\n"
-        if let comment = result.comment {
+        var text = "【毒舌评分】\(result.overallScore)分 - \(result.item)\n\n"
+        if let comment = result.overallComment {
             text += "💬 点评：\(comment)\n\n"
         }
-        if let suggestion = result.suggestion {
-            text += "💡 建议：\(suggestion)\n\n"
+        if let verdict = result.verdict {
+            text += "🔥 结论：\(verdict)\n\n"
+        }
+        if let recommendation = result.recommendation {
+            text += "💡 建议：\(recommendation)\n\n"
         }
         text += "—— 草包评分，公正无情"
         return text
@@ -351,11 +394,15 @@ struct RateView: View {
             let response = try await APIService.shared.rate(content: content, type: selectedType)
             if response.success {
                 result = RateResult(
-                    score: response.score,
-                    deductions: response.deductions,
-                    additions: response.additions,
-                    comment: response.comment,
-                    suggestion: response.suggestion
+                    item: response.item ?? content,
+                    overallScore: response.overallScore ?? 0,
+                    overallComment: response.overallComment,
+                    dimensions: response.dimensions?.map { RateDimensionResult(name: $0.name, score: $0.score, comment: $0.comment) },
+                    pros: response.pros,
+                    cons: response.cons,
+                    verdict: response.verdict,
+                    recommendation: response.recommendation,
+                    roastLevel: response.roastLevel
                 )
             } else {
                 error = response.error ?? "评分失败"
@@ -370,11 +417,28 @@ struct RateView: View {
 
 // MARK: - Rate Result Model
 struct RateResult {
+    let item: String
+    let overallScore: Int
+    let overallComment: String?
+    let dimensions: [RateDimensionResult]?
+    let pros: [String]?
+    let cons: [String]?
+    let verdict: String?
+    let recommendation: String?
+    let roastLevel: Int?
+    
+    // 兼容旧字段
+    var score: Int { overallScore }
+    var comment: String? { overallComment }
+    var suggestion: String? { recommendation }
+    var deductions: [String]? { cons }
+    var additions: [String]? { pros }
+}
+
+struct RateDimensionResult {
+    let name: String
     let score: Int
-    let deductions: [String]?
-    let additions: [String]?
-    let comment: String?
-    let suggestion: String?
+    let comment: String
 }
 
 // MARK: - Share Sheet

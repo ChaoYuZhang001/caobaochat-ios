@@ -1292,12 +1292,28 @@ struct DecisionResponse: Codable {
 
 struct RateResponse: Codable {
     let success: Bool
-    let score: Int
-    let deductions: [String]?
-    let additions: [String]?
-    let comment: String?
-    let suggestion: String?
+    let item: String?
+    let overallScore: Int?
+    let overallComment: String?
+    let dimensions: [RateDimension]?
+    let pros: [String]?
+    let cons: [String]?
+    let verdict: String?
+    let recommendation: String?
+    let roastLevel: Int?
+    let ratedAt: String?
     let error: String?
+    
+    // 兼容旧字段
+    var score: Int { overallScore ?? 0 }
+    var comment: String? { overallComment }
+    var suggestion: String? { recommendation }
+}
+
+struct RateDimension: Codable {
+    let name: String
+    let score: Int
+    let comment: String
 }
 
 struct MorningReportResponse: Codable {
