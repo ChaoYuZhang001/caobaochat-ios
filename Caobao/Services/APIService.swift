@@ -1110,9 +1110,6 @@ class APIService {
             }
         }
     }
-}
-
-// MARK: - Models
 
     // MARK: - Chat Stream V2 (使用 /api/v1/chat/completions 端点)
     func chatStreamV2(
@@ -1221,8 +1218,9 @@ class APIService {
             }
         }
     }
-
 }
+
+// MARK: - Models
 
 // OpenAI 格式流式响应（用于 chatStreamV2）
 struct OpenAIStreamResponse: Codable {
