@@ -35,7 +35,7 @@
 		A1000025 /* MediaLinkDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000025; };
 
 		A1000026 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = E2000001; };
-		A1000027 /* FortuneData.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000027; };
+		A1000027 /* FortuneData.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000044; };
 		A1000028 /* NicknameData.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000028; };
 		A1000029 /* RateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000029; };
 		A1000030 /* MorningReportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000030; };
@@ -51,6 +51,7 @@
 		A1000040 /* StatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000041; };
 		A1000041 /* FavoriteItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000042; };
 		A1000042 /* SpeechManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000043; };
+		A1000043 /* NicknameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000026; };
 		
 		// macOS Target (新增)
 		B1000001 /* CaobaoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001; };
@@ -65,7 +66,7 @@
 		B1000010 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000015; };
 		B1000011 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000008; };
 		B1000012 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = E2000002; };
-		B1000013 /* FortuneData.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000027; };
+		B1000013 /* FortuneData.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000044; };
 		B1000014 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000032; };
 		B1000015 /* LegalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000016; };
 		B1000016 /* AIDeclarationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000035; };
@@ -117,7 +118,7 @@
 		A2000025 /* MediaLinkDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaLinkDetector.swift; sourceTree = "<group>"; };
 		A2000026 /* NicknameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NicknameView.swift; sourceTree = "<group>"; };
 		A2000027 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		A2000027 /* FortuneData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FortuneData.swift; sourceTree = "<group>"; };
+		A2000044 /* FortuneData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FortuneData.swift; sourceTree = "<group>"; };
 		A2000028 /* NicknameData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NicknameData.swift; sourceTree = "<group>"; };
 		A2000029 /* RateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RateView.swift; sourceTree = "<group>"; };
 		A2000030 /* MorningReportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MorningReportView.swift; sourceTree = "<group>"; };
@@ -202,7 +203,7 @@
 				A5000006 /* Services */,
 				A5000008 /* DesignSystem */,
 				A2000008 /* Assets.xcassets */,
-				A2000026 /* Info.plist */,
+				A2000027 /* Info.plist */,
 				B2000002 /* Info-macOS.plist */,
 				A2000033 /* Caobao.entitlements */,
 			);
@@ -295,7 +296,7 @@
 			children = (
 				A2000013 /* User.swift */,
 				A2000025 /* MediaLinkDetector.swift */,
-				A2000027 /* FortuneData.swift */,
+				A2000044 /* FortuneData.swift */,
 				A2000028 /* NicknameData.swift */,
 				A2000042 /* FavoriteItem.swift */,
 			);
@@ -465,7 +466,7 @@
 				A1000023 /* CommonViews.swift in Sources */,
 				A1000024 /* MessageBubble.swift in Sources */,
 				A1000025 /* MediaLinkDetector.swift in Sources */,
-				A1000026 /* NicknameView.swift in Sources */,
+				A1000043 /* NicknameView.swift in Sources */,
 				A1000027 /* FortuneData.swift in Sources */,
 				A1000028 /* NicknameData.swift in Sources */,
 				A1000029 /* RateView.swift in Sources */,
