@@ -105,7 +105,11 @@ struct SettingsView: View {
                             Text("浅色模式").tag("light")
                             Text("深色模式").tag("dark")
                         }
+                        #if os(iOS)
                         .pickerStyle(.navigationLink)
+                        #elseif os(macOS)
+                        .pickerStyle(.automatic)
+                        #endif
                         
                         Toggle("语音播报", isOn: $voiceEnabled)
                     } header: {

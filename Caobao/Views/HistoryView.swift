@@ -170,8 +170,7 @@ struct ConversationDetailView: View {
 }
 #endif
 
-// MARK: - Conversation Model (iOS only, macOS uses its own)
-#if os(iOS)
+// MARK: - Conversation Model
 struct Conversation: Identifiable, Codable, Hashable {
     let id: String
     let title: String
@@ -179,7 +178,6 @@ struct Conversation: Identifiable, Codable, Hashable {
     let date: Date
     let messages: [ChatMessage]
 }
-#endif
 
 #Preview {
     HistoryView()
