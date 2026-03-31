@@ -10,22 +10,22 @@ struct HomeView: View {
     
     // 与 Web 端对齐的快捷功能
     private let mainFeatures: [(icon: String, title: String, subtitle: String)] = [
-        ("message.fill", "找人聊聊", "随时待命"),
-        ("sun.max.fill", "阳光明媚", "今日心情"),
-        ("doc.text.magnifyingglass", "文档秒懂", "扔进来我看看"),
-        ("quote.bubble", "扎心金句", "发朋友圈专用"),
+        ("message.fill", "自由对话", "随时待命"),
+        ("sun.max.fill", "今日运势", "今日心情"),
+        ("doc.text.magnifyingglass", "图片分析", "扔进来我看看"),
+        ("quote.bubble", "毒舌金句", "发朋友圈专用"),
     ]
     
     private let moreFeatures: [(icon: String, title: String, subtitle: String)] = [
         ("flame", "吐槽大会", "专治各种不服"),
-        ("wand.and.stars", "个性昵称", "给你起个名"),
-        ("chart.line.uptrend.xyaxis", "犀利点评", "来评评理"),
-        ("target", "选择困难", "帮你决定"),
+        ("wand.and.stars", "毒舌昵称", "给你起个名"),
+        ("chart.line.uptrend.xyaxis", "犀利评分", "来评评理"),
+        ("target", "决策助手", "帮你决定"),
     ]
     
     private let quickActions: [(icon: String, title: String, subtitle: String)] = [
-        ("sun.max.fill", "早安日报", "开启元气满满的一天"),
-        ("moon.fill", "晚安日报", "总结今日收获"),
+        ("sun.max.fill", "早报", "开启元气满满的一天"),
+        ("moon.fill", "晚报", "总结今日收获"),
     ]
     
     private var greeting: String {
@@ -72,8 +72,8 @@ struct HomeView: View {
                                 GridItem(.flexible()),
                             ], spacing: 12) {
                                 ForEach(mainFeatures, id: \.title) { feature in
-                                    if feature.title == "找人聊聊" {
-                                        // 找人聊聊 - 切换 TabBar
+                                    if feature.title == "自由对话" {
+                                        // 自由对话 - 切换 TabBar
                                         Button {
                                             appState.selectedTab = .chat
                                         } label: {
@@ -315,18 +315,18 @@ struct HomeView: View {
     @ViewBuilder
     private func destinationView(for title: String) -> some View {
         switch title {
-        case "找人聊聊": 
+        case "自由对话": 
             // 不使用 NavigationLink，而是切换 TabBar
             EmptyView()
-        case "阳光明媚": FortuneView()
-        case "文档秒懂": AnalyzeView()
-        case "扎心金句": QuoteView()
+        case "今日运势": FortuneView()
+        case "图片分析": AnalyzeView()
+        case "毒舌金句": QuoteView()
         case "吐槽大会": RoastView()
-        case "个性昵称": NicknameView()
-        case "犀利点评": RateView()
-        case "选择困难": DecisionView()
-        case "早安日报": MorningReportView()
-        case "晚安日报": EveningReportView()
+        case "毒舌昵称": NicknameView()
+        case "犀利评分": RateView()
+        case "决策助手": DecisionView()
+        case "早报": MorningReportView()
+        case "晚报": EveningReportView()
         default: Text("功能开发中")
         }
     }
@@ -334,7 +334,7 @@ struct HomeView: View {
     // 处理功能点击
     private func handleFeatureTap(for title: String) {
         switch title {
-        case "找人聊聊":
+        case "自由对话":
             // 切换到对话 Tab
             appState.selectedTab = .chat
         default:

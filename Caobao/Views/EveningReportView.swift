@@ -31,7 +31,7 @@ struct EveningReportView: View {
                     .padding()
                 }
             }
-            .navigationTitle("晚安日报")
+            .navigationTitle("晚报")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif

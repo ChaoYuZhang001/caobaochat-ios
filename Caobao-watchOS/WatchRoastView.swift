@@ -56,7 +56,7 @@ struct WatchRoastView: View {
             }
             .padding()
         }
-        .navigationTitle("毒舌")
+        .navigationTitle("吐槽大会")
         .task {
             if roastContent.isEmpty {
                 loadRoast()

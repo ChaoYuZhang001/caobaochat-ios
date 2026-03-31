@@ -19,7 +19,7 @@ struct WatchDecisionView: View {
             }
             .padding()
         }
-        .navigationTitle("决策")
+        .navigationTitle("决策助手")
     }
     
     @ViewBuilder

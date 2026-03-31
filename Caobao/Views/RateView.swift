@@ -43,7 +43,7 @@ struct RateView: View {
                 }
                 .padding()
             }
-            .navigationTitle("毒舌打分")
+            .navigationTitle("犀利评分")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif

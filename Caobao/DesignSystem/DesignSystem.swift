@@ -417,16 +417,16 @@ public extension Animation {
 public extension Color {
     static func featureColor(for title: String) -> Color {
         switch title {
-        case "找人聊聊": return .caobaoPrimary
-        case "今日卦象": return .purple
-        case "文档秒懂": return .orange
-        case "扎心金句": return .cyan
-        case "被骂一顿": return .red
-        case "个性昵称": return .blue
-        case "毒舌打分": return .pink
-        case "选择困难": return .indigo
-        case "早安日报": return .orange
-        case "晚安日报": return .purple
+        case "自由对话": return .caobaoPrimary
+        case "今日运势": return .purple
+        case "图片分析": return .orange
+        case "毒舌金句": return .cyan
+        case "吐槽大会": return .red
+        case "毒舌昵称": return .blue
+        case "犀利评分": return .pink
+        case "决策助手": return .indigo
+        case "早报": return .orange
+        case "晚报": return .purple
         default: return .caobaoPrimary
         }
     }
