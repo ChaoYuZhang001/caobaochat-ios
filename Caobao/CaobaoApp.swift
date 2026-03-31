@@ -5,6 +5,7 @@ import AuthenticationServices
 struct CaobaoApp: App {
     @StateObject private var appState = AppState()
     @StateObject private var authService = AuthService.shared
+    @AppStorage("colorScheme") private var colorScheme = "system"
     
     var body: some Scene {
         #if os(macOS)
@@ -15,8 +16,16 @@ struct CaobaoApp: App {
                     MacContentView()
                         .environmentObject(appState)
                         .frame(minWidth: 900, minHeight: 600)
+                        .preferredColorScheme(
+                            colorScheme == "dark" ? .dark :
+                            colorScheme == "light" ? .light : nil
+                        )
                 } else {
                     LoginView()
+                        .preferredColorScheme(
+                            colorScheme == "dark" ? .dark :
+                            colorScheme == "light" ? .light : nil
+                        )
                 }
             }
         }
@@ -46,8 +55,16 @@ struct CaobaoApp: App {
                     ContentView()
                         .environmentObject(appState)
                         .tint(.green)
+                        .preferredColorScheme(
+                            colorScheme == "dark" ? .dark :
+                            colorScheme == "light" ? .light : nil
+                        )
                 } else {
                     LoginView()
+                        .preferredColorScheme(
+                            colorScheme == "dark" ? .dark :
+                            colorScheme == "light" ? .light : nil
+                        )
                 }
             }
             .onAppear {

@@ -12,6 +12,10 @@ class ChatViewModel: ObservableObject {
     @Published var refreshId = UUID()  // 用于强制刷新视图
     @Published var scrollToBottomTrigger = UUID()  // 用于触发自动滚动
     
+    // 从 UserDefaults 读取设置
+    @AppStorage("selectedModel") private var selectedModel = "doubao-pro-32k"
+    @AppStorage("toxicLevel") private var toxicLevel = "normal"
+    
     private var currentSessionId: String = UUID().uuidString
     private var currentTask: Task<Void, Never>?
     private var syncTask: Task<Void, Never>?
@@ -156,6 +160,8 @@ class ChatViewModel: ObservableObject {
                     userId: userId,
                     message: prompt,
                     sessionId: self.currentSessionId,
+                    model: self.selectedModel,
+                    toxicLevel: self.toxicLevel,
                     token: token
                 )
                 

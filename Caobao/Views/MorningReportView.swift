@@ -1,7 +1,7 @@
 import SwiftUI
 
-// MARK: - Morning Report View (早安日报)
-// 与 Web 端保持一致的设计风格
+// MARK: - Morning Report View (早报)
+// 基于昨日聊天提取待办，开启新的一天
 
 struct MorningReportView: View {
     @State private var report: MorningReportData?
@@ -80,36 +80,112 @@ struct MorningReportView: View {
         .frame(maxWidth: .infinity, minHeight: 300)
     }
     
-    // MARK: - Not Available View
+    // MARK: - Not Available View (无聊天时的兜底内容)
     private func notAvailableView(_ info: NotAvailableInfo) -> some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 24) {
             Image(systemName: "sun.max.fill")
                 .font(.system(size: 48))
                 .foregroundStyle(.orange)
+            
             Text(info.message)
                 .font(.headline)
                 .multilineTextAlignment(.center)
-            Text("下次更新时间: \(info.nextUpdate)")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            NavigationLink(destination: ChatView()) {
-                Text("先去聊聊")
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 12)
-                    .background(LinearGradient.caobaoPrimary)
-                    .foregroundStyle(.white)
-                    .clipShape(Capsule())
+            
+            // 提供一些有趣的内容引导用户
+            VStack(spacing: 16) {
+                Text("开启今日对话，获取个性化早报")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                
+                // 快捷入口
+                VStack(spacing: 12) {
+                    quickActionRow(icon: "message.fill", title: "自由对话", subtitle: "随便聊聊") {
+                        // 切换到对话 Tab
+                    }
+                    
+                    quickActionRow(icon: "sparkles", title: "今日运势", subtitle: "看看今天怎么样") {
+                        // 导航到运势
+                    }
+                    
+                    quickActionRow(icon: "flame", title: "吐槽大会", subtitle: "发泄一下") {
+                        // 导航到吐槽
+                    }
+                }
             }
+            .padding(.top, 8)
+            
+            NavigationLink(destination: ChatView()) {
+                Text("开始对话")
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(LinearGradient.caobaoPrimary)
+                    )
+            }
+            .padding(.top, 8)
         }
         .frame(maxWidth: .infinity, minHeight: 300)
+        .padding()
+    }
+    
+    // MARK: - Quick Action Row
+    private func quickActionRow(icon: String, title: String, subtitle: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.title3)
+                    .foregroundStyle(.caobaoPrimary)
+                    .frame(width: 32)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.primary)
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(.ultraThinMaterial)
+            )
+        }
+        .buttonStyle(.plain)
     }
     
     // MARK: - Report Content
     private func reportContent(_ report: MorningReportData) -> some View {
         VStack(spacing: 16) {
+            // 问候语
+            if let greeting = report.greeting, !greeting.isEmpty {
+                greetingCard(greeting)
+            }
+            
+            // 今日待办（从昨日聊天提取）
+            if let todos = report.todos, !todos.isEmpty {
+                todosCard(todos)
+            }
+            
             // 今日运势
             if let fortune = report.fortune {
                 fortuneCard(fortune)
+            }
+            
+            // 昨日回顾
+            if let yesterdayReview = report.yesterdayReview, !yesterdayReview.isEmpty {
+                infoCard(title: "昨日回顾", icon: "clock.arrow.circlepath", color: .blue, content: yesterdayReview)
             }
             
             // 健康提示
@@ -162,6 +238,71 @@ struct MorningReportView: View {
             }
             .buttonStyle(.plain)
         }
+    }
+    
+    // MARK: - Greeting Card
+    private func greetingCard(_ greeting: String) -> some View {
+        VStack(spacing: 8) {
+            Text(greeting)
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundStyle(.primary)
+                .multilineTextAlignment(.center)
+            
+            Text(formatDate(Date()))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+        )
+    }
+    
+    // MARK: - Todos Card (从聊天提取的待办)
+    private func todosCard(_ todos: [TodoItem]) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: "checklist")
+                    .foregroundStyle(.caobaoPrimary)
+                Text("今日待办")
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+                Text("(从昨日对话提取)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            
+            ForEach(todos) { todo in
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: todo.isCompleted ? "checkmark.circle.fill" : "circle")
+                        .foregroundStyle(todo.isCompleted ? .green : .secondary)
+                        .font(.subheadline)
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(todo.content)
+                            .font(.subheadline)
+                            .foregroundStyle(.primary)
+                            .strikethrough(todo.isCompleted)
+                        
+                        if let source = todo.source, !source.isEmpty {
+                            Text("来源: \(source)")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color.caobaoPrimary.opacity(0.1))
+        )
     }
     
     // MARK: - Fortune Card
@@ -233,7 +374,7 @@ struct MorningReportView: View {
                     .font(.headline)
                     .foregroundStyle(.primary)
             }
-            Text("\"\(content)\"")
+            Text(""\(content)"")
                 .font(.subheadline)
                 .foregroundStyle(.primary)
                 .italic()
@@ -315,7 +456,7 @@ struct MorningReportView: View {
                     .font(.headline)
                     .foregroundStyle(.white)
             }
-            Text("\"\(quote)\"")
+            Text(""\(quote)"")
                 .font(.headline)
                 .foregroundStyle(.white)
                 .multilineTextAlignment(.center)
@@ -327,6 +468,14 @@ struct MorningReportView: View {
                 .fill(LinearGradient.caobaoQuote)
                 .shadow(color: .purple.opacity(0.3), radius: 8, y: 4)
         )
+    }
+    
+    // MARK: - Helper
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "zh_Hans_CN")
+        formatter.dateFormat = "M月d日 EEEE"
+        return formatter.string(from: date)
     }
     
     // MARK: - Load Report
@@ -341,13 +490,15 @@ struct MorningReportView: View {
                 if let data = response.data {
                     if data.available == false {
                         notAvailable = NotAvailableInfo(
-                            message: data.message ?? "早报将在 06:00 生成",
-                            nextUpdate: data.nextUpdate ?? "06:00"
+                            message: data.message ?? "暂无昨日对话记录",
+                            nextUpdate: data.nextUpdate ?? ""
                         )
                     } else {
                         report = MorningReportData(
                             date: data.date,
                             greeting: data.greeting,
+                            todos: data.todos?.map { TodoItem(content: $0.content, isCompleted: $0.isCompleted ?? false, source: $0.source) },
+                            yesterdayReview: data.yesterdayReview,
                             fortune: data.fortune.map { FortuneInfo(stars: $0.stars, comment: $0.comment) },
                             health: data.health,
                             action: data.action,
@@ -374,6 +525,8 @@ struct MorningReportView: View {
 struct MorningReportData {
     let date: String?
     let greeting: String?
+    let todos: [TodoItem]?
+    let yesterdayReview: String?
     let fortune: FortuneInfo?
     let health: String?
     let action: String?
@@ -382,6 +535,13 @@ struct MorningReportData {
     let quote: String?
     let funFact: String?
     let news: [NewsItem]?
+}
+
+struct TodoItem: Identifiable {
+    let id = UUID()
+    let content: String
+    let isCompleted: Bool
+    let source: String?
 }
 
 struct FortuneInfo {

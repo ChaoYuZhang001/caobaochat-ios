@@ -33,7 +33,7 @@
 		A1000023 /* DailyReportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000023; };
 		A1000024 /* NicknameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000024; };
 		A1000025 /* SpeechService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000025; };
-		A1000026 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = B1000001; };
+		A1000026 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = E2000001; };
 		A1000027 /* FortuneData.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000027; };
 		A1000028 /* NicknameData.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000028; };
 		A1000029 /* RateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000029; };
@@ -63,7 +63,7 @@
 		B1000009 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000005; };
 		B1000010 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000015; };
 		B1000011 /* Assets-macOS.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B2000001; };
-		B1000012 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = B1000001; };
+		B1000012 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = E2000002; };
 		
 		// watchOS Target (新增)
 		C1000001 /* CaobaoWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000001; };
@@ -141,7 +141,6 @@
 		C2000009 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C3000001 /* Caobao-watchOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Caobao-watchOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 
-		B1000001 /* Alamofire */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Alamofire; path = Frameworks/Alamofire.framework; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -383,6 +382,9 @@
 				"zh-Hans",
 			);
 			mainGroup = A5000001;
+			packageReferences = (
+				E1000001 /* XCRemoteSwiftPackageReference "Alamofire" */,
+			);
 			productRefGroup = A5000003;
 			projectDirPath = "";
 			projectRoot = "";
@@ -852,6 +854,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		E1000001 /* XCRemoteSwiftPackageReference "Alamofire" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Alamofire/Alamofire.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.8.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		E2000001 /* Alamofire */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E1000001;
+			productName = Alamofire;
+		};
+		E2000002 /* Alamofire */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E1000001;
+			productName = Alamofire;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A6000000;
 }

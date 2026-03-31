@@ -1,7 +1,7 @@
 import SwiftUI
 
-// MARK: - Evening Report View (晚安日报)
-// 与 Web 端保持一致的设计风格
+// MARK: - Evening Report View (晚报)
+// 基于今日聊天生成总结，回顾一天
 
 struct EveningReportView: View {
     @State private var report: EveningReportData?
@@ -80,36 +80,134 @@ struct EveningReportView: View {
         .frame(maxWidth: .infinity, minHeight: 300)
     }
     
-    // MARK: - Not Available View
+    // MARK: - Not Available View (无聊天时的兜底内容)
     private func notAvailableView(_ info: NotAvailableInfo) -> some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 24) {
             Image(systemName: "moon.fill")
                 .font(.system(size: 48))
                 .foregroundStyle(.purple)
+            
             Text(info.message)
                 .font(.headline)
                 .multilineTextAlignment(.center)
-            Text("下次更新时间: \(info.nextUpdate)")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            NavigationLink(destination: ChatView()) {
-                Text("先去聊聊")
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 12)
-                    .background(LinearGradient.caobaoEvening)
-                    .foregroundStyle(.white)
-                    .clipShape(Capsule())
+            
+            // 提供一些有趣的内容
+            VStack(spacing: 16) {
+                Text("开始对话，获取个性化晚报总结")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                
+                // 快捷入口
+                VStack(spacing: 12) {
+                    quickActionRow(icon: "quote.bubble", title: "毒舌金句", subtitle: "睡前一句") {
+                        // 导航到金句
+                    }
+                    
+                    quickActionRow(icon: "sparkles", title: "今日运势", subtitle: "看看今天怎么样") {
+                        // 导航到运势
+                    }
+                    
+                    quickActionRow(icon: "flame", title: "吐槽大会", subtitle: "发泄一下") {
+                        // 导航到吐槽
+                    }
+                }
             }
+            .padding(.top, 8)
+            
+            // 睡前小贴士
+            VStack(spacing: 12) {
+                Text("💡 睡前小贴士")
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+                
+                Text(getRandomSleepTip())
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(Color.purple.opacity(0.1))
+            )
+            
+            NavigationLink(destination: ChatView()) {
+                Text("睡前聊一会儿")
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(LinearGradient.caobaoEvening)
+                    )
+            }
+            .padding(.top, 8)
         }
         .frame(maxWidth: .infinity, minHeight: 300)
+        .padding()
+    }
+    
+    // MARK: - Quick Action Row
+    private func quickActionRow(icon: String, title: String, subtitle: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.title3)
+                    .foregroundStyle(.purple)
+                    .frame(width: 32)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.primary)
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(.ultraThinMaterial)
+            )
+        }
+        .buttonStyle(.plain)
     }
     
     // MARK: - Report Content
     private func reportContent(_ report: EveningReportData) -> some View {
         VStack(spacing: 16) {
+            // 晚安问候
+            if let greeting = report.greeting, !greeting.isEmpty {
+                greetingCard(greeting)
+            }
+            
+            // 今日对话总结（从聊天提取）
+            if let chatSummary = report.chatSummary, !chatSummary.isEmpty {
+                summaryCard(chatSummary)
+            }
+            
+            // 今日关键词
+            if let keywords = report.keywords, !keywords.isEmpty {
+                keywordsCard(keywords)
+            }
+            
             // 今日心情
             if let mood = report.mood {
                 moodCard(mood)
+            }
+            
+            // 今日成就
+            if let achievements = report.achievements, !achievements.isEmpty {
+                achievementsCard(achievements)
             }
             
             // 今日回顾
@@ -162,6 +260,113 @@ struct EveningReportView: View {
             }
             .buttonStyle(.plain)
         }
+    }
+    
+    // MARK: - Greeting Card
+    private func greetingCard(_ greeting: String) -> some View {
+        VStack(spacing: 8) {
+            Text(greeting)
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundStyle(.primary)
+                .multilineTextAlignment(.center)
+            
+            Text(formatDate(Date()))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+        )
+    }
+    
+    // MARK: - Summary Card (从聊天提取的总结)
+    private func summaryCard(_ summary: String) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: "doc.text.fill")
+                    .foregroundStyle(.purple)
+                Text("今日对话总结")
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+                Text("(AI 生成)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            
+            Text(summary)
+                .font(.subheadline)
+                .foregroundStyle(.primary)
+                .lineSpacing(4)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color.purple.opacity(0.1))
+        )
+    }
+    
+    // MARK: - Keywords Card
+    private func keywordsCard(_ keywords: [String]) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: "tag.fill")
+                    .foregroundStyle(.blue)
+                Text("今日关键词")
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+            }
+            
+            FlowLayout(spacing: 8) {
+                ForEach(keywords, id: \.self) { keyword in
+                    Text(keyword)
+                        .font(.subheadline)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.blue.opacity(0.1))
+                        .foregroundStyle(.blue)
+                        .clipShape(Capsule())
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(.ultraThinMaterial)
+        )
+    }
+    
+    // MARK: - Achievements Card
+    private func achievementsCard(_ achievements: [String]) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: "trophy.fill")
+                    .foregroundStyle(.yellow)
+                Text("今日成就")
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+            }
+            
+            ForEach(achievements, id: \.self) { achievement in
+                HStack(spacing: 8) {
+                    Text("🏆")
+                    Text(achievement)
+                        .font(.subheadline)
+                        .foregroundStyle(.primary)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color.yellow.opacity(0.1))
+        )
     }
     
     // MARK: - Mood Card
@@ -263,7 +468,7 @@ struct EveningReportView: View {
                     .font(.headline)
                     .foregroundStyle(.primary)
             }
-            Text("\"\(content)\"")
+            Text(""\(content)"")
                 .font(.subheadline)
                 .foregroundStyle(.primary)
                 .italic()
@@ -299,7 +504,7 @@ struct EveningReportView: View {
                             .lineLimit(2)
                     }
                     if let comment = item.comment, !comment.isEmpty {
-                        Text("\"\(comment)\"")
+                        Text(""\(comment)"")
                             .font(.caption)
                             .foregroundStyle(.purple)
                             .italic()
@@ -330,7 +535,7 @@ struct EveningReportView: View {
                     .font(.headline)
                     .foregroundStyle(.white)
             }
-            Text("\"\(quote)\"")
+            Text(""\(quote)"")
                 .font(.headline)
                 .foregroundStyle(.white)
                 .multilineTextAlignment(.center)
@@ -342,6 +547,25 @@ struct EveningReportView: View {
                 .fill(LinearGradient.caobaoQuote)
                 .shadow(color: .purple.opacity(0.3), radius: 8, y: 4)
         )
+    }
+    
+    // MARK: - Helper
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "zh_Hans_CN")
+        formatter.dateFormat = "M月d日 EEEE"
+        return formatter.string(from: date)
+    }
+    
+    private func getRandomSleepTip() -> String {
+        let tips = [
+            "睡前一小时放下手机，让眼睛和大脑休息",
+            "保持规律的作息时间，有助于提高睡眠质量",
+            "睡前可以做一些轻度拉伸，放松身体",
+            "保持卧室温度适宜，通常18-22度最舒适",
+            "睡前避免饮用咖啡、茶等含咖啡因的饮品"
+        ]
+        return tips.randomElement() ?? tips[0]
     }
     
     // MARK: - Load Report
@@ -356,13 +580,16 @@ struct EveningReportView: View {
                 if let data = response.data {
                     if data.available == false {
                         notAvailable = NotAvailableInfo(
-                            message: data.message ?? "晚报将在 21:00 生成",
-                            nextUpdate: data.nextUpdate ?? "21:00"
+                            message: data.message ?? "暂无今日对话记录",
+                            nextUpdate: data.nextUpdate ?? ""
                         )
                     } else {
                         report = EveningReportData(
                             date: data.date,
                             greeting: data.greeting,
+                            chatSummary: data.chatSummary,
+                            keywords: data.keywords,
+                            achievements: data.achievements,
                             mood: data.mood.map { MoodInfo(analysis: $0.analysis, suggestion: $0.suggestion) },
                             review: data.review,
                             tomorrowPlan: data.tomorrowPlan,
@@ -385,10 +612,68 @@ struct EveningReportView: View {
     }
 }
 
+// MARK: - Flow Layout
+struct FlowLayout: Layout {
+    var spacing: CGFloat = 8
+    
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let rows = computeRows(proposal: proposal, subviews: subviews)
+        let height = rows.reduce(0) { $0 + $1.height + spacing } - spacing
+        return CGSize(width: proposal.width ?? 0, height: height > 0 ? height : 0)
+    }
+    
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let rows = computeRows(proposal: proposal, subviews: subviews)
+        var y = bounds.minY
+        for row in rows {
+            var x = bounds.minX
+            for item in row.items {
+                item.place(at: CGPoint(x: x, y: y), proposal: .unspecified)
+                x += item.dimensions(in: .unspecified).width + spacing
+            }
+            y += row.height + spacing
+        }
+    }
+    
+    private func computeRows(proposal: ProposedViewSize, subviews: Subviews) -> [Row] {
+        var rows: [Row] = []
+        var currentRowItems: [LayoutSubview] = []
+        var currentX: CGFloat = 0
+        let maxWidth = proposal.width ?? 0
+        
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            
+            if currentX + size.width > maxWidth && !currentRowItems.isEmpty {
+                rows.append(Row(items: currentRowItems, height: currentRowItems.map { $0.sizeThatFits(.unspecified).height }.max() ?? 0))
+                currentRowItems = []
+                currentX = 0
+            }
+            
+            currentRowItems.append(subview)
+            currentX += size.width + spacing
+        }
+        
+        if !currentRowItems.isEmpty {
+            rows.append(Row(items: currentRowItems, height: currentRowItems.map { $0.sizeThatFits(.unspecified).height }.max() ?? 0))
+        }
+        
+        return rows
+    }
+    
+    struct Row {
+        let items: [LayoutSubview]
+        let height: CGFloat
+    }
+}
+
 // MARK: - Models
 struct EveningReportData {
     let date: String?
     let greeting: String?
+    let chatSummary: String?
+    let keywords: [String]?
+    let achievements: [String]?
     let mood: MoodInfo?
     let review: String?
     let tomorrowPlan: [String]?

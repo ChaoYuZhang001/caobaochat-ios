@@ -1168,19 +1168,27 @@ class APIService {
         userId: String,
         message: String,
         sessionId: String? = nil,
+        model: String? = nil,
+        toxicLevel: String? = nil,
         attachments: [Attachment]? = nil,
         token: String? = nil
     ) -> AsyncThrowingStream<ChatStreamEvent, Error> {
         AsyncThrowingStream { continuation in
             Task {
                 do {
-                    let parameters: [String: Any] = [
+                    var parameters: [String: Any] = [
                         "message": message,
                         "stream": true,
                         "sessionId": sessionId ?? UUID().uuidString,
-                        "model": "deepseek-chat",
+                        "model": model ?? "doubao-pro-32k",
                         "attachments": attachments?.map { ["type": $0.type, "url": $0.url] } ?? []
                     ]
+                    
+                    // 添加毒舌程度设置
+                    if let toxicLevel = toxicLevel {
+                        parameters["toxicLevel"] = toxicLevel
+                    }
+                    
                     // 注意: baseURL 已包含 /api，所以直接拼接 /v1/chat/completions
                     let url = URL(string: "\(APIConfig.baseURL)/v1/chat/completions")!
                     var request = URLRequest(url: url)
@@ -1476,6 +1484,8 @@ struct MorningReportResponse: Codable {
         let message: String?
         let nextUpdate: String?
         let greeting: String?
+        let todos: [TodoItem]? // 从昨日聊天提取的待办
+        let yesterdayReview: String? // 昨日回顾
         let fortune: FortuneInfo?
         let health: String?
         let action: String?
@@ -1484,6 +1494,12 @@ struct MorningReportResponse: Codable {
         let quote: String?
         let funFact: String?
         let news: [NewsItem]?
+        
+        struct TodoItem: Codable {
+            let content: String
+            let isCompleted: Bool?
+            let source: String? // 来源对话
+        }
         
         struct FortuneInfo: Codable {
             let stars: Int
@@ -1514,6 +1530,9 @@ struct EveningReportResponse: Codable {
         let message: String?
         let nextUpdate: String?
         let greeting: String?
+        let chatSummary: String? // 今日对话总结
+        let keywords: [String]? // 今日关键词
+        let achievements: [String]? // 今日成就
         let mood: MoodInfo?
         let review: String?
         let tomorrowPlan: [String]?

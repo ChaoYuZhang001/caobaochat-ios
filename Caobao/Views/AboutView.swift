@@ -31,15 +31,6 @@ struct AboutView: View {
         (icon: "lightbulb.fill", title: "有趣", desc: "让生活多点乐子", color: Color.green)
     ]
     
-    private let timeline = [
-        (date: "2026.2.14", title: "项目启动", desc: "草台班子成立"),
-        (date: "2026.2.22", title: "草包诞生", desc: "首款产品上线"),
-        (date: "2026.3.1", title: "功能迭代", desc: "智能日报等功能上线"),
-        (date: "2026.3.15", title: "能力扩展", desc: "语音/图片服务上线"),
-        (date: "2026.3.21", title: "体验优化", desc: "37+模型支持"),
-        (date: "2026.3.25", title: "全栈升级", desc: "腾讯云部署")
-    ]
-    
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -58,9 +49,6 @@ struct AboutView: View {
                     
                     // 价值观
                     valuesSection
-                    
-                    // 发展历程
-                    timelineSection
                     
                     // 联系我们
                     contactSection
@@ -234,52 +222,6 @@ struct AboutView: View {
                             .multilineTextAlignment(.center)
                     }
                     .frame(maxWidth: .infinity)
-                }
-            }
-            .padding()
-            .background(Color(.systemBackground))
-            .cornerRadius(12)
-        }
-    }
-    
-    private var timelineSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("发展历程")
-                .font(.headline)
-                .frame(maxWidth: .infinity, alignment: .center)
-            
-            VStack(alignment: .leading, spacing: 12) {
-                ForEach(Array(timeline.enumerated()), id: \.offset) { index, item in
-                    HStack(alignment: .top, spacing: 16) {
-                        // 时间线
-                        VStack(spacing: 0) {
-                            Circle()
-                                .fill(Color.green)
-                                .frame(width: 12, height: 12)
-                            
-                            if index < timeline.count - 1 {
-                                Rectangle()
-                                    .fill(Color.green.opacity(0.3))
-                                    .frame(width: 2, height: 40)
-                            }
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(item.date)
-                                .font(.caption)
-                                .foregroundColor(.green)
-                            
-                            Text(item.title)
-                                .font(.subheadline)
-                                .fontWeight(.semibold)
-                            
-                            Text(item.desc)
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        Spacer()
-                    }
                 }
             }
             .padding()
