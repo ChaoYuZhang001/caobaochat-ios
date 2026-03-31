@@ -430,7 +430,7 @@ struct ChatView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(.systemGroupedBackground)
+                Color.caobaoGroupedBackground
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {

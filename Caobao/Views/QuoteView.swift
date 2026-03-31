@@ -21,7 +21,7 @@ struct QuoteView: View {
         NavigationStack {
             ZStack {
                 // 背景
-                Color(.systemGroupedBackground)
+                Color.caobaoGroupedBackground
                     .ignoresSafeArea()
                 
                 ScrollView {

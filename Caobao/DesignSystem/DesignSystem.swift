@@ -3,6 +3,20 @@ import SwiftUI
 // MARK: - 草包设计系统
 // 与 Web 端保持一致的设计风格
 
+// MARK: - 跨平台背景色
+public extension Color {
+    /// 跨平台分组背景色
+    static var caobaoGroupedBackground: Color {
+        #if os(iOS)
+        return Color(.systemGroupedBackground)
+        #elseif os(macOS)
+        return Color(nsColor: .controlBackgroundColor)
+        #else
+        return Color(.secondarySystemBackground)
+        #endif
+    }
+}
+
 // MARK: - 颜色系统
 public extension Color {
     // 主色 - 绿色系

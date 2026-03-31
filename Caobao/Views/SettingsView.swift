@@ -24,8 +24,7 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(.systemGroupedBackground)
-                    .ignoresSafeArea()
+                Color.caobaoGroupedBackground
                 
                 List {
                     // 模型选择

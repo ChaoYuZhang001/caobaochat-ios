@@ -13,7 +13,7 @@ struct DailyReportView: View {
         NavigationStack {
             ZStack {
                 // 背景色
-                Color(.systemGroupedBackground)
+                Color.caobaoGroupedBackground
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {

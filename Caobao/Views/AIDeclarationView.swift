@@ -35,7 +35,7 @@ struct AIDeclarationView: View {
                 }
                 .padding()
             }
-            .background(Color(.systemGroupedBackground))
+            .background(Color.caobaoGroupedBackground)
             .navigationTitle("AI 使用声明")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

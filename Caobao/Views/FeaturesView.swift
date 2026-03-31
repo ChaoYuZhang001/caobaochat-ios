@@ -30,7 +30,7 @@ struct FeaturesView: View {
         NavigationStack {
             ZStack {
                 // 背景色 - 与 Web 端一致
-                Color(.systemGroupedBackground)
+                Color.caobaoGroupedBackground
                     .ignoresSafeArea()
                 
                 ScrollView {
