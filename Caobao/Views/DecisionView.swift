@@ -109,7 +109,7 @@ struct DecisionView: View {
                     .padding()
                 }
             }
-            .navigationTitle("决策助手")
+            .navigationTitle("选择困难")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif

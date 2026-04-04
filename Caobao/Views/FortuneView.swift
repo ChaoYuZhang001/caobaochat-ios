@@ -29,7 +29,7 @@ struct FortuneView: View {
                     .padding()
                 }
             }
-            .navigationTitle("今日运势")
+            .navigationTitle("阳光明媚")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif

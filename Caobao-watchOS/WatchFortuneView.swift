@@ -17,7 +17,7 @@ struct WatchFortuneView: View {
             }
             .padding()
         }
-        .navigationTitle("今日运势")
+        .navigationTitle("阳光明媚")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
@@ -110,7 +110,7 @@ struct WatchFortuneView: View {
                 Button {
                     loadFortune()
                 } label: {
-                    Text("查看今日运势")
+                    Text("查看阳光明媚")
                         .font(.caption)
                 }
                 .buttonStyle(.borderedProminent)

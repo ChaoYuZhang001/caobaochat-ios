@@ -103,7 +103,7 @@ struct QuoteView: View {
                     .padding()
                 }
             }
-            .navigationTitle("毒舌金句")
+            .navigationTitle("扎心金句")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif

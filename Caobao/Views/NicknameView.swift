@@ -154,7 +154,7 @@ struct NicknameView: View {
                     .padding()
                 }
             }
-            .navigationTitle("毒舌昵称")
+            .navigationTitle("个性昵称")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif

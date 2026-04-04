@@ -76,7 +76,7 @@ struct MorningReportView: View {
                         // 切换到对话 Tab
                     }
                     
-                    quickActionRow(icon: "sparkles", title: "今日运势", subtitle: "看看今天怎么样") {
+                    quickActionRow(icon: "sparkles", title: "阳光明媚", subtitle: "看看今天怎么样") {
                         // 导航到运势
                     }
                     
@@ -284,7 +284,7 @@ struct MorningReportView: View {
             HStack {
                 Image(systemName: "sun.max.fill")
                     .foregroundStyle(.white)
-                Text("今日运势")
+                Text("阳光明媚")
                     .font(.headline)
                     .foregroundStyle(.white)
             }

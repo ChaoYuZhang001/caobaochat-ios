@@ -8,17 +8,17 @@ struct FeaturesView: View {
     
     // 与 Web 端对齐的功能入口
     private let mainFeatures: [(icon: String, title: String, subtitle: String)] = [
-        ("message.fill", "自由对话", "随时待命"),
-        ("sparkles", "今日运势", "算一卦"),
+        ("message.fill", "找人聊聊", "随时待命"),
+        ("sparkles", "阳光明媚", "算一卦"),
         ("doc.text.magnifyingglass", "图片分析", "扔进来我看看"),
-        ("quote.bubble", "毒舌金句", "发朋友圈专用"),
+        ("quote.bubble", "扎心金句", "发朋友圈专用"),
     ]
-    
+
     private let moreFeatures: [(icon: String, title: String, subtitle: String)] = [
-        ("chart.line.uptrend.xyaxis", "犀利评分", "来评评理"),
-        ("wand.and.stars", "毒舌昵称", "给你起个名"),
+        ("chart.line.uptrend.xyaxis", "犀利点评", "来评评理"),
+        ("wand.and.stars", "个性昵称", "给你起个名"),
         ("flame", "吐槽大会", "专治各种不服"),
-        ("target", "决策助手", "帮你决定"),
+        ("target", "选择困难", "帮你决定"),
     ]
     
     private let quickActions: [(icon: String, title: String, subtitle: String)] = [
@@ -129,14 +129,14 @@ struct FeaturesView: View {
     @ViewBuilder
     private func destinationView(for title: String) -> some View {
         switch title {
-        case "自由对话": ChatView()
-        case "今日运势": FortuneView()
+        case "找人聊聊": ChatView()
+        case "阳光明媚": FortuneView()
         case "图片分析": AnalyzeView()
-        case "毒舌金句": QuoteView()
+        case "扎心金句": QuoteView()
         case "吐槽大会": RoastView()
-        case "毒舌昵称": NicknameView()
-        case "犀利评分": RateView()
-        case "决策助手": DecisionView()
+        case "个性昵称": NicknameView()
+        case "犀利点评": RateView()
+        case "选择困难": DecisionView()
         case "早报": MorningReportView()
         case "晚报": EveningReportView()
         default: Text("功能开发中")

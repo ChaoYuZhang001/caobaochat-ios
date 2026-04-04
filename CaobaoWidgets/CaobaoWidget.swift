@@ -18,7 +18,7 @@ struct CaobaoProvider: TimelineProvider {
         CaobaoEntry(
             date: Date(),
             type: .fortune,
-            title: "今日运势",
+            title: "阳光明媚",
             content: "大吉大利",
             subtitle: "万事如意"
         )
@@ -28,7 +28,7 @@ struct CaobaoProvider: TimelineProvider {
         let entry = CaobaoEntry(
             date: Date(),
             type: .fortune,
-            title: "今日运势",
+            title: "阳光明媚",
             content: "大吉大利",
             subtitle: "万事如意"
         )
@@ -58,7 +58,7 @@ struct CaobaoProvider: TimelineProvider {
             entry = CaobaoEntry(
                 date: currentDate,
                 type: .fortune,
-                title: "今日运势",
+                title: "阳光明媚",
                 content: "运势小吉",
                 subtitle: "适合思考，不宜冲动"
             )
@@ -415,8 +415,8 @@ struct CaobaoQuoteWidget: Widget {
         StaticConfiguration(kind: kind, provider: CaobaoProvider()) { entry in
             QuoteWidgetView(entry: entry)
         }
-        .configurationDisplayName("毒舌金句")
-        .description("每日毒舌金句")
+        .configurationDisplayName("扎心金句")
+        .description("每日扎心金句")
         .supportedFamilies([.systemSmall])
     }
 }
@@ -431,7 +431,7 @@ struct QuoteWidgetView: View {
                 .font(.title)
                 .foregroundStyle(Color(hex: "#F59E0B"))
             
-            Text("毒舌金句")
+            Text("扎心金句")
                 .font(.headline)
                 .foregroundStyle(.primary)
             
