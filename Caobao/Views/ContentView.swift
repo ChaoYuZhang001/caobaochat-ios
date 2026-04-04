@@ -403,14 +403,30 @@ struct ChatView: View {
     #if os(iOS)
     private func handleSelectedImage(_ image: UIImage) {
         selectedImage = image
-        // 将图片转为 base64 并添加到输入
-        if let imageData = image.jpegData(compressionQuality: 0.8) {
-            let base64String = imageData.base64EncodedString()
-            let dataURI = "data:image/jpeg;base64,\(base64String)"
-            // 发送带图片的消息
-            let userId = appState.user?.id ?? UUID().uuidString
-            viewModel.sendMessageWithImage(userId: userId, imageURI: dataURI)
-            appState.incrementChatCount()
+        HapticManager.light()
+        
+        // 使用优化的图片上传管理器
+        ImageUploadManager.shared.uploadImage(
+            image,
+            userId: appState.user?.id ?? UUID().uuidString
+        ) { progress in
+            print("📤 上传进度: \(Int(progress * 100))%")
+        } completion: { result in
+            switch result {
+            case .success(let imageURI):
+                print("✅ 图片上传成功")
+                // 发送带图片的消息
+                let userId = appState.user?.id ?? UUID().uuidString
+                viewModel.sendMessageWithImage(userId: userId, imageURI: imageURI)
+                appState.incrementChatCount()
+                HapticManager.success()
+                
+            case .failure(let error):
+                print("❌ 图片上传失败: \(error.localizedDescription)")
+                // 显示错误提示
+                viewModel.error = "图片上传失败: \(error.localizedDescription)"
+                HapticManager.error()
+            }
         }
     }
     
