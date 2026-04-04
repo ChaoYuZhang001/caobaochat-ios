@@ -283,6 +283,7 @@
 			isa = PBXGroup;
 			children = (
 				A2000007 /* APIService.swift */,
+				A2000009 /* AuthService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
