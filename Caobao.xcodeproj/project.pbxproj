@@ -32,6 +32,7 @@
 		A1000022 /* RoastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000022; };
 		A1000023 /* CommonViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000023; };
 		A1000024 /* MessageBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000024; };
+		A1000025 /* MarkdownTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000050; };
 		A1000025 /* MediaLinkDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000025; };
 
 		A1000026 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = E2000001; };
@@ -54,6 +55,7 @@
 		A1000043 /* NicknameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000026; };
 		A1000044 /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000045; };
 		A1000045 /* ImageUploadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000046; };
+		A1000046 /* MarkdownTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000047; };
 		
 		// macOS Target (新增)
 		B1000001 /* CaobaoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001; };
@@ -141,6 +143,7 @@
 		A2000046 /* ImageUploadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageUploadManager.swift; sourceTree = "<group>"; };
 
 		A3000001 /* Caobao.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Caobao.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A2000047 /* MarkdownTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownTextView.swift; sourceTree = "<group>"; };
 		
 		// macOS 文件 (新增)
 
@@ -261,6 +264,7 @@
 				A2000022 /* RoastView.swift */,
 				A2000023 /* CommonViews.swift */,
 				A2000024 /* MessageBubble.swift */,
+				A2000047 /* MarkdownTextView.swift */,
 				A2000026 /* NicknameView.swift */,
 				A2000029 /* RateView.swift */,
 				A2000030 /* MorningReportView.swift */,
@@ -470,6 +474,7 @@
 				A1000021 /* QuoteView.swift in Sources */,
 				A1000022 /* RoastView.swift in Sources */,
 				A1000023 /* CommonViews.swift in Sources */,
+				A1000046 /* MarkdownTextView.swift in Sources */,
 				A1000024 /* MessageBubble.swift in Sources */,
 				A1000025 /* MediaLinkDetector.swift in Sources */,
 				A1000043 /* NicknameView.swift in Sources */,
