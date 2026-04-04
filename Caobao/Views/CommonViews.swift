@@ -221,7 +221,7 @@ struct CopyButton: View {
             actionTitle: "开始对话",
             action: {}
         )
-        ActionButton(title: "开始分析", icon: "sparkles", isLoading: false, action: {})
+        ActionButton(title: "开始分析", icon: "sparkles", action: {})
     }
     .padding()
 }

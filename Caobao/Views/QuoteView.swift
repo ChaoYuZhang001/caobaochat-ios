@@ -59,26 +59,29 @@ struct QuoteView: View {
                             ActionButton(
                                 title: "换一句",
                                 icon: "arrow.clockwise",
-                                color: .green
-                            ) {
-                                generateQuote()
-                            }
+                                color: .green,
+                                action: {
+                                    generateQuote()
+                                }
+                            )
                             
                             ActionButton(
                                 title: "收藏",
                                 icon: favorites.contains { $0.content == currentQuote?.content } ? "heart.fill" : "heart",
-                                color: .red
-                            ) {
-                                toggleFavorite()
-                            }
+                                color: .red,
+                                action: {
+                                    toggleFavorite()
+                                }
+                            )
                             
                             ActionButton(
                                 title: "我的收藏",
                                 icon: "bookmark.fill",
-                                color: .blue
-                            ) {
-                                showFavorites = true
-                            }
+                                color: .blue,
+                                action: {
+                                    showFavorites = true
+                                }
+                            )
                         }
                         .padding(.top)
                     }
@@ -262,29 +265,6 @@ struct EmptyQuoteView: View {
                 .foregroundStyle(.secondary)
         }
         .frame(height: 200)
-    }
-}
-
-struct ActionButton: View {
-    let title: String
-    let icon: String
-    let color: Color
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.title2)
-                Text(title)
-                    .font(.caption)
-            }
-            .foregroundStyle(color)
-            .frame(width: 80, height: 70)
-            .background(Color(.systemBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .shadow(color: .black.opacity(0.05), radius: 5)
-        }
     }
 }
 
