@@ -46,14 +46,11 @@
 		A1000035 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000036; };
 		A1000036 /* FavoritesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000037; };
 		A1000037 /* FeedbackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000038; };
-		A1000038 /* ImagePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000039; };
 		A1000039 /* OfficialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000040; };
 		A1000040 /* StatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000041; };
 		A1000041 /* FavoriteItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000042; };
-		A1000042 /* SpeechManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000043; };
 		A1000043 /* NicknameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000026; };
 		A1000044 /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000045; };
-		A1000045 /* ImageUploadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000046; };
 		A1000046 /* MarkdownTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000047; };
 		
 		// macOS Target (新增)
@@ -133,13 +130,8 @@
 		A2000036 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		A2000037 /* FavoritesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesView.swift; sourceTree = "<group>"; };
 		A2000038 /* FeedbackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedbackView.swift; sourceTree = "<group>"; };
-		A2000039 /* ImagePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePicker.swift; sourceTree = "<group>"; };
 		A2000040 /* OfficialView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfficialView.swift; sourceTree = "<group>"; };
 		A2000041 /* StatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsView.swift; sourceTree = "<group>"; };
-		A2000042 /* FavoriteItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoriteItem.swift; sourceTree = "<group>"; };
-		A2000043 /* SpeechManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechManager.swift; sourceTree = "<group>"; };
-		A2000045 /* HapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
-		A2000046 /* ImageUploadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageUploadManager.swift; sourceTree = "<group>"; };
 
 		A3000001 /* Caobao.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Caobao.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A2000047 /* MarkdownTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownTextView.swift; sourceTree = "<group>"; };
@@ -273,7 +265,6 @@
 				A2000036 /* AboutView.swift */,
 				A2000037 /* FavoritesView.swift */,
 				A2000038 /* FeedbackView.swift */,
-				A2000039 /* ImagePicker.swift */,
 				A2000040 /* OfficialView.swift */,
 				A2000041 /* StatsView.swift */,
 			);
@@ -292,10 +283,6 @@
 			isa = PBXGroup;
 			children = (
 				A2000007 /* APIService.swift */,
-				A2000009 /* AuthService.swift */,
-				A2000043 /* SpeechManager.swift */,
-				A2000045 /* HapticManager.swift */,
-				A2000046 /* ImageUploadManager.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -488,13 +475,10 @@
 				A1000035 /* AboutView.swift in Sources */,
 				A1000036 /* FavoritesView.swift in Sources */,
 				A1000037 /* FeedbackView.swift in Sources */,
-				A1000038 /* ImagePicker.swift in Sources */,
 				A1000039 /* OfficialView.swift in Sources */,
 				A1000040 /* StatsView.swift in Sources */,
 				A1000041 /* FavoriteItem.swift in Sources */,
-				A1000042 /* SpeechManager.swift in Sources */,
 				A1000044 /* HapticManager.swift in Sources */,
-				A1000045 /* ImageUploadManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

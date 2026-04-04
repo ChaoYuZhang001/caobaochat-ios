@@ -22,6 +22,10 @@ class ChatViewModel: ObservableObject {
     private var syncTask: Task<Void, Never>?
     private let authService = AuthService.shared
     
+    // 性能优化：限制消息数量和长度
+    private let maxMessages = 1000  // 最大消息数量
+    private let maxContentLength = 10000  // 单条消息最大长度
+    
     // MARK: - Init
     init() {
         // 监听登录成功通知，自动同步云端数据
@@ -160,6 +164,12 @@ class ChatViewModel: ObservableObject {
     func sendMessage(userId: String) {
         guard !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         
+        // 验证消息长度
+        guard inputText.count <= maxContentLength else {
+            error = "消息过长，请缩短后重试（最大\(maxContentLength)字）"
+            return
+        }
+        
         let userMessage = ChatMessage(
             id: UUID().uuidString,
             role: .user,
@@ -238,6 +248,7 @@ class ChatViewModel: ObservableObject {
                 await MainActor.run {
                     self.isLoading = false
                     self.saveToHistory()
+                    self.trimMessages()  // 修剪消息数量，避免内存占用过高
                 }
                 
             } catch {
@@ -373,6 +384,15 @@ class ChatViewModel: ObservableObject {
         )
         refreshId = UUID()
         saveToHistory()
+    }
+    
+    /// 修剪消息数量，避免内存占用过高
+    func trimMessages() {
+        if messages.count > maxMessages {
+            // 保留最近的 maxMessages 条消息
+            messages = Array(messages.suffix(maxMessages))
+            print("✅ 已修剪消息数量，保留最近 \(maxMessages) 条消息")
+        }
     }
     
     /// 重新生成消息
