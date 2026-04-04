@@ -8,6 +8,7 @@ struct QuoteView: View {
     @State private var favorites: [QuoteItem] = []
     @State private var showFavorites = false
     @State private var category = "random"
+    @State private var errorMessage: String?
     
     private let categories = [
         ("random", "随机", "🎲"),
@@ -84,6 +85,20 @@ struct QuoteView: View {
                             )
                         }
                         .padding(.top)
+
+                        // 错误提示
+                        if let error = errorMessage {
+                            HStack {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(.orange)
+                                Text(error)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding()
+                            .background(Color.orange.opacity(0.1))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
                     }
                     .padding()
                 }
@@ -120,6 +135,7 @@ struct QuoteView: View {
     // MARK: - Actions
     private func generateQuote() {
         loading = true
+        errorMessage = nil
         Task {
             do {
                 let response = try await APIService.shared.getQuote(category: category)
@@ -131,12 +147,15 @@ struct QuoteView: View {
                             category: response.category ?? category,
                             timestamp: response.timestamp ?? ISO8601DateFormatter().string(from: Date())
                         )
+                    } else {
+                        errorMessage = response.error ?? "获取金句失败"
                     }
                     loading = false
                 }
             } catch {
                 await MainActor.run {
                     loading = false
+                    errorMessage = "网络错误: \(error.localizedDescription)"
                 }
             }
         }
