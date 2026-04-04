@@ -4,7 +4,7 @@ import Photos
 /// 图片上传管理器
 class ImageUploadManager {
     static let shared = ImageUploadManager()
-    private let apiService = APIService()
+    private let apiService = APIService.shared
 
     private init() {}
 
