@@ -32,7 +32,6 @@
 		A1000022 /* RoastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000022; };
 		A1000023 /* CommonViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000023; };
 		A1000024 /* MessageBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000024; };
-		A1000025 /* MarkdownTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000050; };
 		A1000025 /* MediaLinkDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000025; };
 
 		A1000026 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = E2000001; };
