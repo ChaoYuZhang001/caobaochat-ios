@@ -587,7 +587,12 @@ class APIService {
                         throw NSError(domain: "APIService", code: statusCode, userInfo: [NSLocalizedDescriptionKey: "图片分析失败: HTTP \(statusCode)"])
                     }
                     
-                    let data = Data(bytes)
+                    // 收集所有字节数据
+                    var data = Data()
+                    for try await byte in bytes {
+                        data.append(byte)
+                    }
+                    
                     if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                        let choices = json["choices"] as? [[String: Any]],
                        let firstChoice = choices.first,
