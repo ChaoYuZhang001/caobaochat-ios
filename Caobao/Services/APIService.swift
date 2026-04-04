@@ -562,53 +562,52 @@ class APIService {
     
     /// 使用imageURI分析图片
     func analyzeImage(userId: String, imageURI: String) async throws -> String {
-        AsyncThrowingStream<String, Error> { continuation in
-            Task {
-                do {
-                    let url = URL(string: "\(APIConfig.baseURL)/v1/chat/completions")!
-                    var request = URLRequest(url: url)
-                    request.httpMethod = "POST"
-                    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-                    
-                    let parameters: [String: Any] = [
-                        "message": "请分析这张图片",
-                        "stream": false,
-                        "sessionId": UUID().uuidString,
-                        "attachments": [["type": "image", "url": imageURI]]
-                    ]
-                    
-                    request.httpBody = try? JSONSerialization.data(withJSONObject: parameters)
-                    
-                    let (bytes, response) = try await URLSession.shared.bytes(for: request)
-                    
-                    guard let httpResponse = response as? HTTPURLResponse,
-                          httpResponse.statusCode == 200 else {
-                        let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
-                        throw NSError(domain: "APIService", code: statusCode, userInfo: [NSLocalizedDescriptionKey: "图片分析失败: HTTP \(statusCode)"])
-                    }
-                    
-                    // 收集所有字节数据
-                    var data = Data()
-                    for try await byte in bytes {
-                        data.append(byte)
-                    }
-                    
-                    if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                       let choices = json["choices"] as? [[String: Any]],
-                       let firstChoice = choices.first,
-                       let message = firstChoice["message"] as? [String: Any],
-                       let content = message["content"] as? String {
-                        continuation.yield(content)
-                        continuation.finish()
-                    } else {
-                        throw NSError(domain: "APIService", code: -1, userInfo: [NSLocalizedDescriptionKey: "无法解析响应"])
-                    }
-                } catch {
-                    continuation.finish(throwing: error)
-                }
-            }
+        print("📸 开始分析图片: \(imageURI)")
+
+        let url = URL(string: "\(APIConfig.baseURL)/v1/chat/completions")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let parameters: [String: Any] = [
+            "message": "请分析这张图片",
+            "stream": false,
+            "sessionId": UUID().uuidString,
+            "attachments": [["type": "image", "url": imageURI]]
+        ]
+
+        request.httpBody = try JSONSerialization.data(withJSONObject: parameters)
+
+        print("📤 发送图片分析请求...")
+
+        let (bytes, response) = try await URLSession.shared.bytes(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+            print("❌ 图片分析失败: HTTP \(statusCode)")
+            throw NSError(domain: "APIService", code: statusCode, userInfo: [NSLocalizedDescriptionKey: "图片分析失败: HTTP \(statusCode)"])
         }
-        .reduce("") { $0 + $1 }
+
+        // 收集所有字节数据
+        var data = Data()
+        for try await byte in bytes {
+            data.append(byte)
+        }
+
+        print("📥 收集到 \(data.count) 字节")
+
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let choices = json["choices"] as? [[String: Any]],
+              let firstChoice = choices.first,
+              let message = firstChoice["message"] as? [String: Any],
+              let content = message["content"] as? String else {
+            print("❌ 无法解析响应")
+            throw NSError(domain: "APIService", code: -1, userInfo: [NSLocalizedDescriptionKey: "无法解析响应"])
+        }
+
+        print("✅ 图片分析成功: \(content.prefix(50))...")
+        return content
     }
     
     // MARK: - Upload File
