@@ -140,10 +140,23 @@ class ImageUploadManager {
 
                 progressHandler(1.0)
 
-                print("✅ 图片上传成功: \(response.url)")
+                // 验证响应并获取 URL
+                guard response.success, let imageURL = response.url else {
+                    let errorMessage = response.error ?? "图片上传失败：服务器返回无效响应"
+                    print("❌ 图片上传失败: \(errorMessage)")
+                    
+                    await MainActor.run {
+                        completion(.failure(NSError(domain: "ImageUploadManager", code: -1, userInfo: [
+                            NSLocalizedDescriptionKey: errorMessage
+                        ])))
+                    }
+                    return
+                }
+
+                print("✅ 图片上传成功: \(imageURL)")
 
                 await MainActor.run {
-                    completion(.success(response.url))
+                    completion(.success(imageURL))
                 }
             } catch {
                 print("❌ 图片上传失败: \(error)")
