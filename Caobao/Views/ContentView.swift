@@ -170,11 +170,6 @@ struct ChatView: View {
     @EnvironmentObject var appState: AppState
     @StateObject private var viewModel = ChatViewModel()
     @FocusState private var isInputFocused: Bool
-    @State private var showImagePicker = false
-    @State private var showCamera = false
-    @State private var selectedImage: UIImage?
-    @State private var isRecording = false
-    @State private var showAttachmentMenu = false
     
     var body: some View {
         NavigationStack {
@@ -312,26 +307,6 @@ struct ChatView: View {
     // MARK: - Input Area
     private var inputArea: some View {
         HStack(spacing: 12) {
-            #if os(iOS)
-            // 附件按钮（仅 iOS）
-            Button {
-                showAttachmentMenu = true
-            } label: {
-                Image(systemName: "paperclip")
-                    .font(.title3)
-                    .foregroundStyle(.secondary)
-            }
-            .confirmationDialog("选择附件", isPresented: $showAttachmentMenu) {
-                Button("拍照") {
-                    showCamera = true
-                }
-                Button("从相册选择") {
-                    showImagePicker = true
-                }
-                Button("取消", role: .cancel) {}
-            }
-            #endif
-            
             TextField("说点什么...", text: $viewModel.inputText, axis: .vertical)
                 .textFieldStyle(.roundedBorder)
                 .focused($isInputFocused)
@@ -339,29 +314,6 @@ struct ChatView: View {
                 .onSubmit {
                     sendMessage()
                 }
-            
-            #if os(iOS)
-            // 语音按钮（仅 iOS）
-            if viewModel.isLoading {
-                ProgressView()
-            } else if isRecording {
-                Button {
-                    stopRecording()
-                } label: {
-                    Image(systemName: "stop.circle.fill")
-                        .font(.title3)
-                        .foregroundStyle(.red)
-                }
-            } else {
-                Button {
-                    startRecording()
-                } label: {
-                    Image(systemName: "mic.fill")
-                        .font(.title3)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            #endif
             
             Button {
                 sendMessage()
@@ -386,70 +338,7 @@ struct ChatView: View {
         #else
         .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: -1)
         #endif
-        #if os(iOS)
-        .sheet(isPresented: $showImagePicker) {
-            ImagePicker(sourceType: .photoLibrary) { image in
-                handleSelectedImage(image)
-            }
-        }
-        .sheet(isPresented: $showCamera) {
-            ImagePicker(sourceType: .camera) { image in
-                handleSelectedImage(image)
-            }
-        }
-        #endif
     }
-    
-    #if os(iOS)
-    private func handleSelectedImage(_ image: UIImage) {
-        selectedImage = image
-        HapticManager.light()
-        
-        // 使用优化的图片上传管理器
-        ImageUploadManager.shared.uploadImage(
-            image,
-            userId: appState.user?.id ?? UUID().uuidString
-        ) { progress in
-            print("📤 上传进度: \(Int(progress * 100))%")
-        } completion: { result in
-            switch result {
-            case .success(let imageURI):
-                print("✅ 图片上传成功")
-                // 发送带图片的消息
-                let userId = appState.user?.id ?? UUID().uuidString
-                viewModel.sendMessageWithImage(userId: userId, imageURI: imageURI)
-                appState.incrementChatCount()
-                HapticManager.success()
-                
-            case .failure(let error):
-                print("❌ 图片上传失败: \(error.localizedDescription)")
-                // 显示错误提示
-                viewModel.error = "图片上传失败: \(error.localizedDescription)"
-                HapticManager.error()
-            }
-        }
-    }
-    
-    private func startRecording() {
-        isRecording = true
-        SpeechManager.shared.startRecording { result in
-            DispatchQueue.main.async {
-                switch result {
-                case .success(let text):
-                    viewModel.inputText = text
-                case .failure(let error):
-                    print("语音识别失败: \(error)")
-                }
-                isRecording = false
-            }
-        }
-    }
-    
-    private func stopRecording() {
-        SpeechManager.shared.stopRecording()
-        isRecording = false
-    }
-    #endif
     
     private func sendMessage() {
         // 收缩键盘
