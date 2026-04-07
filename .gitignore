@@ -18,7 +18,6 @@ Pods/
 
 # Swift Package Manager
 .build/
-Package.resolved
 
 # Carthage
 Carthage/Build/
