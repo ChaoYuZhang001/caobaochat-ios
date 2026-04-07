@@ -2,21 +2,7 @@ import SwiftUI
 
 // MARK: - Quote View (毒舌金句)
 struct QuoteView: View {
-    @State private var currentQuote: QuoteItem?
-    @State private var loading = false
-    @State private var copied = false
-    @State private var favorites: [QuoteItem] = []
-    @State private var showFavorites = false
-    @State private var category = "random"
-    @State private var errorMessage: String?
-    
-    private let categories = [
-        ("random", "随机", "🎲"),
-        ("life", "生活", "🌅"),
-        ("work", "工作", "💼"),
-        ("love", "感情", "💔"),
-        ("social", "社交", "👥"),
-    ]
+    @StateObject private var viewModel = QuoteViewModel()
     
     var body: some View {
         NavigationStack {
@@ -28,76 +14,17 @@ struct QuoteView: View {
                 ScrollView {
                     VStack(spacing: 24) {
                         // 分类选择
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 12) {
-                                ForEach(categories, id: \.0) { cat in
-                                    CategoryButton(
-                                        title: cat.1,
-                                        emoji: cat.2,
-                                        isSelected: category == cat.0
-                                    ) {
-                                        category = cat.0
-                                    }
-                                }
-                            }
-                            .padding(.horizontal)
-                        }
+                        categorySection
                         
                         // 金句卡片
-                        if let quote = currentQuote {
-                            QuoteCard(
-                                quote: quote,
-                                copied: copied,
-                                onCopy: copyQuote,
-                                onFavorite: toggleFavorite
-                            )
-                        } else {
-                            EmptyQuoteView()
-                        }
+                        quoteSection
                         
                         // 操作按钮
-                        HStack(spacing: 20) {
-                            ActionButton(
-                                title: "换一句",
-                                icon: "arrow.clockwise",
-                                color: .green,
-                                action: {
-                                    generateQuote()
-                                }
-                            )
-                            
-                            ActionButton(
-                                title: "收藏",
-                                icon: favorites.contains { $0.content == currentQuote?.content } ? "heart.fill" : "heart",
-                                color: .red,
-                                action: {
-                                    toggleFavorite()
-                                }
-                            )
-                            
-                            ActionButton(
-                                title: "我的收藏",
-                                icon: "bookmark.fill",
-                                color: .blue,
-                                action: {
-                                    showFavorites = true
-                                }
-                            )
-                        }
-                        .padding(.top)
-
+                        actionButtons
+                        
                         // 错误提示
-                        if let error = errorMessage {
-                            HStack {
-                                Image(systemName: "exclamationmark.triangle.fill")
-                                    .foregroundStyle(.orange)
-                                Text(error)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                            }
-                            .padding()
-                            .background(Color.orange.opacity(0.1))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                        if let error = viewModel.errorMessage {
+                            errorBanner(error)
                         }
                     }
                     .padding()
@@ -110,92 +37,121 @@ struct QuoteView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        showFavorites = true
+                        viewModel.showFavorites = true
                     } label: {
                         Image(systemName: "bookmark.fill")
                             .foregroundStyle(.green)
                     }
                 }
             }
-            .sheet(isPresented: $showFavorites) {
-                FavoritesSheet(favorites: favorites) { quote in
-                    currentQuote = quote
-                    showFavorites = false
+            .sheet(isPresented: $viewModel.showFavorites) {
+                FavoritesSheet(favorites: viewModel.favorites) { quote in
+                    viewModel.selectFavorite(quote)
                 }
             }
         }
         .onAppear {
-            if currentQuote == nil {
-                generateQuote()
+            if viewModel.currentQuote == nil {
+                Task {
+                    await viewModel.generateQuote()
+                }
             }
-            loadFavorites()
         }
     }
     
-    // MARK: - Actions
-    private func generateQuote() {
-        loading = true
-        errorMessage = nil
-        Task {
-            do {
-                let response = try await APIService.shared.getQuote(category: category)
-                await MainActor.run {
-                    if response.success, let quote = response.quote {
-                        currentQuote = QuoteItem(
-                            id: UUID().uuidString,
-                            content: quote,
-                            category: response.category ?? category,
-                            timestamp: response.timestamp ?? ISO8601DateFormatter().string(from: Date())
-                        )
-                    } else {
-                        errorMessage = response.error ?? "获取金句失败"
+    // MARK: - View Components
+    private var categorySection: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 12) {
+                ForEach(viewModel.categories, id: \.0) { cat in
+                    CategoryButton(
+                        title: cat.1,
+                        emoji: cat.2,
+                        isSelected: viewModel.category == cat.0
+                    ) {
+                        viewModel.selectCategory(cat.0)
                     }
-                    loading = false
                 }
-            } catch {
-                await MainActor.run {
-                    loading = false
-                    errorMessage = "网络错误: \(error.localizedDescription)"
-                }
+            }
+            .padding(.horizontal)
+        }
+    }
+    
+    private var quoteSection: some View {
+        Group {
+            if let quote = viewModel.currentQuote {
+                QuoteCard(
+                    quote: quote,
+                    copied: viewModel.copied,
+                    isFavorited: viewModel.isFavorited,
+                    onCopy: { viewModel.copyQuote() },
+                    onFavorite: { viewModel.toggleFavorite() }
+                )
+            } else if viewModel.loading {
+                loadingView
+            } else {
+                EmptyQuoteView()
             }
         }
     }
     
-    private func copyQuote() {
-        guard let quote = currentQuote else { return }
-        #if os(iOS)
-        UIPasteboard.general.string = quote.content
-        #elseif os(macOS)
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(quote.content, forType: .string)
-        #endif
-        copied = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            copied = false
+    private var actionButtons: some View {
+        HStack(spacing: 20) {
+            ActionButton(
+                title: "换一句",
+                icon: "arrow.clockwise",
+                color: .green,
+                isLoading: viewModel.loading,
+                action: {
+                    Task {
+                        await viewModel.generateQuote()
+                    }
+                }
+            )
+            
+            ActionButton(
+                title: "收藏",
+                icon: viewModel.isFavorited ? "heart.fill" : "heart",
+                color: .red,
+                action: {
+                    viewModel.toggleFavorite()
+                }
+            )
+            
+            ActionButton(
+                title: "我的收藏",
+                icon: "bookmark.fill",
+                color: .blue,
+                action: {
+                    viewModel.showFavorites = true
+                }
+            )
         }
+        .padding(.top)
     }
     
-    private func toggleFavorite() {
-        guard let quote = currentQuote else { return }
-        if let index = favorites.firstIndex(where: { $0.content == quote.content }) {
-            favorites.remove(at: index)
-        } else {
-            favorites.append(quote)
+    private var loadingView: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+                .scaleEffect(1.5)
+            Text("正在生成金句...")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
         }
-        saveFavorites()
+        .frame(height: 200)
     }
     
-    private func loadFavorites() {
-        if let data = UserDefaults.standard.data(forKey: "quote_favorites"),
-           let decoded = try? JSONDecoder().decode([QuoteItem].self, from: data) {
-            favorites = decoded
+    private func errorBanner(_ message: String) -> some View {
+        HStack {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.orange)
+            Text(message)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
         }
-    }
-    
-    private func saveFavorites() {
-        if let encoded = try? JSONEncoder().encode(favorites) {
-            UserDefaults.standard.set(encoded, forKey: "quote_favorites")
-        }
+        .padding()
+        .background(Color.orange.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
 
@@ -234,6 +190,7 @@ struct CategoryButton: View {
 struct QuoteCard: View {
     let quote: QuoteItem
     let copied: Bool
+    let isFavorited: Bool
     let onCopy: () -> Void
     let onFavorite: () -> Void
     
@@ -260,8 +217,8 @@ struct QuoteCard: View {
                 }
                 
                 Button(action: onFavorite) {
-                    Image(systemName: "heart.fill")
-                        .foregroundStyle(.red)
+                    Image(systemName: isFavorited ? "heart.fill" : "heart")
+                        .foregroundStyle(isFavorited ? .red : .gray)
                 }
             }
         }
@@ -287,6 +244,37 @@ struct EmptyQuoteView: View {
     }
 }
 
+struct ActionButton: View {
+    let title: String
+    let icon: String
+    let color: Color
+    var isLoading: Bool = false
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                if isLoading {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                        .tint(.white)
+                } else {
+                    Image(systemName: icon)
+                }
+                Text(title)
+                    .fontWeight(.medium)
+            }
+            .font(.subheadline)
+            .foregroundStyle(.white)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .background(color)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
+        .disabled(isLoading)
+    }
+}
+
 struct FavoritesSheet: View {
     let favorites: [QuoteItem]
     let onSelect: (QuoteItem) -> Void
@@ -295,20 +283,26 @@ struct FavoritesSheet: View {
     var body: some View {
         NavigationStack {
             List {
-                ForEach(favorites) { quote in
-                    Button {
-                        onSelect(quote)
-                    } label: {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(quote.content)
-                                .font(.subheadline)
-                                .foregroundStyle(.primary)
-                                .lineLimit(3)
-                            Text(quote.category)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                if favorites.isEmpty {
+                    Text("暂无收藏")
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                } else {
+                    ForEach(favorites) { quote in
+                        Button {
+                            onSelect(quote)
+                        } label: {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(quote.content)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.primary)
+                                    .lineLimit(3)
+                                Text(quote.category)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(.vertical, 4)
                         }
-                        .padding(.vertical, 4)
                     }
                 }
             }
