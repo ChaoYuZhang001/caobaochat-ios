@@ -14,7 +14,7 @@ final class QuoteViewModel: ObservableObject {
     // MARK: - Properties
     var category = "random"
     
-    private let categories = [
+    public let categories = [
         ("random", "随机", "🎲"),
         ("life", "生活", "🌅"),
         ("work", "工作", "💼"),
