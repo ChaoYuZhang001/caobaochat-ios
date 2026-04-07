@@ -179,11 +179,18 @@ struct FortuneView: View {
             let response = try await APIService.shared.getFortune(userId: UUID().uuidString)
             if response.success {
                 fortune = response.toFortuneData()
+                // 调试日志
+                print("✅ 运势加载成功")
+                print("   综合运势: \(fortune.overall)")
+                print("   幸运颜色: \(fortune.luckyColor ?? "无")")
+                print("   幸运数字: \(fortune.luckyNumber ?? 0)")
             } else {
                 error = response.error ?? "获取运势失败"
+                print("❌ 获取运势失败: \(error ?? "")")
             }
         } catch {
             self.error = error.localizedDescription
+            print("❌ 网络错误: \(error)")
         }
         
         isLoading = false
