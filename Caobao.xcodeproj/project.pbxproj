@@ -52,6 +52,7 @@
 		A1000043 /* NicknameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000026; };
 		A1000044 /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000045; };
 		A1000046 /* MarkdownTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000047; };
+		A1000048 /* AvatarImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000048; };
 		
 		// macOS Target (新增)
 		B1000001 /* CaobaoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001; };
@@ -68,6 +69,7 @@
 		B1000012 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = E2000002; };
 		B1000013 /* FortuneData.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000044; };
 		B1000014 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000032; };
+		B1000024 /* AvatarImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000048; };
 		B1000015 /* LegalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000016; };
 		B1000016 /* AIDeclarationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000035; };
 		B1000017 /* WebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000034; };
@@ -136,6 +138,7 @@
 		A2000042 /* FavoriteItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoriteItem.swift; sourceTree = "<group>";};
 		A3000001 /* Caobao.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Caobao.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A2000047 /* MarkdownTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownTextView.swift; sourceTree = "<group>"; };
+		A2000048 /* AvatarImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarImageView.swift; sourceTree = "<group>"; };
 		
 		// macOS 文件 (新增)
 
@@ -250,6 +253,7 @@
 				A2000016 /* LegalView.swift */,
 				A2000017 /* FeaturesView.swift */,
 				A2000018 /* HomeView.swift */,
+				A2000048 /* AvatarImageView.swift */,
 				A2000019 /* AnalyzeView.swift */,
 				A2000020 /* DecisionView.swift */,
 				A2000021 /* QuoteView.swift */,
@@ -463,6 +467,7 @@
 				A1000022 /* RoastView.swift in Sources */,
 				A1000023 /* CommonViews.swift in Sources */,
 				A1000046 /* MarkdownTextView.swift in Sources */,
+				A1000048 /* AvatarImageView.swift in Sources */,
 				A1000024 /* MessageBubble.swift in Sources */,
 				A1000025 /* MediaLinkDetector.swift in Sources */,
 				A1000043 /* NicknameView.swift in Sources */,
@@ -499,6 +504,7 @@
 				B1000009 /* ProfileView.swift in Sources */,
 				B1000010 /* SettingsView.swift in Sources */,
 				B1000013 /* FortuneData.swift in Sources */,
+				B1000024 /* AvatarImageView.swift in Sources */,
 				B1000014 /* DesignSystem.swift in Sources */,
 				B1000015 /* LegalView.swift in Sources */,
 				B1000016 /* AIDeclarationView.swift in Sources */,
