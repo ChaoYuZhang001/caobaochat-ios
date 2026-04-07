@@ -102,6 +102,10 @@ final class QuoteViewModel: ObservableObject {
     func selectCategory(_ categoryId: String) {
         category = categoryId
         print("📂 切换分类: \(categoryId)")
+        // 切换分类后自动生成新金句
+        Task {
+            await generateQuote()
+        }
     }
     
     func selectFavorite(_ quote: QuoteItem) {
