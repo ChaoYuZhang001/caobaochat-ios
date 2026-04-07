@@ -407,9 +407,18 @@ struct AvatarPickerView: View {
                     .fill(Color(.systemGray6))
                     .frame(width: 80, height: 80)
                 
-                // 加载预设头像图片 - 优先尝试 WebP，失败则使用 PNG
-                AvatarImageView(avatarId: avatarId)
-                    .frame(width: 76, height: 76)
+                // 加载预设头像图片
+                if avatarId == "default" {
+                    // 使用本地默认头像（无需网络请求）
+                    Image("DefaultAvatar")
+                        .resizable()
+                        .scaledToFill()
+                        .clipShape(Circle())
+                } else {
+                    // 网络头像 - 支持WebP和PNG，自动缓存
+                    AvatarImageView(avatarId: avatarId)
+                        .frame(width: 76, height: 76)
+                }
                 
                 if selectedSettings.avatarType == type && selectedSettings.avatarValue == avatarId {
                     Circle()
