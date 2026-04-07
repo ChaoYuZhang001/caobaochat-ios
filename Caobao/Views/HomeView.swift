@@ -318,6 +318,7 @@ struct HomeView: View {
         case "找人聊聊":
             // 不使用 NavigationLink，而是切换 TabBar
             EmptyView()
+        case "阳光明媚": FortuneView()
         case "今日运势": FortuneView()
         case "图片分析": AnalyzeView()
         case "扎心金句": QuoteView()
