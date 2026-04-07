@@ -347,7 +347,7 @@ struct AvatarPickerView: View {
     @Environment(\.dismiss) var dismiss
     @Binding var selectedSettings: UserSettings
     
-    private let presetAvatars = ["logo", "avatar1", "avatar2", "avatar3", "avatar4", "avatar5", "avatar6", "avatar7", "avatar8"]
+    private let presetAvatars = ["avatar1", "avatar2", "avatar3", "avatar4", "avatar5", "avatar6", "avatar7", "avatar8"]
     private let emojiAvatars = ["😊", "😎", "🤓", "😴", "🥳", "🤔", "😏", "🤗", "😺", "🦊", "🐼", "🐨"]
     
     @State private var selectedTab = 0
