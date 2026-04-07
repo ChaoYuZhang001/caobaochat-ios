@@ -186,12 +186,13 @@ struct FortuneView: View {
         do {
             let response = try await APIService.shared.getFortune(userId: UUID().uuidString)
             if response.success {
-                fortune = response.toFortuneData()
+                let tempFortune = response.toFortuneData()
+                fortune = tempFortune
                 // 调试日志
                 print("✅ 运势加载成功")
-                print("   综合运势: \(fortune.overall)")
-                print("   幸运颜色: \(fortune.luckyColor ?? "无")")
-                print("   幸运数字: \(fortune.luckyNumber ?? 0)")
+                print("   综合运势: \(tempFortune.overall)")
+                print("   幸运颜色: \(tempFortune.luckyColor ?? "无")")
+                print("   幸运数字: \(tempFortune.luckyNumber ?? 0)")
             } else {
                 error = response.error ?? "获取运势失败"
                 print("❌ 获取运势失败: \(error ?? "")")
