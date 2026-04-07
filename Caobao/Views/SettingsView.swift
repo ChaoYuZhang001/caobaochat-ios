@@ -66,9 +66,7 @@ struct SettingsView: View {
                         ForEach(toxicLevels, id: \.0) { level in
                             Button {
                                 toxicLevel = level.0
-                                // 同步更新 AppState
-                                appState.userSettings.toxicLevel = level.0
-                                appState.saveUserSettings()
+                                print("🎯 切换毒舌程度: \(level.1)")
                             } label: {
                                 HStack {
                                     Text(level.3)
