@@ -14,7 +14,7 @@ final class QuoteViewModel: ObservableObject {
     @Published var copied = false
     
     // MARK: - Properties
-    var category = "random"
+    @Published var category = "random"
     
     public let categories = [
         ("random", "随机", "🎲"),
