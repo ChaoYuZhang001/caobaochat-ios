@@ -145,20 +145,24 @@ struct iPadContentView: View {
     
     @ViewBuilder
     private var detailView: some View {
-        if selectedTab == .chat, let conv = selectedConversation {
-            ConversationDetailView(conversation: conv)
-        } else {
-            switch selectedTab ?? .home {
-            case .home:
-                HomeView()
-            case .chat:
-                ChatView()
-            case .fortune:
-                FortuneView()
-            case .features:
-                FeaturesView()
-            case .profile:
-                ProfileView()
+        NavigationStack {
+            Group {
+                if selectedTab == .chat, let conv = selectedConversation {
+                    ConversationDetailView(conversation: conv)
+                } else {
+                    switch selectedTab ?? .home {
+                    case .home:
+                        HomeView()
+                    case .chat:
+                        ChatView()
+                    case .fortune:
+                        FortuneView()
+                    case .features:
+                        FeaturesView()
+                    case .profile:
+                        ProfileView()
+                    }
+                }
             }
         }
     }
