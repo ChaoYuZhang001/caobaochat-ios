@@ -35,6 +35,10 @@ final class QuoteViewModel: ObservableObject {
     
     // MARK: - Public Methods
     func generateQuote() async {
+        let oldContent = currentQuote?.content
+        print("🔄 [生成金句] 开始请求...")
+        print("📋 [生成金句] 旧金句: \(oldContent?.prefix(30) ?? "无")")
+        
         loading = true
         errorMessage = nil
         
@@ -42,27 +46,38 @@ final class QuoteViewModel: ObservableObject {
             let response = try await apiService.getQuote(category: category)
             
             if response.success, let quoteText = response.quote {
-                currentQuote = QuoteItem(
+                let newQuote = QuoteItem(
                     id: UUID().uuidString,
                     content: quoteText,
                     category: response.category ?? category,
                     timestamp: String(response.timestamp ?? Int(Date().timeIntervalSince1970))
                 )
-                print("✅ 金句生成成功")
+                
+                // 比较新旧金句
+                if oldContent == quoteText {
+                    print("⚠️  [生成金句] 返回了相同的金句: \(quoteText)")
+                } else {
+                    print("✅ [生成金句] 新金句生成成功")
+                    print("📝 [生成金句] 新内容: \(quoteText)")
+                }
+                
+                // 强制更新（即使内容相同，也创建新对象触发 UI 更新）
+                currentQuote = newQuote
             } else if response.fallback == true {
                 // 降级响应
                 errorMessage = response.error ?? "数据格式错误"
-                print("⚠️  使用降级响应: \(errorMessage ?? "")")
+                print("⚠️  [生成金句] 使用降级响应: \(errorMessage ?? "")")
             } else {
                 errorMessage = response.error ?? "获取金句失败"
-                print("❌ 获取金句失败: \(errorMessage ?? "")")
+                print("❌ [生成金句] 获取金句失败: \(errorMessage ?? "")")
             }
         } catch {
             errorMessage = "网络错误: \(error.localizedDescription)"
-            print("❌ 网络请求失败: \(error)")
+            print("❌ [生成金句] 网络请求失败: \(error)")
         }
         
         loading = false
+        print("🏁 [生成金句] 请求完成")
     }
     
     func copyQuote() {
