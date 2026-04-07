@@ -142,7 +142,9 @@ struct HomeView: View {
                                 GridItem(.flexible()),
                             ], spacing: 12) {
                                 ForEach(moreFeatures, id: \.title) { feature in
-                                    NavigationLink(value: feature.title) {
+                                    NavigationLink {
+                                        destinationView(for: feature.title)
+                                    } label: {
                                         CaobaoFeatureCard(
                                             icon: feature.icon,
                                             title: feature.title,
