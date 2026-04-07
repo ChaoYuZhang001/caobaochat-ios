@@ -15,7 +15,6 @@
 		A1000005 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000005; };
 		A1000006 /* ChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000006; };
 		A1000007 /* APIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000007; };
-A1000050 /* QuoteViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000048; };
 		A1000008 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000008; };
 		A1000009 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000009; };
 		A1000010 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000010; };
@@ -58,8 +57,6 @@ A1000050 /* QuoteViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 
 		B1000001 /* CaobaoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001; };
 		B1000002 /* MacContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000012; };
 		B1000003 /* ChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000006; };
-				B1000024 /* QuoteViewModel.swift in Sources */,
-B1000024 /* QuoteViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000048; };
 		B1000004 /* APIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000007; };
 		B1000005 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000009; };
 		B1000006 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000013; };
@@ -101,7 +98,6 @@ B1000024 /* QuoteViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 
 		A2000005 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		A2000006 /* ChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewModel.swift; sourceTree = "<group>"; };
 		A2000007 /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
-		A2000048 /* QuoteViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteViewModel.swift; sourceTree = "<group>";};
 		A2000008 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A2000009 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		A2000010 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
@@ -281,7 +277,6 @@ B1000024 /* QuoteViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 
 			children = (
 				A2000006 /* ChatViewModel.swift */,
 			);
-				A2000048 /* QuoteViewModel.swift */,
 			path = ViewModels;
 			sourceTree = "<group>";
 		};
@@ -452,7 +447,6 @@ B1000024 /* QuoteViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 
 				A1000005 /* ProfileView.swift in Sources */,
 				A1000006 /* ChatViewModel.swift in Sources */,
 				A1000007 /* APIService.swift in Sources */,
-				A1000050 /* QuoteViewModel.swift in Sources */,
 				A1000009 /* AuthService.swift in Sources */,
 				A1000010 /* LoginView.swift in Sources */,
 				A1000011 /* AccountSettingsView.swift in Sources */,
