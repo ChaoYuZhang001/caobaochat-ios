@@ -97,7 +97,7 @@ struct QuoteView: View {
     
     private var actionButtons: some View {
         HStack(spacing: 20) {
-            ActionButton(
+            QuoteActionButton(
                 title: "换一句",
                 icon: "arrow.clockwise",
                 color: .green,
@@ -109,7 +109,7 @@ struct QuoteView: View {
                 }
             )
             
-            ActionButton(
+            QuoteActionButton(
                 title: "收藏",
                 icon: viewModel.isFavorited ? "heart.fill" : "heart",
                 color: .red,
@@ -118,7 +118,7 @@ struct QuoteView: View {
                 }
             )
             
-            ActionButton(
+            QuoteActionButton(
                 title: "我的收藏",
                 icon: "bookmark.fill",
                 color: .blue,
@@ -244,7 +244,7 @@ struct EmptyQuoteView: View {
     }
 }
 
-struct ActionButton: View {
+struct QuoteActionButton: View {
     let title: String
     let icon: String
     let color: Color
