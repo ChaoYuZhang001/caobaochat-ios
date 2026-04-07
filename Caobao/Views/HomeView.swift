@@ -11,7 +11,7 @@ struct HomeView: View {
     // 与 Web 端对齐的快捷功能
     private let mainFeatures: [(icon: String, title: String, subtitle: String)] = [
         ("message.fill", "找人聊聊", "随时待命"),
-        ("sun.max.fill", "阳光明媚", "今日心情"),
+        ("sun.max.fill", "阳光明媚", "算一卦"),
         ("doc.text.magnifyingglass", "图片分析", "扔进来我看看"),
         ("quote.bubble", "扎心金句", "发朋友圈专用"),
     ]
