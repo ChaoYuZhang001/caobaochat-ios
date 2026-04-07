@@ -205,16 +205,28 @@ struct FavoritesView: View {
         
         Task {
             do {
-                // 使用无 token 版本的方法
-                let items = try await APIService.shared.getFavorites(userId: nil, type: nil)
+                // 使用 AuthService 获取当前用户的 ID
+                let authService = AuthService.shared
+                guard let userId = authService.user?.id else {
+                    await MainActor.run {
+                        errorMessage = "请先登录"
+                        isLoading = false
+                    }
+                    return
+                }
+                
+                print("📚 加载收藏，userId: \(userId)")
+                let items = try await APIService.shared.getFavorites(userId: userId, type: selectedType)
                 await MainActor.run {
                     favorites = items
                     isLoading = false
+                    print("✅ 加载收藏成功，共 \(items.count) 条")
                 }
             } catch {
                 await MainActor.run {
                     errorMessage = error.localizedDescription
                     isLoading = false
+                    print("❌ 加载收藏失败: \(error)")
                 }
             }
         }
