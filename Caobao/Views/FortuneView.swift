@@ -117,10 +117,18 @@ struct FortuneView: View {
             // Lucky Items
             HStack(spacing: 48) {
                 VStack {
-                    Circle()
-                        .fill(Color(hex: fortune.luckyColor ?? "#22C55E"))
-                        .frame(width: 50, height: 50)
-                        .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
+                    if let colorHex = fortune.luckyColor, !colorHex.isEmpty {
+                        Circle()
+                            .fill(Color(hex: colorHex))
+                            .frame(width: 50, height: 50)
+                            .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
+                    } else {
+                        // 降级显示：如果没有颜色，显示默认绿色圆圈
+                        Circle()
+                            .fill(Color.caobaoPrimary)
+                            .frame(width: 50, height: 50)
+                            .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
+                    }
                     Text("幸运颜色")
                         .font(.caption)
                         .foregroundStyle(.secondary)
