@@ -46,7 +46,7 @@ final class QuoteViewModel: ObservableObject {
                     id: UUID().uuidString,
                     content: quoteText,
                     category: response.category ?? category,
-                    timestamp: String(response.timestamp ?? Int(Date().timeIntervalSince1970)).string(from: Date())
+                    timestamp: String(response.timestamp ?? Int(Date().timeIntervalSince1970))
                 )
                 print("✅ 金句生成成功")
             } else if response.fallback == true {
