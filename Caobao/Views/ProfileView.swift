@@ -347,7 +347,7 @@ struct AvatarPickerView: View {
     @Environment(\.dismiss) var dismiss
     @Binding var selectedSettings: UserSettings
     
-    private let presetAvatars = ["avatar1", "avatar2", "avatar3", "avatar4", "avatar5", "avatar6", "avatar7", "avatar8"]
+    private let presetAvatars = ["default", "avatar1", "avatar2", "avatar3", "avatar4", "avatar5", "avatar6", "avatar7", "avatar8"]
     private let emojiAvatars = ["😊", "😎", "🤓", "😴", "🥳", "🤔", "😏", "🤗", "😺", "🦊", "🐼", "🐨"]
     
     @State private var selectedTab = 0
@@ -407,30 +407,9 @@ struct AvatarPickerView: View {
                     .fill(Color(.systemGray6))
                     .frame(width: 80, height: 80)
                 
-                // 加载预设头像图片
-                AsyncImage(url: URL(string: "https://caobao.coze.site/avatars/\(avatarId).png")) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 76, height: 76)
-                            .clipShape(Circle())
-                    case .failure(_):
-                        // 加载失败时显示默认图标
-                        Image(systemName: "person.circle.fill")
-                            .font(.system(size: 40))
-                            .foregroundStyle(.gray)
-                    case .empty:
-                        // 加载中显示占位符
-                        ProgressView()
-                            .frame(width: 40, height: 40)
-                    @unknown default:
-                        Image(systemName: "person.circle.fill")
-                            .font(.system(size: 40))
-                            .foregroundStyle(.gray)
-                    }
-                }
+                // 加载预设头像图片 - 优先尝试 WebP，失败则使用 PNG
+                AvatarImageView(avatarId: avatarId)
+                    .frame(width: 76, height: 76)
                 
                 if selectedSettings.avatarType == type && selectedSettings.avatarValue == avatarId {
                     Circle()
