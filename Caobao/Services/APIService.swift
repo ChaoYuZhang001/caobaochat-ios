@@ -258,23 +258,75 @@ class APIService {
     }
     
     // MARK: - Quote
+    // MARK: - Quote
     func getQuote(category: String = "random") async throws -> QuoteResponse {
-        try await withCheckedThrowingContinuation { continuation in
+        let url = "\(APIConfig.baseURL)/caobao/quote"
+        print("🔄 请求扎心金句...")
+        print("📍 URL: \(url)")
+        print("📦 参数: category=\(category)")
+        
+        return try await withCheckedThrowingContinuation { continuation in
             session.request(
-                "\(APIConfig.baseURL)/caobao/quote",
+                url,
                 method: .post,
                 parameters: ["category": category],
                 encoding: JSONEncoding.default
             )
             .validate()
-            .responseDecodable(of: QuoteResponse.self) { response in
+            .responseJSON { response in
+                print("📥 收到响应，状态码: \(response.response?.statusCode ?? -1)")
+                
+                // 打印原始响应数据用于调试
+                if let data = response.data,
+                   let jsonString = String(data: data, encoding: .utf8) {
+                    print("📄 原始响应: \(jsonString.prefix(500))")
+                }
+                
                 switch response.result {
-                case .success(let quote):
-                    continuation.resume(returning: quote)
+                case .success(let json):
+                    // 尝试解码为 QuoteResponse
+                    if let data = response.data {
+                        do {
+                            let decoder = JSONDecoder()
+                            let quoteResponse = try decoder.decode(QuoteResponse.self, from: data)
+                            print("✅ 解码成功: success=\(quoteResponse.success)")
+                            continuation.resume(returning: quoteResponse)
+                        } catch {
+                            print("❌ 解码失败: \(error)")
+                            print("📋 尝试手动解析...")
+                            
+                            // 尝试手动解析 JSON
+                            if let jsonData = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                                print("🔍 JSON 结构: \(jsonData.keys)")
+                                
+                                // 如果格式不对，返回一个友好的错误响应
+                                let fallbackResponse = QuoteResponse(
+                                    success: false,
+                                    quote: nil,
+                                    category: category,
+                                    timestamp: nil,
+                                    fallback: true,
+                                    error: "数据格式错误: \(error.localizedDescription)"
+                                )
+                                continuation.resume(returning: fallbackResponse)
+                            } else {
+                                continuation.resume(throwing: error)
+                            }
+                        }
+                    } else {
+                        continuation.resume(throwing: NSError(domain: "APIService", code: -1, userInfo: [NSLocalizedDescriptionKey: "响应数据为空"]))
+                    }
                 case .failure(let error):
+                    print("❌ 请求失败: \(error.localizedDescription)")
+                    if let data = response.data,
+                       let errorString = String(data: data, encoding: .utf8) {
+                        print("📄 错误响应: \(errorString)")
+                    }
                     continuation.resume(throwing: error)
                 }
             }
+        }
+    }
         }
     }
     
