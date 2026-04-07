@@ -263,7 +263,7 @@ struct ImagePicker: UIViewControllerRepresentable {
             actionTitle: "开始对话",
             action: {}
         )
-        ActionButton(title: "开始分析", icon: "sparkles", action: {})
+        ActionButton(title: "开始分析", icon: "sparkles", color: .caobaoPrimary, action: {})
     }
     .padding()
 }
