@@ -74,9 +74,11 @@ struct HomeView: View {
                                 ForEach(mainFeatures, id: \.title) { feature in
                                     if feature.title == "找人聊聊" {
                                         // 找人聊聊 - 切换 TabBar
-                                        Button {
-                                            appState.selectedTab = .chat
-                                        } label: {
+                                        Button(action: {
+                                            withAnimation {
+                                                appState.selectedTab = .chat
+                                            }
+                                        }) {
                                             CaobaoFeatureCard(
                                                 icon: feature.icon,
                                                 title: feature.title,
@@ -140,9 +142,7 @@ struct HomeView: View {
                                 GridItem(.flexible()),
                             ], spacing: 12) {
                                 ForEach(moreFeatures, id: \.title) { feature in
-                                    NavigationLink {
-                                        destinationView(for: feature.title)
-                                    } label: {
+                                    NavigationLink(value: feature.title) {
                                         CaobaoFeatureCard(
                                             icon: feature.icon,
                                             title: feature.title,
