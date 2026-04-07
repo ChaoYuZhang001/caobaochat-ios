@@ -1,5 +1,110 @@
 import SwiftUI
 
+
+// MARK: - 颜色名称映射
+extension Color {
+    /// 将中文颜色名称转换为 Hex 颜色代码
+    static func fromChineseName(_ name: String) -> Color {
+        let colorMap: [String: String] = [
+            // 红色系
+            "红色": "#FF0000",
+            "深红": "#8B0000",
+            "朱红": "#FF4D00",
+            "樱桃红": "#DE3163",
+            "珊瑚红": "#FF7F50",
+            "玫瑰红": "#FF007F",
+            "粉红": "#FFC0CB",
+            "浅粉": "#FFB6C1",
+            
+            // 橙色系
+            "橙色": "#FFA500",
+            "深橙": "#FF8C00",
+            "橘红": "#FF4500",
+            "杏色": "#FFE4B5",
+            
+            // 黄色系
+            "黄色": "#FFFF00",
+            "金黄": "#FFD700",
+            "柠檬黄": "#FFF44F",
+            "米黄": "#F5F5DC",
+            "卡其": "#F0E68C",
+            
+            // 绿色系
+            "绿色": "#00FF00",
+            "深绿": "#006400",
+            "草绿": "#7CFC00",
+            "橄榄绿": "#808000",
+            "薄荷绿": "#98FB98",
+            "墨绿": "#2E8B57",
+            "翠绿": "#00FA9A",
+            
+            // 青色系
+            "青色": "#00FFFF",
+            "深青": "#008B8B",
+            "孔雀蓝": "#00CED1",
+            "天青": "#F0FFFF",
+            
+            // 蓝色系
+            "蓝色": "#0000FF",
+            "深蓝": "#00008B",
+            "天蓝": "#87CEEB",
+            "宝蓝": "#4169E1",
+            "蔚蓝": "#007FFF",
+            "孔雀蓝": "#00BFFF",
+            "雾霾蓝": "#7F8C8D",
+            "午夜蓝": "#191970",
+            "海军蓝": "#000080",
+            
+            // 紫色系
+            "紫色": "#800080",
+            "深紫": "#4B0082",
+            "薰衣草": "#E6E6FA",
+            "紫罗兰": "#EE82EE",
+            "紫罗兰色": "#EE82EE",
+            
+            // 粉色系
+            "粉色": "#FFC0CB",
+            "深粉": "#FF1493",
+            
+            // 棕色系
+            "棕色": "#A52A2A",
+            "浅棕": "#D2691E",
+            "咖啡": "#6F4E37",
+            
+            // 灰色系
+            "灰色": "#808080",
+            "深灰": "#A9A9A9",
+            "浅灰": "#D3D3D3",
+            "银灰": "#C0C0C0",
+            "雾霾灰": "#A0A0A0",
+            
+            // 黑白系
+            "黑色": "#000000",
+            "白色": "#FFFFFF",
+            "象牙白": "#FFFFF0",
+            "雪白": "#FFFAFA",
+            
+            // 特色颜色
+            "彩虹": "#FF6B6B",  // 使用彩虹的红色
+            "金色": "#FFD700",
+            "银色": "#C0C0C0",
+            "铜色": "#B87333",
+        ]
+        
+        if let hex = colorMap[name] {
+            return Color(hex: hex)
+        }
+        
+        // 尝试解析为 Hex 格式
+        if name.hasPrefix("#") {
+            return Color(hex: name)
+        }
+        
+        // 默认返回绿色
+        return Color.caobaoPrimary
+    }
+}
+
 // MARK: - Fortune View (今日运势)
 // 与 Web 端保持一致的设计风格
 
@@ -117,9 +222,9 @@ struct FortuneView: View {
             // Lucky Items
             HStack(spacing: 48) {
                 VStack {
-                    if let colorHex = fortune.luckyColor, !colorHex.isEmpty {
+                    if let colorName = fortune.luckyColor, !colorName.isEmpty {
                         Circle()
-                            .fill(Color(hex: colorHex))
+                            .fill(Color.fromChineseName(colorName))
                             .frame(width: 50, height: 50)
                             .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
                     } else {
