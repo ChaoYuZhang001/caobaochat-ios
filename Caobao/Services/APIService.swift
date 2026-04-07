@@ -1483,7 +1483,7 @@ struct QuoteResponse: Codable {
     let success: Bool
     let quote: String?
     let category: String?
-    let timestamp: String?
+    let timestamp: Int?
     let fallback: Bool?
     let error: String?
 }
