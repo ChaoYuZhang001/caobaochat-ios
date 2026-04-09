@@ -242,26 +242,27 @@ struct ChatView: View {
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
-            .toolbar {
-                #if os(iOS)
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        viewModel.clearChat()
-                    } label: {
-                        Image(systemName: "trash")
-                            .foregroundStyle(.gray)
-                    }
-                }
-                #else
-                ToolbarItem(placement: .automatic) {
-                    Button {
-                        viewModel.clearChat()
-                    } label: {
-                        Image(systemName: "trash")
-                    }
-                }
-                #endif
-            }
+            // 删除按钮已移除
+            // .toolbar {
+            //     #if os(iOS)
+            //     ToolbarItem(placement: .topBarTrailing) {
+            //         Button {
+            //             viewModel.clearChat()
+            //         } label: {
+            //             Image(systemName: "trash")
+            //                 .foregroundStyle(.gray)
+            //         }
+            //     }
+            //     #else
+            //     ToolbarItem(placement: .automatic) {
+            //         Button {
+            //             viewModel.clearChat()
+            //         } label: {
+            //             Image(systemName: "trash")
+            //         }
+            //     }
+            //     #endif
+            // }
         }
         .onReceive(NotificationCenter.default.publisher(for: .newChat)) { _ in
             viewModel.clearChat()
