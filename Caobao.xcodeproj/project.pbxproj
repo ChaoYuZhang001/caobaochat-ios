@@ -80,15 +80,15 @@
 		B1000022 /* MessageBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000024; };
 		B1000023 /* MediaLinkDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000025; };
 		
-				// watchOS Target
-		W1000001 /* CaobaoWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = W2000001; };
-		W1000002 /* WatchContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = W2000002; };
-		W1000003 /* WatchFortuneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = W2000003; };
-		W1000004 /* WatchNewsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = W2000004; };
-		W1000005 /* WatchRoastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = W2000005; };
-		W1000006 /* WatchDecisionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = W2000006; };
-		W1000007 /* WatchAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = W2000007; };
-		W1000008 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = W2000008; };
+		// watchOS Target (新增)
+		C1000001 /* CaobaoWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000001; };
+		C1000002 /* WatchContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000002; };
+		C1000003 /* WatchFortuneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000003; };
+		C1000004 /* WatchNewsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000004; };
+		C1000005 /* WatchRoastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000005; };
+		C1000006 /* WatchDecisionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000006; };
+		C1000007 /* WatchAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000007; };
+		C1000008 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C2000008; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -145,18 +145,18 @@
 		B2000002 /* Info-macOS.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info-macOS.plist"; sourceTree = "<group>"; };
 		B3000001 /* Caobao-macOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Caobao-macOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		
-		
-		// watchOS 文件
-		W2000001 /* CaobaoWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaobaoWatchApp.swift; sourceTree = "<group>"; };
-		W2000002 /* WatchContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchContentView.swift; sourceTree = "<group>"; };
-		W2000003 /* WatchFortuneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchFortuneView.swift; sourceTree = "<group>"; };
-		W2000004 /* WatchNewsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchNewsView.swift; sourceTree = "<group>"; };
-		W2000005 /* WatchRoastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchRoastView.swift; sourceTree = "<group>"; };
-		W2000006 /* WatchDecisionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchDecisionView.swift; sourceTree = "<group>"; };
-		W2000007 /* WatchAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchAPIService.swift; sourceTree = "<group>"; };
-		W2000008 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		W2000009 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		W3000001 /* Caobao-watchOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Caobao-watchOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		// watchOS 文件 (新增)
+		C2000001 /* CaobaoWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaobaoWatchApp.swift; sourceTree = "<group>"; };
+		C2000002 /* WatchContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchContentView.swift; sourceTree = "<group>"; };
+		C2000003 /* WatchFortuneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchFortuneView.swift; sourceTree = "<group>"; };
+		C2000004 /* WatchNewsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchNewsView.swift; sourceTree = "<group>"; };
+		C2000005 /* WatchRoastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchRoastView.swift; sourceTree = "<group>"; };
+		C2000006 /* WatchDecisionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchDecisionView.swift; sourceTree = "<group>"; };
+		C2000007 /* WatchAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchAPIService.swift; sourceTree = "<group>"; };
+		C2000008 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		C2000009 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		C3000001 /* Caobao-watchOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Caobao-watchOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -176,13 +176,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		W4000001 /* Frameworks (watchOS) */ = {
+		C4000001 /* Frameworks (watchOS) */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -197,6 +191,7 @@
 			children = (
 				A5000002 /* Caobao */,
 				A5000003 /* Products */,
+				A5000009 /* Caobao-watchOS */,
 			);
 			sourceTree = "<group>";
 		};
@@ -222,13 +217,25 @@
 			children = (
 				A3000001 /* Caobao.app */,
 				B3000001 /* Caobao-macOS.app */,
+				C3000001 /* Caobao-watchOS.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
+		A5000009 /* Caobao-watchOS */ = {
 			isa = PBXGroup;
 			children = (
+				C2000001 /* CaobaoWatchApp.swift */,
+				C2000002 /* WatchContentView.swift */,
+				C2000003 /* WatchFortuneView.swift */,
+				C2000004 /* WatchNewsView.swift */,
+				C2000005 /* WatchRoastView.swift */,
+				C2000006 /* WatchDecisionView.swift */,
+				C2000007 /* WatchAPIService.swift */,
+				C2000008 /* Assets.xcassets */,
+				C2000009 /* Info.plist */,
 			);
+			path = "Caobao-watchOS";
 			sourceTree = "<group>";
 		};
 		A5000004 /* Views */ = {
@@ -308,23 +315,6 @@
 		};
 /* End PBXGroup section */
 
-		A5000009 /* Caobao-watchOS */ = {
-			isa = PBXGroup;
-			children = (
-				W2000001 /* CaobaoWatchApp.swift */,
-				W2000002 /* WatchContentView.swift */,
-				W2000003 /* WatchFortuneView.swift */,
-				W2000004 /* WatchNewsView.swift */,
-				W2000005 /* WatchRoastView.swift */,
-				W2000006 /* WatchDecisionView.swift */,
-				W2000007 /* WatchAPIService.swift */,
-				W2000008 /* Assets.xcassets */,
-				W2000009 /* Info.plist */,
-			);
-			path = "Caobao-watchOS";
-			sourceTree = "<group>";
-		};
-
 /* Begin PBXNativeTarget section */
 		A6000001 /* Caobao */ = {
 			isa = PBXNativeTarget;
@@ -360,21 +350,13 @@
 			productReference = B3000001;
 			productType = "com.apple.product-type.application";
 		};
+		C6000001 /* Caobao-watchOS */ = {
 			isa = PBXNativeTarget;
+			buildConfigurationList = C7000001;
 			buildPhases = (
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-		};
-		W6000001 /* Caobao-watchOS */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = W7000001;
-			buildPhases = (
-				W8000001 /* Sources */,
-				W4000001 /* Frameworks */,
-				W8000002 /* Resources */,
+				C8000001 /* Sources */,
+				C4000001 /* Frameworks */,
+				C8000002 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -382,7 +364,7 @@
 			);
 			name = "Caobao-watchOS";
 			productName = "Caobao-watchOS";
-			productReference = W3000001;
+			productReference = C3000001;
 			productType = "com.apple.product-type.application.watchapp2";
 		};
 /* End PBXNativeTarget section */
@@ -401,6 +383,7 @@
 					B6000001 = {
 						CreatedOnToolsVersion = 15.0;
 					};
+					C6000001 = {
 						CreatedOnToolsVersion = 15.0;
 					};
 				};
@@ -423,8 +406,8 @@
 			projectRoot = "";
 			targets = (
 				A6000001 /* Caobao */,
-				W6000001 /* Caobao-watchOS */,
 				B6000001 /* Caobao-macOS */,
+				C6000001 /* Caobao-watchOS */,
 			);
 		};
 /* End PBXProject section */
@@ -446,17 +429,11 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C8000002 /* Resources (watchOS) */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		W8000002 /* Resources (watchOS) */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				W1000008 /* Assets.xcassets in Resources */,
+				C1000008 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -541,23 +518,17 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C8000001 /* Sources (watchOS) */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		W8000001 /* Sources (watchOS) */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				W1000001 /* CaobaoWatchApp.swift in Sources */,
-				W1000002 /* WatchContentView.swift in Sources */,
-				W1000003 /* WatchFortuneView.swift in Sources */,
-				W1000004 /* WatchNewsView.swift in Sources */,
-				W1000005 /* WatchRoastView.swift in Sources */,
-				W1000006 /* WatchDecisionView.swift in Sources */,
-				W1000007 /* WatchAPIService.swift in Sources */,
+				C1000001 /* CaobaoWatchApp.swift in Sources */,
+				C1000002 /* WatchContentView.swift in Sources */,
+				C1000003 /* WatchFortuneView.swift in Sources */,
+				C1000004 /* WatchNewsView.swift in Sources */,
+				C1000005 /* WatchRoastView.swift in Sources */,
+				C1000006 /* WatchDecisionView.swift in Sources */,
+				C1000007 /* WatchAPIService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -819,6 +790,7 @@
 			};
 			name = Release;
 		};
+		C9000003 /* Debug (watchOS) */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -826,50 +798,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
-				DEVELOPMENT_TEAM = "";
-				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = NO;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0.0;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 4;
-			};
-			name = Debug;
-		};
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "";
-				DEVELOPMENT_TEAM = "";
-				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = NO;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0.0;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 4;
-			};
-			name = Release;
-		};
-		W9000001 /* Debug (watchOS) */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -889,13 +817,14 @@
 			};
 			name = Debug;
 		};
-		W9000002 /* Release (watchOS) */ = {
+		C9000004 /* Release (watchOS) */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -936,8 +865,11 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		C7000001 /* Build configuration list for PBXNativeTarget "Caobao-watchOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
+				C9000003 /* Debug */,
+				C9000004 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -947,15 +879,6 @@
 			buildConfigurations = (
 				A9000001 /* Debug */,
 				A9000002 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		W7000001 /* Build configuration list for PBXNativeTarget "Caobao-watchOS" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				W9000001 /* Debug */,
-				W9000002 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
