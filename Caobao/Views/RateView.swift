@@ -24,7 +24,7 @@ struct RateView: View {
     ]
     
     private var selectedTypeColors: (Color, Color) {
-        types.first { $0.0 == selectedType }.map { (Color($0.4), Color($0.5)) } ?? (.purple, .pink)
+        types.first { $0.0 == selectedType }.map { ($0.4, $0.5) } ?? (.purple, .pink)
     }
     
     var body: some View {
@@ -35,7 +35,7 @@ struct RateView: View {
                     gradient: Gradient(colors: [
                         Color.purple.opacity(0.2),
                         Color.pink.opacity(0.15),
-                        Color.rose.opacity(0.1),
+                        Color.red.opacity(0.1),
                         Color.caobaoGroupedBackground
                     ]),
                     startPoint: .topLeading,
@@ -144,32 +144,11 @@ struct RateView: View {
                 GridItem(.flexible())
             ], spacing: 10) {
                 ForEach(types, id: \.0) { type in
-                    Button {
-                        selectedType = type.0
-                    } label: {
-                        HStack(spacing: 8) {
-                            Text(type.2)
-                                .font(.title2)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(type.1)
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                Text(type.3)
-                                    .font(.caption2)
-                                    .foregroundStyle(selectedType == type.0 ? .white.opacity(0.8) : .secondary)
-                            }
-                            Spacer()
-                        }
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(
-                            selectedType == type.0
-                                ? LinearGradient(gradient: Gradient(colors: [Color(type.4), Color(type.5)]), startPoint: .leading, endPoint: .trailing)
-                                : Color(.secondarySystemBackground)
-                        )
-                        .foregroundStyle(selectedType == type.0 ? .white : .primary)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
+                    RateTypeCard(
+                        type: type,
+                        isSelected: selectedType == type.0,
+                        onTap: { selectedType = type.0 }
+                    )
                 }
             }
         }
@@ -243,13 +222,17 @@ struct RateView: View {
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(
-                    content.isEmpty
-                        ? Color.gray
-                        : LinearGradient(
-                            gradient: Gradient(colors: [selectedTypeColors.0, selectedTypeColors.1]),
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
+                    Group {
+                        if content.isEmpty {
+                            Color.gray
+                        } else {
+                            LinearGradient(
+                                gradient: Gradient(colors: [selectedTypeColors.0, selectedTypeColors.1]),
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        }
+                    }
                 )
                 .foregroundStyle(.white)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
@@ -540,6 +523,49 @@ struct ShareSheet: NSViewRepresentable {
     func updateNSView(_ nsView: NSShareView, context: Context) {}
 }
 #endif
+
+// MARK: - Rate Type Card
+struct RateTypeCard: View {
+    let type: (String, String, String, String, Color, Color)
+    let isSelected: Bool
+    let onTap: () -> Void
+    
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 8) {
+                Text(type.2)
+                    .font(.title2)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(type.1)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    Text(type.3)
+                        .font(.caption2)
+                        .foregroundStyle(isSelected ? .white.opacity(0.8) : .secondary)
+                }
+                Spacer()
+            }
+            .padding()
+            .frame(maxWidth: .infinity)
+            .background(
+                Group {
+                    if isSelected {
+                        LinearGradient(
+                            gradient: Gradient(colors: [type.4, type.5]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    } else {
+                        Color(.secondarySystemBackground)
+                    }
+                }
+            )
+            .foregroundStyle(isSelected ? .white : .primary)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
+        .buttonStyle(.plain)
+    }
+}
 
 #Preview {
     RateView()
