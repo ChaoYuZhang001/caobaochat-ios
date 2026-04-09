@@ -111,7 +111,7 @@
 		A2000005 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		A2000006 /* ChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewModel.swift; sourceTree = "<group>"; };
 		A2000007 /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
-		A2000008 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A2000008 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Caobao/Assets.xcassets"; sourceTree = "<group>"; };
 		A2000009 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		A2000010 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		A2000011 /* AccountSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountSettingsView.swift; sourceTree = "<group>"; };
@@ -130,7 +130,7 @@
 		A2000024 /* MessageBubble.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageBubble.swift; sourceTree = "<group>"; };
 		A2000025 /* MediaLinkDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaLinkDetector.swift; sourceTree = "<group>"; };
 		A2000026 /* NicknameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NicknameView.swift; sourceTree = "<group>"; };
-		A2000027 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A2000027 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Caobao/Info.plist"; sourceTree = "<group>"; };
 		A2000044 /* FortuneData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FortuneData.swift; sourceTree = "<group>"; };
 		A2000028 /* NicknameData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NicknameData.swift; sourceTree = "<group>"; };
 		A2000029 /* RateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RateView.swift; sourceTree = "<group>"; };
@@ -157,15 +157,15 @@
 		B3000001 /* Caobao-macOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Caobao-macOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		
 		// watchOS 文件 (新增)
-		C2000001 /* CaobaoWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaobaoWatchApp.swift; sourceTree = "<group>"; };
-		C2000002 /* WatchContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchContentView.swift; sourceTree = "<group>"; };
-		C2000003 /* WatchFortuneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchFortuneView.swift; sourceTree = "<group>"; };
-		C2000004 /* WatchNewsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchNewsView.swift; sourceTree = "<group>"; };
-		C2000005 /* WatchRoastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchRoastView.swift; sourceTree = "<group>"; };
-		C2000006 /* WatchDecisionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchDecisionView.swift; sourceTree = "<group>"; };
-		C2000007 /* WatchAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchAPIService.swift; sourceTree = "<group>"; };
-		C2000008 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		C2000009 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		C2000001 /* CaobaoWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Caobao-watchOS/CaobaoWatchApp.swift"; sourceTree = "<group>"; };
+		C2000002 /* WatchContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Caobao-watchOS/WatchContentView.swift"; sourceTree = "<group>"; };
+		C2000003 /* WatchFortuneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Caobao-watchOS/WatchFortuneView.swift"; sourceTree = "<group>"; };
+		C2000004 /* WatchNewsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Caobao-watchOS/WatchNewsView.swift"; sourceTree = "<group>"; };
+		C2000005 /* WatchRoastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Caobao-watchOS/WatchRoastView.swift"; sourceTree = "<group>"; };
+		C2000006 /* WatchDecisionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Caobao-watchOS/WatchDecisionView.swift"; sourceTree = "<group>"; };
+		C2000007 /* WatchAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Caobao-watchOS/WatchAPIService.swift"; sourceTree = "<group>"; };
+		C2000008 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Caobao-watchOS/Assets.xcassets"; sourceTree = "<group>"; };
+		C2000009 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Caobao-watchOS/Info.plist"; sourceTree = "<group>"; };
 		C3000001 /* Caobao-watchOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Caobao-watchOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 
 		B2000025 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/LoginView.swift; sourceTree = "<group>"; };
