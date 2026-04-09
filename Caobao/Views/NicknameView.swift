@@ -17,7 +17,7 @@ struct NicknameView: View {
     
     private let styles = [
         ("sharp", "犀利毒舌", "🔥", "一针见血", Color.red, Color.orange),
-        ("gentle", "温和吐槽", "🌸", "温柔一刀", Color.pink, Color(hex: "f43f5e")),
+        ("gentle", "温和吐槽", "🌸", "温柔一刀", Color.pink, Color.red),
         ("funny", "搞笑调侃", "🎭", "笑中带刀", Color.purple, Color.indigo),
     ]
     
