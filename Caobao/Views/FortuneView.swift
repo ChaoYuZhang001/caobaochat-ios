@@ -94,24 +94,22 @@ extension Color {
         let lowerName = name.lowercased()
         for (key, hex) in colorMap {
             if lowerName.contains(key.lowercased()) || key.lowercased().contains(lowerName) {
-                if let color = Color(hex: hex) {
-                    return color
-                }
+                return Color(hex: hex)
             }
         }
         
         // 关键词匹配
-        if lowerName.contains("红") { return Color(hex: "#EF4444")! }
-        if lowerName.contains("橙") || lowerName.contains("橘") { return Color(hex: "#F97316")! }
-        if lowerName.contains("黄") || lowerName.contains("金") { return Color(hex: "#EAB308")! }
-        if lowerName.contains("绿") { return Color(hex: "#22C55E")! }
-        if lowerName.contains("青") || lowerName.contains("蓝") { return Color(hex: "#3B82F6")! }
-        if lowerName.contains("紫") { return Color(hex: "#A855F7")! }
-        if lowerName.contains("粉") || lowerName.contains("玫") { return Color(hex: "#EC4899")! }
-        if lowerName.contains("白") { return Color(hex: "#F8FAFC")! }
-        if lowerName.contains("黑") { return Color(hex: "#1F2937")! }
-        if lowerName.contains("灰") { return Color(hex: "#6B7280")! }
-        if lowerName.contains("棕") || lowerName.contains("咖") { return Color(hex: "#A16207")! }
+        if lowerName.contains("红") { return Color(hex: "#EF4444") }
+        if lowerName.contains("橙") || lowerName.contains("橘") { return Color(hex: "#F97316") }
+        if lowerName.contains("黄") || lowerName.contains("金") { return Color(hex: "#EAB308") }
+        if lowerName.contains("绿") { return Color(hex: "#22C55E") }
+        if lowerName.contains("青") || lowerName.contains("蓝") { return Color(hex: "#3B82F6") }
+        if lowerName.contains("紫") { return Color(hex: "#A855F7") }
+        if lowerName.contains("粉") || lowerName.contains("玫") { return Color(hex: "#EC4899") }
+        if lowerName.contains("白") { return Color(hex: "#F8FAFC") }
+        if lowerName.contains("黑") { return Color(hex: "#1F2937") }
+        if lowerName.contains("灰") { return Color(hex: "#6B7280") }
+        if lowerName.contains("棕") || lowerName.contains("咖") { return Color(hex: "#A16207") }
         
         // 默认返回绿色
         return Color.caobaoPrimary
@@ -511,7 +509,7 @@ struct FortuneView: View {
             // 操作按钮
             HStack(spacing: 16) {
                 Button {
-                    fortune = nil
+                    resetFortune()
                 } label: {
                     HStack {
                         Image(systemName: "arrow.uturn.left")
@@ -546,12 +544,17 @@ struct FortuneView: View {
     // MARK: - 获取分数对应颜色
     private func getScoreColors(_ score: Int) -> [Color] {
         if score >= 80 {
-            return [.green, .emerald]
+            return [.green, Color(hex: "#10B981")]  // emerald -> 翠绿
         } else if score >= 60 {
             return [.yellow, .orange]
         } else {
             return [.red, .pink]
         }
+    }
+    
+    // MARK: - 重置运势
+    private func resetFortune() {
+        fortune = nil
     }
     
     // MARK: - 加载运势
