@@ -31,7 +31,7 @@ struct RoastView: View {
                     gradient: Gradient(colors: [
                         Color.red.opacity(0.2),
                         Color.orange.opacity(0.15),
-                        Color.amber.opacity(0.1),
+                        Color.yellow.opacity(0.1),
                         Color.caobaoGroupedBackground
                     ]),
                     startPoint: .topLeading,
