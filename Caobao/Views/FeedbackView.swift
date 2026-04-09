@@ -156,11 +156,11 @@ struct FeedbackView: View {
                     TextEditor(text: $content)
                         .frame(minHeight: 120)
                         .padding(8)
-                        .background(Color(.systemGray6))
+                        .background(Color(.systemGray6).opacity(1))
                         .cornerRadius(12)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color(.systemGray4), lineWidth: 1)
+                                .stroke(Color(.systemGray4).opacity(1), lineWidth: 1)
                         )
                     
                     HStack {
@@ -230,7 +230,7 @@ struct FeedbackView: View {
                             .foregroundColor(.secondary)
                     }
                     .padding()
-                    .background(Color(.systemGray6))
+                    .background(Color(.systemGray6).opacity(1))
                     .cornerRadius(12)
                 }
             }
