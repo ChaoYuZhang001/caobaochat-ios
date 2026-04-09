@@ -11,6 +11,7 @@ struct AccountSettingsView: View {
     @State private var isLoading = false
     @State private var alertMessage: String?
     @State private var showSuccessAlert = false
+    @State private var alertTitle = "提示"
     @State private var exportedData: IdentifiableString?
     
     var body: some View {
@@ -172,8 +173,8 @@ struct AccountSettingsView: View {
         } message: {
             Text("此操作不可撤销，所有数据将被永久删除。\n请输入\"确认注销\"以继续")
         }
-        // 成功提示
-        .alert("操作成功", isPresented: $showSuccessAlert) {
+        // 提示弹窗
+        .alert(alertTitle, isPresented: $showSuccessAlert) {
             Button("确定", role: .cancel) { }
         } message: {
             Text(alertMessage ?? "")
@@ -196,11 +197,25 @@ struct AccountSettingsView: View {
                     exportedData = IdentifiableString(jsonString)
                 }
             } else {
-                alertMessage = "导出失败"
+                alertTitle = "导出失败"
+                alertMessage = "服务器返回了失败响应"
                 showSuccessAlert = true
             }
         } catch {
-            alertMessage = error.localizedDescription
+            alertTitle = "导出失败"
+            // 处理不同类型的错误
+            if let authError = error as? AuthError {
+                switch authError {
+                case .notLoggedIn:
+                    alertMessage = "请先登录后再导出数据"
+                case .exportFailed(let message):
+                    alertMessage = message
+                default:
+                    alertMessage = authError.errorDescription
+                }
+            } else {
+                alertMessage = error.localizedDescription
+            }
             showSuccessAlert = true
         }
         isLoading = false
@@ -214,10 +229,12 @@ struct AccountSettingsView: View {
                 confirmation: "确认注销",
                 reason: "用户主动申请注销"
             )
+            alertTitle = "操作成功"
             alertMessage = "账号已成功注销，感谢您的使用"
             showSuccessAlert = true
             deleteConfirmationText = ""
         } catch {
+            alertTitle = "注销失败"
             alertMessage = error.localizedDescription
             showSuccessAlert = true
         }
