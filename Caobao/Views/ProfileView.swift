@@ -151,7 +151,7 @@ struct ProfileView: View {
                     NavigationLink {
                         AccountSettingsView()
                     } label: {
-                        Label("账号与数据", systemImage: "person.crop.circle.badge.gearshape")
+                        Label("账号与数据", systemImage: "gearshape.circle")
                     }
                 } header: {
                     Text("设置")
