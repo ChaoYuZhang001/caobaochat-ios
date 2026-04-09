@@ -35,8 +35,8 @@ class APIService {
     
     private init() {
         let configuration = URLSessionConfiguration.default
-        configuration.timeoutIntervalForRequest = 30  // 请求超时 30 秒（服务端响应较慢）
-        configuration.timeoutIntervalForResource = 60  // 资源超时 60 秒
+        configuration.timeoutIntervalForRequest = 60  // 请求超时 60 秒
+        configuration.timeoutIntervalForResource = 120  // 资源超时 120 秒
         configuration.waitsForConnectivity = false  // 不等待连接，快速失败
         configuration.networkServiceType = .default
         
