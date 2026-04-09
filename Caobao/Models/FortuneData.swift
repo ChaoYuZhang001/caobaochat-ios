@@ -10,6 +10,7 @@ public struct FortuneData: Codable {
     public let luckyNumber: Int?
     public let warning: String?
     public let suggestion: String?
+    public let date: String?  // 添加日期字段
     
     // 便捷属性，兼容旧代码
     public var love: Int { aspects?.love?.score ?? 50 }
@@ -34,6 +35,7 @@ public struct FortuneData: Codable {
         self.luckyNumber = luckyNumber
         self.warning = nil
         self.suggestion = advice
+        self.date = nil
     }
     
     // 完整初始化器，用于从 API 响应创建
@@ -45,7 +47,8 @@ public struct FortuneData: Codable {
         luckyColor: String? = nil,
         luckyNumber: Int? = nil,
         warning: String? = nil,
-        suggestion: String? = nil
+        suggestion: String? = nil,
+        date: String? = nil
     ) {
         self.overall = overall
         self.overallComment = overallComment
@@ -55,6 +58,7 @@ public struct FortuneData: Codable {
         self.luckyNumber = luckyNumber
         self.warning = warning
         self.suggestion = suggestion
+        self.date = date
     }
 }
 
@@ -141,7 +145,8 @@ public struct FortuneResponse: Codable, Sendable {
             luckyColor: luckyColor,
             luckyNumber: luckyNumber,
             warning: warning,
-            suggestion: suggestion
+            suggestion: suggestion,
+            date: date
         )
     }
 }

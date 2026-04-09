@@ -257,6 +257,51 @@ class APIService {
         }
     }
     
+    // MARK: - Fortune with Params (支持完整参数)
+    func getFortuneWithParams(
+        fortuneType: String = "general",
+        name: String? = nil,
+        birthday: String? = nil,
+        question: String? = nil,
+        zodiac: String? = nil
+    ) async throws -> FortuneResponse {
+        var params: [String: Any] = [
+            "fortuneType": fortuneType,
+            "random": name == nil && birthday == nil
+        ]
+        
+        if let name = name {
+            params["name"] = name
+        }
+        if let birthday = birthday {
+            params["birthday"] = birthday
+        }
+        if let question = question {
+            params["question"] = question
+        }
+        if let zodiac = zodiac {
+            params["zodiac"] = zodiac
+        }
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            session.request(
+                "\(APIConfig.baseURL)/caobao/fortune",
+                method: .post,
+                parameters: params,
+                encoding: JSONEncoding.default
+            )
+            .validate()
+            .responseDecodable(of: FortuneResponse.self) { response in
+                switch response.result {
+                case .success(let fortune):
+                    continuation.resume(returning: fortune)
+                case .failure(let error):
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+    
     // MARK: - Quote
     // MARK: - Quote
     func getQuote(category: String = "random") async throws -> QuoteResponse {
