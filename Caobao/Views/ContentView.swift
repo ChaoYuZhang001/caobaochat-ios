@@ -139,6 +139,13 @@ struct iPadContentView: View {
                     selectedConversation = nil
                 }
             }
+            .onChange(of: appState.selectedTab) { newTab in
+                // 同步 appState.selectedTab 的变化到本地状态
+                if newTab != selectedTab {
+                    selectedTab = newTab
+                    selectedConversation = nil
+                }
+            }
         } detail: {
             // 右侧内容
             detailView
