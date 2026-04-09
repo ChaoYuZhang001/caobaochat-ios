@@ -14,6 +14,7 @@ struct SettingsView: View {
         ("qwen-turbo", "通义千问 Turbo", "快速响应，适合简单对话", "⚡"),
         ("deepseek-chat", "DeepSeek Chat", "深度思考，逻辑性强", "🧠"),
         ("kimi-32k", "Kimi", "长文本处理能力强", "📚"),
+        ("grok-2-1212", "Grok 2", "马斯克出品，幽默毒舌", "🧪"),
     ]
     
     // 毒舌程度 - 与后端保持一致

@@ -88,6 +88,7 @@ struct AIDeclarationView: View {
                     aiProviderRow(name: "文心一言", desc: "知识问答、创作辅助")
                     aiProviderRow(name: "腾讯混元", desc: "对话生成、多模态")
                     aiProviderRow(name: "讯飞星火", desc: "认知智能、语音交互")
+                    aiProviderRow(name: "xAI Grok", desc: "幽默毒舌、实时信息")
                 }
             }
         }
