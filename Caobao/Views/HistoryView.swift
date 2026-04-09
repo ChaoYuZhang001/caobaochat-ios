@@ -41,9 +41,6 @@ struct HistoryView: View {
                 NavigationLink(value: conversation) {
                     ConversationRowView(conversation: conversation)
                 }
-                .navigationDestination(for: Conversation.self) { conv in
-                    ConversationDetailView(conversation: conv)
-                }
             }
             .onDelete { indexSet in
                 conversations.remove(atOffsets: indexSet)
@@ -51,6 +48,9 @@ struct HistoryView: View {
             }
         }
         .listStyle(.plain)
+        .navigationDestination(for: Conversation.self) { conv in
+            ConversationDetailView(conversation: conv)
+        }
     }
     
     private var filteredConversations: [Conversation] {
