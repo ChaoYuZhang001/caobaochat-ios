@@ -397,6 +397,9 @@ class ChatViewModel: ObservableObject {
     
     /// 重新生成消息
     func regenerate(_ messageId: String, userId: String) {
+        // 取消之前的任务
+        currentTask?.cancel()
+        
         guard let index = messages.firstIndex(where: { $0.id == messageId }) else { return }
         
         // 找到这条消息之前的用户消息
@@ -482,8 +485,13 @@ class ChatViewModel: ObservableObject {
     
     /// 删除消息
     func deleteMessage(_ messageId: String) {
+        // 取消正在进行的任务
+        currentTask?.cancel()
+        
         messages.removeAll { $0.id == messageId }
         refreshId = UUID()
+        isLoading = false
+        error = nil
         saveToHistory()
     }
     
@@ -495,9 +503,13 @@ class ChatViewModel: ObservableObject {
     
     // MARK: - Clear Chat
     func clearChat() {
+        // 取消正在进行的任务
+        currentTask?.cancel()
+        
         messages.removeAll()
         currentSessionId = UUID().uuidString
         error = nil
+        isLoading = false
     }
     
     // MARK: - Save to History
