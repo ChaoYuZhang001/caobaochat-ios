@@ -27,7 +27,17 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.caobaoGroupedBackground
+                // 渐变背景 - 绿色系（代表效率与智能）
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color(hex: "22c55e").opacity(0.08),
+                        Color(hex: "16a34a").opacity(0.05),
+                        Color.caobaoGroupedBackground
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
                 
                 List {
                     // 模型选择

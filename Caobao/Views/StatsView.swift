@@ -43,26 +43,39 @@ struct StatsView: View {
     
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // 总览卡片
-                    overviewCard
-                    
-                    // 时间段统计
-                    timeStatsCard
-                    
-                    // 对话详情
-                    messageDetailsCard
-                    
-                    // 成就徽章
-                    achievementsCard
-                    
-                    // 使用建议
-                    suggestionsCard
+            ZStack {
+                // 渐变背景 - 蓝色系（代表数据与分析）
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color(hex: "3b82f6").opacity(0.08),
+                        Color(hex: "6366f1").opacity(0.05),
+                        Color.caobaoGroupedBackground
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // 总览卡片
+                        overviewCard
+                        
+                        // 时间段统计
+                        timeStatsCard
+                        
+                        // 对话详情
+                        messageDetailsCard
+                        
+                        // 成就徽章
+                        achievementsCard
+                        
+                        // 使用建议
+                        suggestionsCard
+                    }
+                    .padding()
                 }
-                .padding()
             }
-            .background(Color.caobaoGroupedBackground)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {

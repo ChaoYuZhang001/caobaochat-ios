@@ -12,9 +12,16 @@ struct MorningReportView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // 背景色
-                Color.caobaoGroupedBackground
-                    .ignoresSafeArea()
+                // 暖橙渐变背景（代表清晨阳光）
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color(hex: "f59e0b"),
+                        Color(hex: "ea580c")
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
                 
                 ScrollView {
                     VStack(spacing: 16) {
@@ -43,7 +50,7 @@ struct MorningReportView: View {
                         Task { await loadReport() }
                     } label: {
                         Image(systemName: "arrow.clockwise")
-                            .foregroundStyle(.caobaoPrimary)
+                            .foregroundStyle(.white)
                     }
                 }
             }

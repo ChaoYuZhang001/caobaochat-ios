@@ -162,12 +162,24 @@ struct QuoteView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // 背景
-                Color.caobaoGroupedBackground
-                    .ignoresSafeArea()
+                // 渐变背景
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color.orange.opacity(0.3),
+                        Color.red.opacity(0.2),
+                        Color.pink.opacity(0.1),
+                        Color.caobaoGroupedBackground
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
                 
                 ScrollView {
-                    VStack(spacing: 24) {
+                    VStack(spacing: 20) {
+                        // 头部 Banner
+                        headerBanner
+                        
                         // 分类选择
                         categorySection
                         
@@ -185,17 +197,20 @@ struct QuoteView: View {
                     .padding()
                 }
             }
-            .navigationTitle("扎心金句")
-            #if os(iOS)
+            .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
-            #endif
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("扎心金句")
+                        .font(.headline)
+                        .foregroundStyle(.orange)
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         viewModel.showFavorites = true
                     } label: {
                         Image(systemName: "bookmark.fill")
-                            .foregroundStyle(.green)
+                            .foregroundStyle(.orange)
                     }
                 }
             }
@@ -212,6 +227,49 @@ struct QuoteView: View {
                 }
             }
         }
+    }
+    
+    // MARK: - Header Banner
+    private var headerBanner: some View {
+        VStack(spacing: 12) {
+            // 渐变标签
+            HStack(spacing: 8) {
+                Image(systemName: "sparkles")
+                    .font(.caption)
+                Text("扎心金句")
+                    .font(.caption)
+                    .fontWeight(.medium)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(
+                Capsule()
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [Color.orange.opacity(0.8), Color.red.opacity(0.8)]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+            )
+            .foregroundStyle(.white)
+            
+            Text("来句金句")
+                .font(.title)
+                .fontWeight(.bold)
+                .foregroundStyle(
+                    LinearGradient(
+                        gradient: Gradient(colors: [Color.orange, Color.red]),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+            
+            Text("一针见血的毒舌金句，发朋友圈专用")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 8)
     }
     
     // MARK: - View Components
@@ -335,7 +393,7 @@ struct CategoryButton: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
-            .background(isSelected ? Color.green : Color(.systemGray5))
+            .background(isSelected ? Color.orange : Color(.systemGray5))
             .foregroundStyle(isSelected ? .white : .primary)
             .clipShape(Capsule())
         }
@@ -353,7 +411,7 @@ struct QuoteCard: View {
         VStack(spacing: 20) {
             Image(systemName: "quote.opening")
                 .font(.largeTitle)
-                .foregroundStyle(.green.opacity(0.5))
+                .foregroundStyle(.orange.opacity(0.5))
             
             Text(quote.content)
                 .font(.title3)
@@ -368,7 +426,7 @@ struct QuoteCard: View {
                         Text(copied ? "已复制" : "复制")
                     }
                     .font(.subheadline)
-                    .foregroundStyle(.green)
+                    .foregroundStyle(.orange)
                 }
                 
                 Button(action: onFavorite) {
@@ -389,7 +447,7 @@ struct EmptyQuoteView: View {
         VStack(spacing: 16) {
             Image(systemName: "text.bubble")
                 .font(.system(size: 60))
-                .foregroundStyle(.green.opacity(0.5))
+                .foregroundStyle(.orange.opacity(0.5))
             
             Text("点击下方按钮生成金句")
                 .font(.headline)

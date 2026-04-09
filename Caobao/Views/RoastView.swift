@@ -10,9 +10,9 @@ struct RoastView: View {
     @State private var errorMessage: String?
     
     private let intensities = [
-        ("mild", "温和", "🌶️", "点到为止"),
-        ("medium", "中等", "🌶️🌶️", "一针见血"),
-        ("spicy", "爆辣", "🌶️🌶️🌶️", "直击灵魂"),
+        ("mild", "温和", "🌶️", "点到为止", Color.green),
+        ("medium", "中等", "🌶️🌶️", "一针见血", Color.orange),
+        ("spicy", "爆辣", "🌶️🌶️🌶️", "直击灵魂", Color.red),
     ]
     
     private let quickExamples = [
@@ -26,48 +26,23 @@ struct RoastView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.caobaoGroupedBackground
-                    .ignoresSafeArea()
+                // 渐变背景
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color.red.opacity(0.2),
+                        Color.orange.opacity(0.15),
+                        Color.amber.opacity(0.1),
+                        Color.caobaoGroupedBackground
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
                 
                 ScrollView {
-                    VStack(spacing: 24) {
-                        // 吐槽内容
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("吐槽内容")
-                                .font(.headline)
-                            
-                            TextEditor(text: $content)
-                                .frame(minHeight: 120)
-                                .padding(8)
-                                .background(Color(.systemGray6))
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(Color(.systemGray4), lineWidth: 1)
-                                )
-                            
-                            // 快捷示例
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 8) {
-                                    ForEach(quickExamples, id: \.self) { example in
-                                        Button {
-                                            content = example
-                                        } label: {
-                                            Text(example)
-                                                .font(.caption)
-                                                .padding(.horizontal, 12)
-                                                .padding(.vertical, 6)
-                                                .background(Color.green.opacity(0.1))
-                                                .foregroundStyle(.green)
-                                                .clipShape(Capsule())
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        .padding()
-                        .background(Color(.systemBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                    VStack(spacing: 20) {
+                        // 头部 Banner
+                        headerBanner
                         
                         // 吐槽强度
                         VStack(alignment: .leading, spacing: 12) {
@@ -80,12 +55,65 @@ struct RoastView: View {
                                         emoji: i.2,
                                         name: i.1,
                                         desc: i.3,
-                                        isSelected: intensity == i.0
+                                        isSelected: intensity == i.0,
+                                        color: i.4
                                     ) {
                                         intensity = i.0
                                     }
                                 }
                             }
+                        }
+                        .padding()
+                        .background(Color(.systemBackground))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        
+                        // 快捷示例
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "sparkles")
+                                    .font(.caption)
+                                    .foregroundStyle(.orange)
+                                Text("快速选择")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 8) {
+                                    ForEach(quickExamples, id: \.self) { example in
+                                        Button {
+                                            content = example
+                                        } label: {
+                                            Text(example.count > 12 ? String(example.prefix(12)) + "..." : example)
+                                                .font(.caption)
+                                                .padding(.horizontal, 12)
+                                                .padding(.vertical, 6)
+                                                .background(content == example ? Color.red : Color(.systemGray6))
+                                                .foregroundStyle(content == example ? .white : .primary)
+                                                .clipShape(Capsule())
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        .padding()
+                        .background(Color(.systemBackground))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        
+                        // 吐槽内容
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("吐槽内容")
+                                .font(.headline)
+                            
+                            TextEditor(text: $content)
+                                .frame(minHeight: 100)
+                                .padding(8)
+                                .background(Color(.systemGray6))
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color(.systemGray4), lineWidth: 1)
+                                )
                         }
                         .padding()
                         .background(Color(.systemBackground))
@@ -107,7 +135,13 @@ struct RoastView: View {
                             }
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color.red)
+                            .background(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [Color.red, Color.orange]),
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
                             .foregroundStyle(.white)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
@@ -194,11 +228,59 @@ struct RoastView: View {
                     .padding()
                 }
             }
-            .navigationTitle("吐槽大会")
-            #if os(iOS)
+            .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
-            #endif
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("吐槽大会")
+                        .font(.headline)
+                        .foregroundStyle(.red)
+                }
+            }
         }
+    }
+    
+    // MARK: - Header Banner
+    private var headerBanner: some View {
+        VStack(spacing: 12) {
+            // 渐变标签
+            HStack(spacing: 8) {
+                Image(systemName: "flame.fill")
+                    .font(.caption)
+                Text("被骂一顿")
+                    .font(.caption)
+                    .fontWeight(.medium)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(
+                Capsule()
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [Color.red.opacity(0.9), Color.orange.opacity(0.9)]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+            )
+            .foregroundStyle(.white)
+            
+            Text("专治各种不服")
+                .font(.title)
+                .fontWeight(.bold)
+                .foregroundStyle(
+                    LinearGradient(
+                        gradient: Gradient(colors: [Color.red, Color.orange]),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+            
+            Text("让草包用毒舌的方式，狠狠吐槽你一顿")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 8)
     }
     
     // MARK: - Format Result
@@ -271,6 +353,7 @@ struct IntensityCard: View {
     let name: String
     let desc: String
     let isSelected: Bool
+    var color: Color = .red
     let action: () -> Void
     
     var body: some View {
@@ -283,18 +366,27 @@ struct IntensityCard: View {
                     .fontWeight(.medium)
                 Text(desc)
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(isSelected ? .white.opacity(0.9) : .secondary)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
-            .background(isSelected ? Color.red.opacity(0.15) : Color(.systemGray6))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? Color.red : Color.clear, lineWidth: 2)
+            .background(
+                Group {
+                    if isSelected {
+                        LinearGradient(
+                            gradient: Gradient(colors: [color, color.opacity(0.7)]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    } else {
+                        Color(.systemGray6)
+                    }
+                }
             )
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .shadow(color: isSelected ? color.opacity(0.3) : .clear, radius: 4, y: 2)
         }
-        .foregroundStyle(.primary)
+        .foregroundStyle(isSelected ? .white : .primary)
     }
 }
 

@@ -33,32 +33,45 @@ struct AboutView: View {
     
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 24) {
-                    // Hero 区域
-                    heroSection
-                    
-                    // 统计数据
-                    statsSection
-                    
-                    // 我们的故事
-                    storySection
-                    
-                    // 核心功能
-                    featuresSection
-                    
-                    // 价值观
-                    valuesSection
-                    
-                    // 联系我们
-                    contactSection
-                    
-                    // 底部信息
-                    footerSection
+            ZStack {
+                // 渐变背景 - 橙色系（代表热情与活力）
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color(hex: "f97316").opacity(0.08),
+                        Color(hex: "fb923c").opacity(0.05),
+                        Color.caobaoGroupedBackground
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // Hero 区域
+                        heroSection
+                        
+                        // 统计数据
+                        statsSection
+                        
+                        // 我们的故事
+                        storySection
+                        
+                        // 核心功能
+                        featuresSection
+                        
+                        // 价值观
+                        valuesSection
+                        
+                        // 联系我们
+                        contactSection
+                        
+                        // 底部信息
+                        footerSection
+                    }
+                    .padding()
                 }
-                .padding()
             }
-            .background(Color.caobaoGroupedBackground)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {

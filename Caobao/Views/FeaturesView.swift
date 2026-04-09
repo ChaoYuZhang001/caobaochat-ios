@@ -29,9 +29,17 @@ struct FeaturesView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // 背景色 - 与 Web 端一致
-                Color.caobaoGroupedBackground
-                    .ignoresSafeArea()
+                // 渐变背景 - 多彩渐变（代表丰富功能）
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color(hex: "8b5cf6").opacity(0.08),
+                        Color(hex: "a855f7").opacity(0.05),
+                        Color.caobaoGroupedBackground
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
                 
                 ScrollView {
                     VStack(spacing: 24) {

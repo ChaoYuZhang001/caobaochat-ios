@@ -125,7 +125,20 @@ struct MacSidebarView: View {
     let conversations: [Conversation]
     
     var body: some View {
-        List {
+        ZStack {
+            // 渐变背景 - 温暖的橙黄渐变
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(hex: "fbbf24").opacity(0.1),
+                    Color(hex: "f59e0b").opacity(0.05),
+                    Color.caobaoGroupedBackground
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            
+            List {
             // 核心功能
             Section("核心功能") {
                 ForEach([MacFeature.chat, .fortune, .analyze]) { feature in
@@ -172,6 +185,7 @@ struct MacSidebarView: View {
         }
         .listStyle(.sidebar)
         .navigationTitle("草包")
+        }
     }
 }
 

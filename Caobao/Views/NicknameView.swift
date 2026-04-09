@@ -16,26 +16,54 @@ struct NicknameView: View {
     ]
     
     private let styles = [
-        ("sharp", "犀利毒舌", "🔥", "一针见血"),
-        ("gentle", "温和吐槽", "🌸", "温柔一刀"),
-        ("funny", "搞笑调侃", "🎭", "笑中带刀"),
+        ("sharp", "犀利毒舌", "🔥", "一针见血", Color.red, Color.orange),
+        ("gentle", "温和吐槽", "🌸", "温柔一刀", Color.pink, Color.rose),
+        ("funny", "搞笑调侃", "🎭", "笑中带刀", Color.purple, Color.indigo),
     ]
+    
+    private var selectedStyleColors: (Color, Color) {
+        styles.first { $0.0 == style }.map { (Color($0.4), Color($0.5)) } ?? (.blue, .cyan)
+    }
     
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.caobaoGroupedBackground
-                    .ignoresSafeArea()
+                // 渐变背景
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color.blue.opacity(0.2),
+                        Color.cyan.opacity(0.15),
+                        Color.teal.opacity(0.1),
+                        Color.caobaoGroupedBackground
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
                 
                 ScrollView {
-                    VStack(spacing: 24) {
-                        // 名字输入
+                    VStack(spacing: 20) {
+                        // 头部 Banner
+                        headerBanner
+                        
+                        // 风格选择
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("你的名字")
+                            Text("昵称风格")
                                 .font(.headline)
                             
-                            TextField("输入名字（可选）", text: $name)
-                                .textFieldStyle(.roundedBorder)
+                            HStack(spacing: 12) {
+                                ForEach(styles, id: \.0) { s in
+                                    StyleCard(
+                                        emoji: s.2,
+                                        name: s.1,
+                                        desc: s.3,
+                                        isSelected: style == s.0,
+                                        gradient: (Color(s.4), Color(s.5))
+                                    ) {
+                                        style = s.0
+                                    }
+                                }
+                            }
                         }
                         .padding()
                         .background(Color(.systemBackground))
@@ -43,17 +71,24 @@ struct NicknameView: View {
                         
                         // 特点选择
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("你的特点")
-                                .font(.headline)
+                            HStack(spacing: 4) {
+                                Image(systemName: "sparkles")
+                                    .font(.caption)
+                                    .foregroundStyle(.blue)
+                                Text("快速选择特点")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
                             
                             LazyVGrid(columns: [
                                 GridItem(.flexible()),
                                 GridItem(.flexible()),
-                            ], spacing: 12) {
+                            ], spacing: 8) {
                                 ForEach(traits, id: \.self) { trait in
                                     TraitChip(
                                         trait: trait,
-                                        isSelected: selectedTraits.contains(trait)
+                                        isSelected: selectedTraits.contains(trait),
+                                        color: selectedStyleColors.0
                                     ) {
                                         if selectedTraits.contains(trait) {
                                             selectedTraits.remove(trait)
@@ -75,7 +110,7 @@ struct NicknameView: View {
                                         customTrait = ""
                                     }
                                     .font(.caption)
-                                    .foregroundStyle(.green)
+                                    .foregroundStyle(selectedStyleColors.0)
                                 }
                             }
                         }
@@ -83,23 +118,13 @@ struct NicknameView: View {
                         .background(Color(.systemBackground))
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         
-                        // 风格选择
+                        // 名字输入
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("昵称风格")
+                            Text("你的名字")
                                 .font(.headline)
                             
-                            HStack(spacing: 12) {
-                                ForEach(styles, id: \.0) { s in
-                                    StyleCard(
-                                        emoji: s.1,
-                                        name: s.2,
-                                        desc: s.3,
-                                        isSelected: style == s.0
-                                    ) {
-                                        style = s.0
-                                    }
-                                }
-                            }
+                            TextField("输入名字（可选）", text: $name)
+                                .textFieldStyle(.roundedBorder)
                         }
                         .padding()
                         .background(Color(.systemBackground))
@@ -121,7 +146,13 @@ struct NicknameView: View {
                             }
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color.green)
+                            .background(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [selectedStyleColors.0, selectedStyleColors.1]),
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
                             .foregroundStyle(.white)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
@@ -140,6 +171,7 @@ struct NicknameView: View {
                                         nickname: item,
                                         index: index + 1,
                                         copied: copied == index,
+                                        gradient: (selectedStyleColors.0, selectedStyleColors.1),
                                         onCopy: {
                                             copyToClipboard(item.name, index: index)
                                         }
@@ -154,11 +186,59 @@ struct NicknameView: View {
                     .padding()
                 }
             }
-            .navigationTitle("个性昵称")
-            #if os(iOS)
+            .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
-            #endif
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("个性昵称")
+                        .font(.headline)
+                        .foregroundStyle(.blue)
+                }
+            }
         }
+    }
+    
+    // MARK: - Header Banner
+    private var headerBanner: some View {
+        VStack(spacing: 12) {
+            // 渐变标签
+            HStack(spacing: 8) {
+                Image(systemName: "wand.and.stars")
+                    .font(.caption)
+                Text("个性昵称")
+                    .font(.caption)
+                    .fontWeight(.medium)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(
+                Capsule()
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [Color.blue.opacity(0.9), Color.cyan.opacity(0.9)]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+            )
+            .foregroundStyle(.white)
+            
+            Text("给你起个名")
+                .font(.title)
+                .fontWeight(.bold)
+                .foregroundStyle(
+                    LinearGradient(
+                        gradient: Gradient(colors: [Color.blue, Color.cyan]),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+            
+            Text("让草包给你起一个有创意的个性昵称")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 8)
     }
     
     // MARK: - Actions
@@ -211,15 +291,16 @@ struct NicknameView: View {
 struct TraitChip: View {
     let trait: String
     let isSelected: Bool
+    var color: Color = .blue
     let action: () -> Void
     
     var body: some View {
         Button(action: action) {
             Text(trait)
-                .font(.subheadline)
+                .font(.caption)
                 .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(isSelected ? Color.green : Color(.systemGray5))
+                .padding(.vertical, 6)
+                .background(isSelected ? color : Color(.systemGray5))
                 .foregroundStyle(isSelected ? .white : .primary)
                 .clipShape(Capsule())
         }
@@ -231,6 +312,7 @@ struct StyleCard: View {
     let name: String
     let desc: String
     let isSelected: Bool
+    var gradient: (Color, Color) = (.blue, .cyan)
     let action: () -> Void
     
     var body: some View {
@@ -243,18 +325,27 @@ struct StyleCard: View {
                     .fontWeight(.medium)
                 Text(desc)
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(isSelected ? .white.opacity(0.9) : .secondary)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
-            .background(isSelected ? Color.green.opacity(0.15) : Color(.systemGray6))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? Color.green : Color.clear, lineWidth: 2)
+            .background(
+                Group {
+                    if isSelected {
+                        LinearGradient(
+                            gradient: Gradient(colors: [gradient.0, gradient.1]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    } else {
+                        Color(.systemGray6)
+                    }
+                }
             )
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .shadow(color: isSelected ? gradient.0.opacity(0.3) : .clear, radius: 4, y: 2)
         }
-        .foregroundStyle(.primary)
+        .foregroundStyle(isSelected ? .white : .primary)
     }
 }
 
@@ -262,6 +353,7 @@ struct NicknameCard: View {
     let nickname: NicknameItem
     let index: Int
     let copied: Bool
+    var gradient: (Color, Color) = (.blue, .cyan)
     let onCopy: () -> Void
     
     var body: some View {
@@ -271,7 +363,13 @@ struct NicknameCard: View {
                 .fontWeight(.bold)
                 .foregroundStyle(.white)
                 .frame(width: 24, height: 24)
-                .background(Color.green)
+                .background(
+                    LinearGradient(
+                        gradient: Gradient(colors: [gradient.0, gradient.1]),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
                 .clipShape(Circle())
             
             VStack(alignment: .leading, spacing: 4) {

@@ -11,15 +11,61 @@ struct DecisionView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.caobaoGroupedBackground
-                    .ignoresSafeArea()
+                // 蓝紫渐变背景
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color(hex: "667eea"),
+                        Color(hex: "764ba2")
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
                 
                 ScrollView {
                     VStack(spacing: 24) {
+                        // 头部Banner
+                        VStack(spacing: 16) {
+                            // 渐变标签
+                            Text("纠结终结者")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 6)
+                                .background(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [
+                                            Color.white.opacity(0.3),
+                                            Color.white.opacity(0.1)
+                                        ]),
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .foregroundStyle(.white)
+                                .clipShape(Capsule())
+                            
+                            // 大标题
+                            Text("选择困难？")
+                                .font(.system(size: 32, weight: .bold, design: .rounded))
+                                .foregroundStyle(.white)
+                            
+                            // 副标题
+                            Text("帮你做出最不后悔的决定")
+                                .font(.subheadline)
+                                .foregroundStyle(.white.opacity(0.8))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 24)
+                        
                         // 问题输入
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("你的问题")
-                                .font(.headline)
+                            HStack {
+                                Image(systemName: "questionmark.circle.fill")
+                                    .foregroundStyle(Color(hex: "667eea"))
+                                Text("你的问题")
+                                    .font(.headline)
+                            }
                             
                             TextField("今天中午吃什么？", text: $question)
                                 .textFieldStyle(.roundedBorder)
@@ -46,7 +92,7 @@ struct DecisionView: View {
                                     }
                                 } label: {
                                     Image(systemName: "plus.circle")
-                                        .foregroundStyle(.green)
+                                        .foregroundStyle(Color(hex: "667eea"))
                                 }
                             }
                             
@@ -57,7 +103,7 @@ struct DecisionView: View {
                                         .fontWeight(.bold)
                                         .foregroundStyle(.white)
                                         .frame(width: 20, height: 20)
-                                        .background(Color.green)
+                                        .background(Color(hex: "667eea"))
                                         .clipShape(Circle())
                                     
                                     TextField("选项 \(index + 1)", text: $options[index])
@@ -94,7 +140,16 @@ struct DecisionView: View {
                             }
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color.purple)
+                            .background(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [
+                                        Color(hex: "667eea"),
+                                        Color(hex: "764ba2")
+                                    ]),
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
                             .foregroundStyle(.white)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                         }

@@ -12,26 +12,39 @@ struct OfficialView: View {
     
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 24) {
-                    // Hero
-                    heroSection
-                    
-                    // 理念
-                    philosophySection
-                    
-                    // 产品矩阵
-                    productsSection
-                    
-                    // 团队文化
-                    cultureSection
-                    
-                    // 联系方式
-                    contactSection
+            ZStack {
+                // 渐变背景 - 紫色系（代表创意与想象）
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color(hex: "8b5cf6").opacity(0.08),
+                        Color(hex: "a855f7").opacity(0.05),
+                        Color.caobaoGroupedBackground
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // Hero
+                        heroSection
+                        
+                        // 理念
+                        philosophySection
+                        
+                        // 产品矩阵
+                        productsSection
+                        
+                        // 团队文化
+                        cultureSection
+                        
+                        // 联系方式
+                        contactSection
+                    }
+                    .padding()
                 }
-                .padding()
             }
-            .background(Color.caobaoGroupedBackground)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {

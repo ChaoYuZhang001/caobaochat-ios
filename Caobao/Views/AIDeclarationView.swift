@@ -13,29 +13,42 @@ struct AIDeclarationView: View {
     
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    // 顶部提示
-                    warningCard
-                    
-                    // AI 说明
-                    aiDescriptionSection
-                    
-                    // 使用限制
-                    usageLimitSection
-                    
-                    // 免责声明
-                    disclaimerSection
-                    
-                    // 用户责任
-                    userResponsibilitySection
-                    
-                    // 举报入口
-                    reportSection
+            ZStack {
+                // 渐变背景 - 灰蓝色系（代表专业与严谨）
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color(hex: "6b7280").opacity(0.08),
+                        Color(hex: "9ca3af").opacity(0.05),
+                        Color.caobaoGroupedBackground
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        // 顶部提示
+                        warningCard
+                        
+                        // AI 说明
+                        aiDescriptionSection
+                        
+                        // 使用限制
+                        usageLimitSection
+                        
+                        // 免责声明
+                        disclaimerSection
+                        
+                        // 用户责任
+                        userResponsibilitySection
+                        
+                        // 举报入口
+                        reportSection
+                    }
+                    .padding()
                 }
-                .padding()
             }
-            .background(Color.caobaoGroupedBackground)
             .navigationTitle("AI 使用声明")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)

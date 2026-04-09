@@ -18,11 +18,53 @@ struct AnalyzeView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.caobaoGroupedBackground
-                    .ignoresSafeArea()
+                // 青绿渐变背景
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color(hex: "10b981"),
+                        Color(hex: "059669")
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
                 
                 ScrollView {
                     VStack(spacing: 24) {
+                        // 头部Banner
+                        VStack(spacing: 16) {
+                            // 渐变标签
+                            Text("火眼金睛")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 6)
+                                .background(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [
+                                            Color.white.opacity(0.3),
+                                            Color.white.opacity(0.1)
+                                        ]),
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .foregroundStyle(.white)
+                                .clipShape(Capsule())
+                            
+                            // 大标题
+                            Text("图片分析")
+                                .font(.system(size: 32, weight: .bold, design: .rounded))
+                                .foregroundStyle(.white)
+                            
+                            // 副标题
+                            Text("上传图片，让AI帮你看透一切")
+                                .font(.subheadline)
+                                .foregroundStyle(.white.opacity(0.8))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 24)
+                        
                         // 图片选择区域
                         VStack(spacing: 16) {
                             if let image = selectedImage {
@@ -33,7 +75,7 @@ struct AnalyzeView: View {
                                     .clipShape(RoundedRectangle(cornerRadius: 12))
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 12)
-                                            .stroke(Color.green, lineWidth: 2)
+                                            .stroke(Color(hex: "10b981"), lineWidth: 2)
                                     )
                                 
                                 // 更换图片按钮
@@ -68,7 +110,7 @@ struct AnalyzeView: View {
                                 VStack(spacing: 16) {
                                     Image(systemName: "photo.on.rectangle.angled")
                                         .font(.system(size: 60))
-                                        .foregroundStyle(.green.opacity(0.5))
+                                        .foregroundStyle(Color(hex: "10b981").opacity(0.5))
                                     
                                     Text("选择或拍摄图片")
                                         .font(.headline)
@@ -79,8 +121,8 @@ struct AnalyzeView: View {
                                         PhotosPicker(selection: $selectedItem, matching: .images) {
                                             Label("相册", systemImage: "photo.fill")
                                                 .padding()
-                                                .background(Color.green.opacity(0.1))
-                                                .foregroundStyle(.green)
+                                                .background(Color(hex: "10b981").opacity(0.1))
+                                                .foregroundStyle(Color(hex: "10b981"))
                                                 .clipShape(RoundedRectangle(cornerRadius: 12))
                                         }
                                         .onChange(of: selectedItem) { _ in
@@ -97,8 +139,8 @@ struct AnalyzeView: View {
                                         } label: {
                                             Label("相机", systemImage: "camera.fill")
                                                 .padding()
-                                                .background(Color.green.opacity(0.1))
-                                                .foregroundStyle(.green)
+                                                .background(Color(hex: "10b981").opacity(0.1))
+                                                .foregroundStyle(Color(hex: "10b981"))
                                                 .clipShape(RoundedRectangle(cornerRadius: 12))
                                         }
                                         #else
@@ -107,8 +149,8 @@ struct AnalyzeView: View {
                                         } label: {
                                             Label("选择图片", systemImage: "photo.fill")
                                                 .padding()
-                                                .background(Color.green.opacity(0.1))
-                                                .foregroundStyle(.green)
+                                                .background(Color(hex: "10b981").opacity(0.1))
+                                                .foregroundStyle(Color(hex: "10b981"))
                                                 .clipShape(RoundedRectangle(cornerRadius: 12))
                                         }
                                         #endif
@@ -126,8 +168,12 @@ struct AnalyzeView: View {
                         
                         // 分析提示词
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("分析指令")
-                                .font(.headline)
+                            HStack {
+                                Image(systemName: "text.bubble.fill")
+                                    .foregroundStyle(Color(hex: "10b981"))
+                                Text("分析指令")
+                                    .font(.headline)
+                            }
                             
                             TextField("请分析这张图片", text: $prompt)
                                 .textFieldStyle(.roundedBorder)
@@ -143,8 +189,8 @@ struct AnalyzeView: View {
                                                 .font(.caption)
                                                 .padding(.horizontal, 12)
                                                 .padding(.vertical, 6)
-                                                .background(Color.green.opacity(0.1))
-                                                .foregroundStyle(.green)
+                                                .background(Color(hex: "10b981").opacity(0.1))
+                                                .foregroundStyle(Color(hex: "10b981"))
                                                 .clipShape(Capsule())
                                         }
                                     }
@@ -171,7 +217,16 @@ struct AnalyzeView: View {
                             }
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color.green)
+                            .background(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [
+                                        Color(hex: "10b981"),
+                                        Color(hex: "059669")
+                                    ]),
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
                             .foregroundStyle(.white)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                         }

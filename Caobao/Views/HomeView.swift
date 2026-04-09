@@ -42,9 +42,17 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // 背景色 - 与 Web 端一致
-                Color.caobaoGroupedBackground
-                    .ignoresSafeArea()
+                // 渐变背景 - 温暖的橙黄渐变（代表草包的热情）
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color(hex: "fbbf24").opacity(0.15),
+                        Color(hex: "f59e0b").opacity(0.1),
+                        Color.caobaoGroupedBackground
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
                 
                 ScrollView {
                     VStack(spacing: 20) {

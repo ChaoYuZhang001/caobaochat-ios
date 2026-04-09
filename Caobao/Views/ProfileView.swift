@@ -14,47 +14,60 @@ struct ProfileView: View {
     
     var body: some View {
         NavigationStack {
-            List {
-                // Profile Header
-                Section {
-                    HStack(spacing: 16) {
-                        // Avatar
-                        Button {
-                            showAvatarPicker = true
-                        } label: {
-                            avatarView
-                                .frame(width: 70, height: 70)
-                        }
-                        .buttonStyle(.plain)
-                        
-                        // Info
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(appState.userSettings.nickname)
-                                .font(.title2)
-                                .fontWeight(.bold)
+            ZStack {
+                // 渐变背景 - 蓝色系渐变（代表专业与信任）
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color(hex: "3b82f6").opacity(0.08),
+                        Color(hex: "60a5fa").opacity(0.05),
+                        Color.caobaoGroupedBackground
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+                
+                List {
+                    // Profile Header
+                    Section {
+                        HStack(spacing: 16) {
+                            // Avatar
+                            Button {
+                                showAvatarPicker = true
+                            } label: {
+                                avatarView
+                                    .frame(width: 70, height: 70)
+                            }
+                            .buttonStyle(.plain)
                             
-                            if let user = authService.user {
-                                Text(user.isGuest == true ? "游客账号" : "\(user.authProvider.capitalized) 登录")
-                                    .font(.caption)
+                            // Info
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(appState.userSettings.nickname)
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                
+                                if let user = authService.user {
+                                    Text(user.isGuest == true ? "游客账号" : "\(user.authProvider.capitalized) 登录")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                
+                                Text("毒舌等级: \(toxicLevelText)")
+                                    .font(.subheadline)
                                     .foregroundStyle(.secondary)
                             }
                             
-                            Text("毒舌等级: \(toxicLevelText)")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                            Spacer()
+                            
+                            Image(systemName: "chevron.right")
+                                .foregroundStyle(.tertiary)
                         }
-                        
-                        Spacer()
-                        
-                        Image(systemName: "chevron.right")
-                            .foregroundStyle(.tertiary)
+                        .padding(.vertical, 8)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            showNicknameEditor = true
+                        }
                     }
-                    .padding(.vertical, 8)
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        showNicknameEditor = true
-                    }
-                }
                 
                 // Stats
                 Section {

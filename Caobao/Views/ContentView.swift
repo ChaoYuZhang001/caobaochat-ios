@@ -74,41 +74,54 @@ struct iPadContentView: View {
     
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
-            // 左侧边栏
-            List(selection: $selectedTab) {
-                Section("功能") {
-                    ForEach(AppTab.allCases, id: \.self) { tab in
-                        NavigationLink(value: tab) {
-                            Label(tab.rawValue, systemImage: tab.icon)
+            // 左侧边栏 - 带渐变背景
+            ZStack {
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color(hex: "fbbf24").opacity(0.1),
+                        Color(hex: "f59e0b").opacity(0.05),
+                        Color.caobaoGroupedBackground
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+                
+                List(selection: $selectedTab) {
+                    Section("功能") {
+                        ForEach(AppTab.allCases, id: \.self) { tab in
+                            NavigationLink(value: tab) {
+                                Label(tab.rawValue, systemImage: tab.icon)
+                            }
                         }
                     }
-                }
-                
-                Section("最近对话") {
-                    ForEach(conversations.prefix(10)) { conv in
-                        Button {
-                            selectedConversation = conv
-                            selectedTab = .chat
-                        } label: {
-                            HStack {
-                                Image(systemName: "message")
-                                    .foregroundStyle(.secondary)
-                                VStack(alignment: .leading) {
-                                    Text(conv.title)
-                                        .font(.headline)
-                                        .lineLimit(1)
-                                        .foregroundStyle(.primary)
-                                    Text(conv.preview)
-                                        .font(.caption)
+                    
+                    Section("最近对话") {
+                        ForEach(conversations.prefix(10)) { conv in
+                            Button {
+                                selectedConversation = conv
+                                selectedTab = .chat
+                            } label: {
+                                HStack {
+                                    Image(systemName: "message")
                                         .foregroundStyle(.secondary)
-                                        .lineLimit(1)
+                                    VStack(alignment: .leading) {
+                                        Text(conv.title)
+                                            .font(.headline)
+                                            .lineLimit(1)
+                                            .foregroundStyle(.primary)
+                                        Text(conv.preview)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                            .lineLimit(1)
+                                    }
                                 }
                             }
                         }
                     }
                 }
+                .listStyle(.sidebar)
             }
-            .listStyle(.sidebar)
             .navigationTitle("草包")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -178,8 +191,17 @@ struct ChatView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.caobaoGroupedBackground
-                    .ignoresSafeArea()
+                // 渐变背景 - 温暖的橙色渐变
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color(hex: "f97316").opacity(0.08),
+                        Color(hex: "fb923c").opacity(0.05),
+                        Color.caobaoGroupedBackground
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
                     // Messages

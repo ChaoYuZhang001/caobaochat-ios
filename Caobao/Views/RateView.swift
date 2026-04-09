@@ -9,10 +9,10 @@ struct RateView: View {
     @State private var showingShareSheet = false
     
     private let types = [
-        ("text", "文字/想法", "📝", "评价你的想法"),
-        ("behavior", "行为/做法", "🎭", "评价你的行为"),
-        ("work", "工作表现", "💼", "评价工作成果"),
-        ("life", "生活状态", "🌈", "评价生活方式")
+        ("text", "文字/想法", "📝", "评价你的想法", Color.purple, Color.pink),
+        ("behavior", "行为/做法", "🎭", "评价你的行为", Color.blue, Color.cyan),
+        ("work", "工作表现", "💼", "评价工作成果", Color.orange, Color.yellow),
+        ("life", "生活状态", "🌈", "评价生活方式", Color.green, Color.teal)
     ]
     
     private let quickExamples = [
@@ -23,35 +23,61 @@ struct RateView: View {
         "明明很困却还在刷手机"
     ]
     
+    private var selectedTypeColors: (Color, Color) {
+        types.first { $0.0 == selectedType }.map { (Color($0.4), Color($0.5)) } ?? (.purple, .pink)
+    }
+    
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // 类型选择
-                    typeSelector
-                    
-                    // 快速示例
-                    quickExamplesSection
-                    
-                    // 输入区
-                    inputSection
-                    
-                    // 结果展示
-                    if let result = result {
-                        resultSection(result)
+            ZStack {
+                // 渐变背景
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color.purple.opacity(0.2),
+                        Color.pink.opacity(0.15),
+                        Color.rose.opacity(0.1),
+                        Color.caobaoGroupedBackground
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // 头部 Banner
+                        headerBanner
+                        
+                        // 类型选择
+                        typeSelector
+                        
+                        // 快速示例
+                        quickExamplesSection
+                        
+                        // 输入区
+                        inputSection
+                        
+                        // 结果展示
+                        if let result = result {
+                            resultSection(result)
+                        }
                     }
+                    .padding()
                 }
-                .padding()
             }
-            .navigationTitle("犀利点评")
-            #if os(iOS)
+            .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
-            #endif
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("犀利点评")
+                        .font(.headline)
+                        .foregroundStyle(.purple)
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     if result != nil {
                         Button(action: { showingShareSheet = true }) {
                             Image(systemName: "square.and.arrow.up")
+                                .foregroundStyle(.purple)
                         }
                     }
                 }
@@ -62,6 +88,49 @@ struct RateView: View {
                 }
             }
         }
+    }
+    
+    // MARK: - Header Banner
+    private var headerBanner: some View {
+        VStack(spacing: 12) {
+            // 渐变标签
+            HStack(spacing: 8) {
+                Image(systemName: "star.fill")
+                    .font(.caption)
+                Text("毒舌打分")
+                    .font(.caption)
+                    .fontWeight(.medium)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(
+                Capsule()
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [Color.purple.opacity(0.9), Color.pink.opacity(0.9)]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+            )
+            .foregroundStyle(.white)
+            
+            Text("来评评理")
+                .font(.title)
+                .fontWeight(.bold)
+                .foregroundStyle(
+                    LinearGradient(
+                        gradient: Gradient(colors: [Color.purple, Color.pink]),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+            
+            Text("让草包用毒舌的方式，给你一个\"公正\"的评分")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 8)
     }
     
     // MARK: - Type Selector
@@ -87,20 +156,20 @@ struct RateView: View {
                                     .fontWeight(.medium)
                                 Text(type.3)
                                     .font(.caption2)
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(selectedType == type.0 ? .white.opacity(0.8) : .secondary)
                             }
                             Spacer()
                         }
                         .padding()
                         .frame(maxWidth: .infinity)
-                        .background(selectedType == type.0 ? Color.pink.opacity(0.15) : Color(.secondarySystemBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(selectedType == type.0 ? Color.pink : Color.clear, lineWidth: 2)
+                        .background(
+                            selectedType == type.0
+                                ? LinearGradient(gradient: Gradient(colors: [Color(type.4), Color(type.5)]), startPoint: .leading, endPoint: .trailing)
+                                : Color(.secondarySystemBackground)
                         )
+                        .foregroundStyle(selectedType == type.0 ? .white : .primary)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
-                    .buttonStyle(.plain)
                 }
             }
         }
@@ -111,7 +180,7 @@ struct RateView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Image(systemName: "sparkles")
-                    .foregroundStyle(.pink)
+                    .foregroundStyle(selectedTypeColors.0)
                 Text("快速选择")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -127,7 +196,7 @@ struct RateView: View {
                                 .font(.caption)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 6)
-                                .background(content == example ? Color.pink : Color(.secondarySystemBackground))
+                                .background(content == example ? selectedTypeColors.0 : Color(.secondarySystemBackground))
                                 .foregroundStyle(content == example ? .white : .primary)
                                 .clipShape(Capsule())
                         }
@@ -173,7 +242,15 @@ struct RateView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(content.isEmpty ? Color.gray : Color.pink)
+                .background(
+                    content.isEmpty
+                        ? Color.gray
+                        : LinearGradient(
+                            gradient: Gradient(colors: [selectedTypeColors.0, selectedTypeColors.1]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                )
                 .foregroundStyle(.white)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             }
