@@ -11,6 +11,11 @@
 //
 
 import SwiftUI
+#if os(iOS)
+import UIKit
+#else
+import AppKit
+#endif
 
 // MARK: - AvatarImageView
 struct AvatarImageView: View {
@@ -68,6 +73,7 @@ struct AvatarImageView: View {
             let (data, _) = try await URLSession.shared.data(from: url)
             
             // 验证图片数据
+            #if os(iOS)
             if let uiImage = UIImage(data: data) {
                 await MainActor.run {
                     self.image = Image(uiImage: uiImage)
@@ -83,6 +89,23 @@ struct AvatarImageView: View {
                     await handleError()
                 }
             }
+            #else
+            if let nsImage = NSImage(data: data) {
+                await MainActor.run {
+                    self.image = Image(nsImage: nsImage)
+                    self.isLoading = false
+                    self.loadError = false
+                }
+            } else {
+                // 图片数据无效
+                if format == "webp" {
+                    // WebP 失败，尝试 PNG
+                    await loadAvatar(format: "png")
+                } else {
+                    await handleError()
+                }
+            }
+            #endif
         } catch {
             // 下载失败
             if format == "webp" {
