@@ -22,7 +22,7 @@ struct NicknameView: View {
     ]
     
     private var selectedStyleColors: (Color, Color) {
-        styles.first { $0.0 == style }.map { (Color($0.4), Color($0.5)) } ?? (.blue, .cyan)
+        styles.first { $0.0 == style }.map { ($0.4, $0.5) } ?? (.blue, .cyan)
     }
     
     var body: some View {
@@ -58,7 +58,7 @@ struct NicknameView: View {
                                         name: s.1,
                                         desc: s.3,
                                         isSelected: style == s.0,
-                                        gradient: (Color(s.4), Color(s.5))
+                                        gradient: (s.4, s.5)
                                     ) {
                                         style = s.0
                                     }
