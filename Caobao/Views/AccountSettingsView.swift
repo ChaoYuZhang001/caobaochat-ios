@@ -229,9 +229,19 @@ struct AccountSettingsView: View {
                 confirmation: "确认注销",
                 reason: "用户主动申请注销"
             )
+            // 清除所有本地数据
+            clearAllLocalData()
+            // 导航回首页
             alertTitle = "操作成功"
-            alertMessage = "账号已成功注销，感谢您的使用"
+            alertMessage = "账号已成功注销，正在返回首页..."
             showSuccessAlert = true
+            // 延迟导航
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                   let window = windowScene.windows.first {
+                    window.rootViewController?.dismiss(animated: true)
+                }
+            }
             deleteConfirmationText = ""
         } catch {
             alertTitle = "注销失败"
@@ -239,6 +249,29 @@ struct AccountSettingsView: View {
             showSuccessAlert = true
         }
         isLoading = false
+    }
+    
+    // MARK: - 清除所有本地数据
+    private func clearAllLocalData() {
+        // 清除 UserDefaults 中的数据
+        let keysToRemove = [
+            "conversationHistory",  // 对话历史
+            "caobao_guest_id",
+            "caobao_guest_token",
+            "caobao_guest_created_at",
+            "caobao_chat_history",
+            "caobao_settings",
+            "caobao_user_preferences"
+        ]
+        
+        for key in keysToRemove {
+            UserDefaults.standard.removeObject(forKey: key)
+        }
+        
+        // 清除 AuthService 的登录状态
+        authService.logout()
+        
+        print("已清除所有本地数据")
     }
 }
 
