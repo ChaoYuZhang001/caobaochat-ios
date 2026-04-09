@@ -178,7 +178,7 @@ struct AIDeclarationView: View {
     // MARK: - 用户责任
     private var userResponsibilitySection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            sectionHeader(title: "您的责任", icon: "person.check", color: .purple)
+            sectionHeader(title: "您的责任", icon: "checkmark.shield", color: .purple)
             
             VStack(alignment: .leading, spacing: 10) {
                 responsibilityRow("遵守中华人民共和国相关法律法规")
