@@ -3,22 +3,24 @@ import SwiftUI
 // MARK: - Settings View (设置)
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
-    @AppStorage("selectedModel") private var selectedModel = "doubao-pro-32k"
+    @AppStorage("selectedModel") private var selectedModel = "qwen-plus"
     @AppStorage("colorScheme") private var colorScheme = "system"
     @AppStorage("toxicLevel") private var toxicLevel = "normal"
     @AppStorage("voiceEnabled") private var voiceEnabled = true
     
+    // 模型列表 - 与后端保持一致
     private let models = [
-        ("doubao-pro-32k", "豆包 Pro", "推荐，平衡性能与速度", "🚀"),
-        ("doubao-lite-32k", "豆包 Lite", "快速响应，适合简单对话", "⚡"),
-        ("deepseek-chat", "DeepSeek", "深度思考，逻辑性强", "🧠"),
-        ("kimi", "Kimi", "长文本处理能力强", "📚"),
+        ("qwen-plus", "通义千问 Plus", "推荐，平衡性能与速度", "🚀"),
+        ("qwen-turbo", "通义千问 Turbo", "快速响应，适合简单对话", "⚡"),
+        ("deepseek-chat", "DeepSeek Chat", "深度思考，逻辑性强", "🧠"),
+        ("kimi-32k", "Kimi", "长文本处理能力强", "📚"),
     ]
     
+    // 毒舌程度 - 与后端保持一致
     private let toxicLevels = [
         ("light", "温和", "温柔提醒，点到为止", "🌸"),
         ("normal", "标准", "一针见血，恰到好处", "🎯"),
-        ("heavy", "爆辣", "直击灵魂，不留情面", "🔥"),
+        ("fierce", "爆辣", "直击灵魂，不留情面", "🔥"),
     ]
     
     var body: some View {
@@ -66,6 +68,9 @@ struct SettingsView: View {
                         ForEach(toxicLevels, id: \.0) { level in
                             Button {
                                 toxicLevel = level.0
+                                // 同步到 appState 以保持联动
+                                appState.userSettings.toxicLevel = level.0
+                                appState.saveUserSettings()
                                 print("🎯 切换毒舌程度: \(level.1)")
                             } label: {
                                 HStack {
