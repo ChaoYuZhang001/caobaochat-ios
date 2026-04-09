@@ -54,7 +54,6 @@ struct WatchDecisionView: View {
         } label: {
             if isLoading {
                 ProgressView()
-                    .tint(.white)
             } else {
                 Text("帮我决定")
             }

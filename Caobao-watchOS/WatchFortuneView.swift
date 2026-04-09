@@ -59,7 +59,7 @@ struct WatchFortuneView: View {
         VStack(alignment: .leading, spacing: 6) {
             fortuneItem("爱情", score: fortune.loveScore, icon: "heart.fill", color: .pink)
             fortuneItem("事业", score: fortune.careerScore, icon: "briefcase.fill", color: .blue)
-            fortuneItem("财运", score: fortune.wealthScore, icon: "yensign.circle.fill", color: .yellow)
+            fortuneItem("财运", score: fortune.wealthScore, icon: "dollarsign.circle.fill", color: .yellow)
             fortuneItem("健康", score: fortune.healthScore, icon: "heart.fill", color: .green)
         }
         

@@ -4,7 +4,7 @@ import SwiftUI
 struct WatchContentView: View {
     @EnvironmentObject var appState: WatchAppState
     
-    var body: some Scene {
+    var body: some View {
         TabView {
             WatchHomeView()
                 .tabItem {
@@ -31,7 +31,6 @@ struct WatchContentView: View {
                     Image(systemName: "scale.3d")
                 }
         }
-        .tabViewStyle(.verticalPage)
     }
 }
 
