@@ -52,6 +52,17 @@ class ChatViewModel: ObservableObject {
                 self?.conversations = []
             }
         }
+        
+        // 监听历史记录变化通知
+        NotificationCenter.default.addObserver(
+            forName: .conversationHistoryChanged,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.loadConversationsFromHistory()
+            }
+        }
     }
     
     deinit {
@@ -158,6 +169,16 @@ class ChatViewModel: ObservableObject {
         
         // 展开所有对话中的消息
         return conversations.flatMap { $0.messages }
+    }
+    
+    /// 从历史记录加载对话列表（用于Mac侧边栏）
+    func loadConversationsFromHistory() {
+        guard let data = UserDefaults.standard.data(forKey: "conversationHistory"),
+              let saved = try? JSONDecoder().decode([Conversation].self, from: data) else {
+            self.conversations = []
+            return
+        }
+        self.conversations = saved
     }
     
     // MARK: - Send Message

@@ -154,6 +154,10 @@ struct iPadContentView: View {
         .task {
             loadConversations()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .conversationHistoryChanged)) { _ in
+            // 监听历史记录变化，同步更新侧边栏
+            loadConversations()
+        }
     }
     
     private func loadConversations() {

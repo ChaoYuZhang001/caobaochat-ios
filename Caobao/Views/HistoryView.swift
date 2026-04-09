@@ -45,6 +45,7 @@ struct HistoryView: View {
             .onDelete { indexSet in
                 conversations.remove(atOffsets: indexSet)
                 saveHistory()
+                NotificationCenter.default.post(name: .conversationHistoryChanged, object: nil)
             }
         }
         .listStyle(.plain)
@@ -98,6 +99,7 @@ struct HistoryView: View {
     private func clearHistory() {
         conversations.removeAll()
         UserDefaults.standard.removeObject(forKey: "conversationHistory")
+        NotificationCenter.default.post(name: .conversationHistoryChanged, object: nil)
     }
 }
 

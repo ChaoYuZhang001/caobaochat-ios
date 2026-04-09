@@ -86,6 +86,7 @@ struct CaobaoApp: App {
 extension Notification.Name {
     static let newChat = Notification.Name("newChat")
     static let clearChat = Notification.Name("clearChat")
+    static let conversationHistoryChanged = Notification.Name("conversationHistoryChanged")
 }
 
 // MARK: - App State
