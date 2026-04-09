@@ -281,6 +281,7 @@ struct ProfileView: View {
                 .frame(width: 400, height: 400)
             }
             #endif
+            }
         }
     }
     
