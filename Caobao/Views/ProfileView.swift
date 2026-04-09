@@ -140,8 +140,8 @@ struct ProfileView: View {
                     
                     Picker("毒舌程度", selection: $appState.userSettings.toxicLevel) {
                         Text("温和").tag("light")
-                        Text("正常").tag("normal")
-                        Text("暴躁").tag("heavy")
+                        Text("标准").tag("normal")
+                        Text("爆辣").tag("fierce")
                     }
                     .onChange(of: appState.userSettings.toxicLevel) { _ in
                         appState.saveUserSettings()
@@ -317,9 +317,9 @@ struct ProfileView: View {
     private var toxicLevelText: String {
         switch appState.userSettings.toxicLevel {
         case "light": return "温和"
-        case "normal": return "正常"
-        case "heavy": return "暴躁"
-        default: return "正常"
+        case "normal": return "标准"
+        case "fierce": return "爆辣"
+        default: return "标准"
         }
     }
 }
