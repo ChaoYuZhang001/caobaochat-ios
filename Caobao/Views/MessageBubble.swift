@@ -2,6 +2,10 @@ import SwiftUI
 import AVKit
 import AVFoundation
 
+#if os(macOS)
+import AppKit
+#endif
+
 // MARK: - Message Bubble
 struct MessageBubble: View {
     let message: ChatMessage
@@ -97,6 +101,7 @@ struct MessageBubble: View {
                 if !displayText.isEmpty {
                     if message.role == .assistant {
                         // AI消息使用美观的Markdown渲染
+                        #if os(iOS)
                         MarkdownTextView(markdown: displayText)
                             .font(.body)
                             .padding(.horizontal, 16)
@@ -118,6 +123,28 @@ struct MessageBubble: View {
                                     .fill(Color(.systemBackground))
                                 }
                             )
+                        #else
+                        Text(displayText)
+                            .font(.body)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                            .background(Color(nsColor: .textBackgroundColor))
+                            .foregroundStyle(.primary)
+                            .clipShape(
+                                RoundedRectangle(cornerRadius: 18)
+                                    .inset(by: 0.5)
+                            )
+                            .overlay(
+                                GeometryReader { geo in
+                                    Path { path in
+                                        path.move(to: CGPoint(x: 18, y: 0))
+                                        path.addLine(to: CGPoint(x: 0, y: 0))
+                                        path.addLine(to: CGPoint(x: 0, y: 18))
+                                    }
+                                    .fill(Color(nsColor: .textBackgroundColor))
+                                }
+                            )
+                        #endif
                     } else {
                         // 用户消息使用简单的文本渲染
                         Text(formatMarkdown(displayText))
@@ -319,7 +346,11 @@ struct MessageBubble: View {
             Text(emoji)
                 .font(.title2)
                 .frame(width: 36, height: 36)
+                #if os(iOS)
                 .background(Color(.systemGray5))
+                #else
+                .background(Color(nsColor: .quaternaryLabelColor))
+                #endif
                 .clipShape(Circle())
         } else if let url = userSettings.avatarUrl, !url.isEmpty {
             AsyncImage(url: URL(string: url)) { phase in
@@ -386,7 +417,11 @@ struct QuickActionButton: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
+            #if os(iOS)
             .background(Color(.systemBackground))
+            #else
+            .background(Color(nsColor: .textBackgroundColor))
+            #endif
             .clipShape(Capsule())
             .shadow(color: .black.opacity(0.05), radius: 2)
         }
@@ -443,12 +478,20 @@ struct MediaContentView: View {
                                 .foregroundStyle(.secondary)
                         }
                         .frame(width: 200, height: 150)
+                        #if os(iOS)
                         .background(Color(.systemGray6))
+                        #else
+                        .background(Color(nsColor: .controlBackgroundColor))
+                        #endif
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                     case .empty:
                         ProgressView()
                             .frame(width: 200, height: 150)
+                            #if os(iOS)
                             .background(Color(.systemGray6))
+                            #else
+                            .background(Color(nsColor: .controlBackgroundColor))
+                            #endif
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                     @unknown default:
                         ProgressView()
@@ -467,14 +510,28 @@ struct MediaContentView: View {
                 
             case .video:
                 // 视频播放器
+                #if os(iOS)
                 VideoPlayerView(url: mediaLink.url)
                     .frame(maxWidth: 280, maxHeight: 200)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
+                #else
+                Text("视频播放")
+                    .frame(width: 280, height: 200)
+                    .background(Color.gray)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                #endif
                 
             case .audio:
                 // 音频播放器
+                #if os(iOS)
                 AudioPlayerView(url: mediaLink.url, autoPlay: autoPlayAudio)
                     .frame(maxWidth: 280)
+                #else
+                Text("音频播放")
+                    .frame(width: 280)
+                    .background(Color.gray)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                #endif
             }
         }
     }
