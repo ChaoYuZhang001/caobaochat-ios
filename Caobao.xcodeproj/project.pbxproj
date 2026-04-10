@@ -90,7 +90,6 @@
 		C1000007 /* WatchAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000007; };
 		C1000008 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C2000008; };
 		B1000025 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000025; };
-		B1000026 /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000026; };
 		B1000027 /* AnalyzeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000027; };
 		B1000028 /* QuoteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000028; };
 		B1000029 /* RoastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000029; };
@@ -169,7 +168,6 @@
 		C3000001 /* Caobao-watchOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Caobao-watchOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 
 		B2000025 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Caobao/Views/LoginView.swift; sourceTree = "<group>"; };
-		B2000026 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Caobao/Views/ChatView.swift; sourceTree = "<group>"; };
 		B2000027 /* AnalyzeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Caobao/Views/AnalyzeView.swift; sourceTree = "<group>"; };
 		B2000028 /* QuoteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Caobao/Views/QuoteView.swift; sourceTree = "<group>"; };
 		B2000029 /* RoastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Caobao/Views/RoastView.swift; sourceTree = "<group>"; };
@@ -538,7 +536,6 @@
 				B1000022 /* MessageBubble.swift in Sources */,
 				B1000023 /* MediaLinkDetector.swift in Sources */,
 				B1000025 /* LoginView.swift in Sources */,
-				B1000026 /* ChatView.swift in Sources */,
 				B1000027 /* AnalyzeView.swift in Sources */,
 				B1000028 /* QuoteView.swift in Sources */,
 				B1000029 /* RoastView.swift in Sources */,
