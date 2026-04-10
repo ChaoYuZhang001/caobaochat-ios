@@ -168,17 +168,17 @@
 		C2000009 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Caobao-watchOS/Info.plist"; sourceTree = "<group>"; };
 		C3000001 /* Caobao-watchOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Caobao-watchOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 
-		B2000025 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/LoginView.swift; sourceTree = "<group>"; };
-		B2000026 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/ChatView.swift; sourceTree = "<group>"; };
-		B2000027 /* AnalyzeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/AnalyzeView.swift; sourceTree = "<group>"; };
-		B2000028 /* QuoteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/QuoteView.swift; sourceTree = "<group>"; };
-		B2000029 /* RoastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/RoastView.swift; sourceTree = "<group>"; };
-		B2000030 /* NicknameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/NicknameView.swift; sourceTree = "<group>"; };
-		B2000031 /* RateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/RateView.swift; sourceTree = "<group>"; };
-		B2000032 /* DecisionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/DecisionView.swift; sourceTree = "<group>"; };
-		B2000033 /* MorningReportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/MorningReportView.swift; sourceTree = "<group>"; };
-		B2000034 /* EveningReportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/EveningReportView.swift; sourceTree = "<group>"; };
-		B2000035 /* FavoritesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/FavoritesView.swift; sourceTree = "<group>"; };
+		B2000025 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Caobao/Views/LoginView.swift; sourceTree = "<group>"; };
+		B2000026 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Caobao/Views/ChatView.swift; sourceTree = "<group>"; };
+		B2000027 /* AnalyzeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Caobao/Views/AnalyzeView.swift; sourceTree = "<group>"; };
+		B2000028 /* QuoteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Caobao/Views/QuoteView.swift; sourceTree = "<group>"; };
+		B2000029 /* RoastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Caobao/Views/RoastView.swift; sourceTree = "<group>"; };
+		B2000030 /* NicknameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Caobao/Views/NicknameView.swift; sourceTree = "<group>"; };
+		B2000031 /* RateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Caobao/Views/RateView.swift; sourceTree = "<group>"; };
+		B2000032 /* DecisionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Caobao/Views/DecisionView.swift; sourceTree = "<group>"; };
+		B2000033 /* MorningReportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Caobao/Views/MorningReportView.swift; sourceTree = "<group>"; };
+		B2000034 /* EveningReportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Caobao/Views/EveningReportView.swift; sourceTree = "<group>"; };
+		B2000035 /* FavoritesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Caobao/Views/FavoritesView.swift; sourceTree = "<group>"; };
 	/* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
