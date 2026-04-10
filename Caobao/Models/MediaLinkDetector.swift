@@ -46,11 +46,13 @@ struct MediaLinkDetector {
             // 检测媒体类型
             let mediaType: MediaType?
             
-            // 检查 URL 是否包含图片扩展名（可能后面有 ? 参数）
+            // 检查 URL 是否包含图片扩展名（路径末尾或查询参数中）
             if imageExtensions.contains(where: { ext in
                 lowercased.contains(".\(ext)?") || 
                 lowercased.contains(".\(ext)") ||
-                lowercased.hasSuffix(".\(ext)")
+                lowercased.hasSuffix(".\(ext)") ||
+                lowercased.contains("/\(ext)") ||  // 路径中的扩展名
+                lowercased.contains("\(ext)")       // 查询参数中的扩展名
             }) {
                 mediaType = .image
             } else if videoExtensions.contains(where: { ext in
