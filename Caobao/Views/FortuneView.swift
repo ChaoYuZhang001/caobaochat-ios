@@ -185,7 +185,7 @@ struct FortuneView: View {
             .navigationBarTitleDisplayMode(.inline)
             #endif
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .automatic) {
                     if fortune != nil {
                         Button {
                             Task {
@@ -322,7 +322,7 @@ struct FortuneView: View {
                 }
             }
             .padding()
-            .background(Color(.systemBackground))
+            .background(Color.caobaoSystemBackground)
             .clipShape(RoundedRectangle(cornerRadius: 16))
             .shadow(color: .black.opacity(0.05), radius: 8, y: 4)
         }
@@ -459,7 +459,7 @@ struct FortuneView: View {
             }
             .padding()
             .frame(maxWidth: .infinity)
-            .background(Color(.secondarySystemBackground))
+            .background(Color.caobaoGroupedBackground)
             .clipShape(RoundedRectangle(cornerRadius: 16))
             
             // 今日警示
@@ -523,9 +523,7 @@ struct FortuneView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
                 
-                Button {
-                    shareFortune(fortune)
-                } label: {
+                ShareLink(item: fortuneShareText(fortune)) {
                     HStack {
                         Image(systemName: "square.and.arrow.up")
                         Text("分享")
@@ -586,7 +584,7 @@ struct FortuneView: View {
     }
     
     // MARK: - 分享运势
-    private func shareFortune(_ fortune: FortuneData) {
+    private func fortuneShareText(_ fortune: FortuneData) -> String {
         var shareText = "【今日卦象】\(fortune.date ?? "")\n\n"
         shareText += "综合运势：\(fortune.overall)分\n"
         
@@ -616,16 +614,7 @@ struct FortuneView: View {
         
         shareText += "\n\n—— 草包算卦，信不信由你"
         
-        // 调用系统分享
-        let activityVC = UIActivityViewController(
-            activityItems: [shareText],
-            applicationActivities: nil
-        )
-        
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let rootVC = windowScene.windows.first?.rootViewController {
-            rootVC.present(activityVC, animated: true)
-        }
+        return shareText
     }
 }
 

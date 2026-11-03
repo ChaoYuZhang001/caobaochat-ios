@@ -1,9 +1,15 @@
 import SwiftUI
+#if os(iOS)
 import PhotosUI
+typealias AnalyzePlatformImage = UIImage
+#elseif os(macOS)
+import AppKit
+typealias AnalyzePlatformImage = NSImage
+#endif
 
 // MARK: - Analyze View (图片分析)
 struct AnalyzeView: View {
-    @State private var selectedImage: UIImage?
+    @State private var selectedImage: AnalyzePlatformImage?
     @State private var showingImagePicker = false
     @State private var showingCamera = false
     @State private var prompt = "请分析这张图片"
@@ -68,6 +74,7 @@ struct AnalyzeView: View {
                         // 图片选择区域
                         VStack(spacing: 16) {
                             if let image = selectedImage {
+                                #if os(iOS)
                                 Image(uiImage: image)
                                     .resizable()
                                     .scaledToFit()
@@ -77,6 +84,17 @@ struct AnalyzeView: View {
                                         RoundedRectangle(cornerRadius: 12)
                                             .stroke(Color(hex: "10b981"), lineWidth: 2)
                                     )
+                                #else
+                                Image(nsImage: image)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(maxHeight: 250)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(Color(hex: "10b981"), lineWidth: 2)
+                                    )
+                                #endif
                                 
                                 // 更换图片按钮
                                 HStack(spacing: 16) {
@@ -158,12 +176,12 @@ struct AnalyzeView: View {
                                 }
                                 .frame(height: 250)
                                 .frame(maxWidth: .infinity)
-                                .background(Color(.systemGray6))
+                                .background(Color.caobaoGroupedBackground)
                                 .clipShape(RoundedRectangle(cornerRadius: 12))
                             }
                         }
                         .padding()
-                        .background(Color(.systemBackground))
+                        .background(Color.caobaoGroupedBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         
                         // 分析提示词
@@ -198,7 +216,7 @@ struct AnalyzeView: View {
                             }
                         }
                         .padding()
-                        .background(Color(.systemBackground))
+                                    .background(Color.caobaoGroupedBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         
                         // 分析按钮
@@ -262,7 +280,7 @@ struct AnalyzeView: View {
                                 .frame(maxHeight: 300)
                             }
                             .padding()
-                            .background(Color(.systemBackground))
+                            .background(Color.caobaoGroupedBackground)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
                     }
@@ -292,8 +310,14 @@ struct AnalyzeView: View {
     
     // MARK: - Actions
     private func analyzeImage() {
-        guard let image = selectedImage,
-              let imageData = image.jpegData(compressionQuality: 0.8) else { return }
+        guard let image = selectedImage else { return }
+        #if os(iOS)
+        guard let imageData = image.jpegData(compressionQuality: 0.8) else { return }
+        #else
+        guard let tiffData = image.tiffRepresentation,
+              let bitmap = NSBitmapImageRep(data: tiffData),
+              let imageData = bitmap.representation(using: .jpeg, properties: [:]) else { return }
+        #endif
         
         loading = true
         result = ""

@@ -46,7 +46,7 @@ struct FavoritesView: View {
                                     .font(.subheadline)
                                     .padding(.horizontal, 16)
                                     .padding(.vertical, 8)
-                                    .background(selectedType == type.1 ? Color.green : Color(.systemGray6))
+                                    .background(selectedType == type.1 ? Color.green : Color.caobaoGroupedBackground)
                                     .foregroundColor(selectedType == type.1 ? .white : .primary)
                                     .cornerRadius(20)
                             }
@@ -55,7 +55,7 @@ struct FavoritesView: View {
                     .padding(.horizontal)
                     .padding(.vertical, 12)
                 }
-                .background(Color(.systemBackground))
+                .background(Color.caobaoGroupedBackground)
                 
                 if isLoading {
                     Spacer()
@@ -108,12 +108,15 @@ struct FavoritesView: View {
                     .listStyle(.plain)
                 }
             }
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     Text("我的收藏")
                         .font(.headline)
                 }
+                #if os(iOS)
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("返回") {
                         dismiss()
@@ -124,6 +127,16 @@ struct FavoritesView: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
+                #else
+                ToolbarItem(placement: .automatic) {
+                    Button("返回") { dismiss() }
+                }
+                ToolbarItem(placement: .automatic) {
+                    Text("\(filteredFavorites.count) 条")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                #endif
             }
             .onAppear {
                 loadFavorites()

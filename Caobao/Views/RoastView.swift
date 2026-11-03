@@ -64,7 +64,7 @@ struct RoastView: View {
                             }
                         }
                         .padding()
-                        .background(Color(.systemBackground))
+                        .background(Color.caobaoGroupedBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         
                         // 快捷示例
@@ -88,7 +88,7 @@ struct RoastView: View {
                                                 .font(.caption)
                                                 .padding(.horizontal, 12)
                                                 .padding(.vertical, 6)
-                                                .background(content == example ? Color.red : Color(.systemGray6))
+                                                .background(content == example ? Color.red : Color.caobaoGroupedBackground)
                                                 .foregroundStyle(content == example ? .white : .primary)
                                                 .clipShape(Capsule())
                                         }
@@ -97,7 +97,7 @@ struct RoastView: View {
                             }
                         }
                         .padding()
-                        .background(Color(.systemBackground))
+                        .background(Color.caobaoGroupedBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         
                         // 吐槽内容
@@ -108,15 +108,15 @@ struct RoastView: View {
                             TextEditor(text: $content)
                                 .frame(minHeight: 100)
                                 .padding(8)
-                                .background(Color(.systemGray6))
+                                .background(Color.caobaoGroupedBackground)
                                 .clipShape(RoundedRectangle(cornerRadius: 12))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .stroke(Color(.systemGray4), lineWidth: 1)
+                                        .stroke(Color.secondary.opacity(0.25), lineWidth: 1)
                                 )
                         }
                         .padding()
-                        .background(Color(.systemBackground))
+                        .background(Color.caobaoGroupedBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         
                         // 吐槽按钮
@@ -221,7 +221,7 @@ struct RoastView: View {
                                 .frame(maxHeight: 400)
                             }
                             .padding()
-                            .background(Color(.systemBackground))
+                            .background(Color.caobaoGroupedBackground)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
                     }
@@ -229,7 +229,9 @@ struct RoastView: View {
                 }
             }
             .navigationTitle("")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     Text("吐槽大会")
@@ -370,19 +372,11 @@ struct IntensityCard: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
-            .background(
-                Group {
-                    if isSelected {
-                        LinearGradient(
-                            gradient: Gradient(colors: [color, color.opacity(0.7)]),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    } else {
-                        Color(.systemGray6)
-                    }
-                }
-            )
+            .background(isSelected
+                ? AnyShapeStyle(LinearGradient(
+                    gradient: Gradient(colors: [color, color.opacity(0.7)]),
+                    startPoint: .topLeading, endPoint: .bottomTrailing))
+                : AnyShapeStyle(Color.caobaoGroupedBackground))
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .shadow(color: isSelected ? color.opacity(0.3) : .clear, radius: 4, y: 2)
         }

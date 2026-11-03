@@ -198,13 +198,16 @@ struct QuoteView: View {
                 }
             }
             .navigationTitle("")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     Text("扎心金句")
                         .font(.headline)
                         .foregroundStyle(.orange)
                 }
+                #if os(iOS)
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         viewModel.showFavorites = true
@@ -213,6 +216,16 @@ struct QuoteView: View {
                             .foregroundStyle(.orange)
                     }
                 }
+                #else
+                ToolbarItem(placement: .automatic) {
+                    Button {
+                        viewModel.showFavorites = true
+                    } label: {
+                        Image(systemName: "bookmark.fill")
+                            .foregroundStyle(.orange)
+                    }
+                }
+                #endif
             }
             .sheet(isPresented: $viewModel.showFavorites) {
                 FavoritesSheet(favorites: viewModel.favorites) { quote in
@@ -393,7 +406,7 @@ struct CategoryButton: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
-            .background(isSelected ? Color.orange : Color(.systemGray5))
+            .background(isSelected ? Color.orange : Color.caobaoGroupedBackground)
             .foregroundStyle(isSelected ? .white : .primary)
             .clipShape(Capsule())
         }
@@ -436,7 +449,7 @@ struct QuoteCard: View {
             }
         }
         .padding(32)
-        .background(Color(.systemBackground))
+        .background(Color.caobaoGroupedBackground)
         .clipShape(RoundedRectangle(cornerRadius: 20))
         .shadow(color: .black.opacity(0.05), radius: 10)
     }

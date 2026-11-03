@@ -53,6 +53,11 @@
 		A1000044 /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000045; };
 		A1000046 /* MarkdownTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000047; };
 		A1000048 /* AvatarImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000048; };
+		A1000049 /* AssistantLocalRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000049; };
+		A1000093 /* AssistantCloudMemorySync.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000093; };
+		A1000094 /* AssistantCloudConversationSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000094; };
+		A1000095 /* AssistantDeviceRegistration.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000095; };
+		A1000096 /* AssistantPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000096; };
 		
 		// macOS Target (新增)
 		B1000001 /* CaobaoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001; };
@@ -79,6 +84,10 @@
 		B1000021 /* CommonViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000023; };
 		B1000022 /* MessageBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000024; };
 		B1000023 /* MediaLinkDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000025; };
+		B1000055 /* AssistantSubscriptionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000055; };
+		B1000097 /* AssistantMacPreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000097; };
+		B1000098 /* MacChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000098; };
+		B1000100 /* AssistantWorkspaceViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000052; };
 		
 		// watchOS Target (新增)
 		C1000001 /* CaobaoWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000001; };
@@ -99,7 +108,79 @@
 		B1000033 /* MorningReportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000033; };
 		B1000034 /* EveningReportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000034; };
 		B1000035 /* FavoritesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000035; };
-	/* End PBXBuildFile section */
+			A1000050 /* AssistantProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000050; };
+		A1000051 /* AssistantChatArchive.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000051; };
+		A1800001 /* AssistantChatDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2800001; };
+		A1800002 /* AssistantArchiveOperationGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2800002; };
+		A1900001 /* AssistantTaskTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2900001; };
+		A1900002 /* AssistantTaskToolReceipt.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2900002; };
+		A1900003 /* AssistantTaskToolExecution.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2900003; };
+		A1900004 /* AssistantTaskToolCapabilityProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2900004; };
+		A1900006 /* AssistantOwnerIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2900006; };
+		A1900005 /* AssistantTaskToolProposalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2900005; };
+		A1000052 /* AssistantWorkspaceViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000052; };
+		B1000049 /* AssistantLocalRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000049; };
+		B1000093 /* AssistantCloudMemorySync.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000093; };
+		B1000094 /* AssistantCloudConversationSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000094; };
+		B1000096 /* AssistantPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000096; };
+		B1000050 /* AssistantProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000050; };
+		B1000051 /* AssistantChatArchive.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000051; };
+		B1800001 /* AssistantChatDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2800001; };
+		B1800002 /* AssistantArchiveOperationGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2800002; };
+		B1900001 /* AssistantTaskTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2900001; };
+		B1900002 /* AssistantTaskToolReceipt.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2900002; };
+		B1900003 /* AssistantTaskToolExecution.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2900003; };
+		B1900004 /* AssistantTaskToolCapabilityProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2900004; };
+		B1900006 /* AssistantOwnerIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2900006; };
+		B1900005 /* AssistantTaskToolProposalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2900005; };
+        A1000060 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = A2000060; };
+        A1000053 /* AssistantMedia.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000053; };
+        B1000053 /* AssistantMedia.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000053; };
+        A1000054 /* AssistantSpeechController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000054; };
+        A1000055 /* AssistantSubscriptionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000055; };
+        A1000056 /* AssistantSubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000056; };
+        A1000057 /* AssistantReminderCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000057; };
+        B1000057 /* AssistantReminderCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000057; };
+        A1000058 /* AssistantNotificationRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000058; };
+        A1000059 /* AssistantIdentityClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000059; };
+        B1000059 /* AssistantIdentityClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000059; };
+        A1000063 /* AssistantEntitlements.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000063; };
+        B1000063 /* AssistantEntitlements.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000063; };
+        A1000064 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = A2000064; };
+        A1000067 /* AssistantConversationClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000067; };
+        B1000067 /* AssistantConversationClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000067; };
+        A1000068 /* AssistantLocalization.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000068; };
+        B1000068 /* AssistantLocalization.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000068; };
+        A1000069 /* AssistantModelCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000069; };
+        B1000069 /* AssistantModelCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000069; };
+        A1000070 /* AssistantModelPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000070; };
+        B1000070 /* AssistantModelPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000070; };
+        A1000071 /* AssistantConnectionProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000071; };
+        B1000071 /* AssistantConnectionProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000071; };
+        A1000072 /* AssistantLocalizedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000072; };
+        B1000072 /* AssistantLocalizedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000072; };
+        A1000073 /* AssistantDataManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000073; };
+        B1000073 /* AssistantDataManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000073; };
+        A1000074 /* AssistantDataExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000074; };
+        B1000074 /* AssistantDataExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000074; };
+        A1000091 /* AssistantDataImport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000091; };
+        B1000091 /* AssistantDataImport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000091; };
+        A1000092 /* AssistantChatViewport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000092; };
+        B1000092 /* AssistantChatViewport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000092; };
+        A1000075 /* AssistantDeletionNotice.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000075; };
+        A1000077 /* AssistantQuietHours.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000077; };
+        B1000075 /* AssistantDeletionNotice.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000075; };
+        B1000077 /* AssistantQuietHours.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000077; };
+        A1000076 /* AssistantDeletionNoticeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000076; };
+        A1000078 /* AssistantQuietHoursSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000078; };
+        B1000076 /* AssistantDeletionNoticeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000076; };
+        B1000078 /* AssistantQuietHoursSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000078; };
+        A1000079 /* AssistantMarkdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000079; };
+        B1000079 /* AssistantMarkdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000079; };
+        A1000080 /* AssistantMarkdownInline.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000080; };
+        B1000080 /* AssistantMarkdownInline.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000080; };
+        B1000046 /* MarkdownTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000047; };
+/* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		// iOS 文件 (现有)
@@ -149,6 +230,13 @@
 		A3000001 /* Caobao.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Caobao.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A2000047 /* MarkdownTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownTextView.swift; sourceTree = "<group>"; };
 		A2000048 /* AvatarImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarImageView.swift; sourceTree = "<group>"; };
+		A2000049 /* AssistantLocalRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantLocalRepository.swift; sourceTree = "<group>"; };
+		A2000093 /* AssistantCloudMemorySync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantCloudMemorySync.swift; sourceTree = "<group>"; };
+		A2000094 /* AssistantCloudConversationSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantCloudConversationSync.swift; sourceTree = "<group>"; };
+        A2000095 /* AssistantDeviceRegistration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantDeviceRegistration.swift; sourceTree = "<group>"; };
+		A2000096 /* AssistantPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantPreferences.swift; sourceTree = "<group>"; };
+		A2000097 /* AssistantMacPreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantMacPreferencesView.swift; sourceTree = "<group>"; };
+		A2000098 /* MacChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacChatView.swift; sourceTree = "<group>"; };
 		
 		// macOS 文件 (新增)
 
@@ -177,7 +265,46 @@
 		B2000033 /* MorningReportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Caobao/Views/MorningReportView.swift; sourceTree = "<group>"; };
 		B2000034 /* EveningReportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Caobao/Views/EveningReportView.swift; sourceTree = "<group>"; };
 		B2000035 /* FavoritesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Caobao/Views/FavoritesView.swift; sourceTree = "<group>"; };
-	/* End PBXFileReference section */
+			A2000050 /* AssistantProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantProtocol.swift; sourceTree = "<group>"; };
+		A2000051 /* AssistantChatArchive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantChatArchive.swift; sourceTree = "<group>"; };
+		A2800001 /* AssistantChatDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantChatDatabase.swift; sourceTree = "<group>"; };
+		A2800002 /* AssistantArchiveOperationGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantArchiveOperationGate.swift; sourceTree = "<group>"; };
+		A2900001 /* AssistantTaskTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantTaskTools.swift; sourceTree = "<group>"; };
+		A2900002 /* AssistantTaskToolReceipt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantTaskToolReceipt.swift; sourceTree = "<group>"; };
+		A2900003 /* AssistantTaskToolExecution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantTaskToolExecution.swift; sourceTree = "<group>"; };
+		A2900004 /* AssistantTaskToolCapabilityProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantTaskToolCapabilityProbe.swift; sourceTree = "<group>"; };
+		A2900006 /* AssistantOwnerIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantOwnerIdentity.swift; sourceTree = "<group>"; };
+		A2900005 /* AssistantTaskToolProposalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantTaskToolProposalView.swift; sourceTree = "<group>"; };
+		A2000052 /* AssistantWorkspaceViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantWorkspaceViews.swift; sourceTree = "<group>"; };
+        A2000061 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+        A2000062 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
+        A2000053 /* AssistantMedia.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantMedia.swift; sourceTree = "<group>"; };
+        A2000054 /* AssistantSpeechController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantSpeechController.swift; sourceTree = "<group>"; };
+        A2000055 /* AssistantSubscriptionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantSubscriptionStore.swift; sourceTree = "<group>"; };
+        A2000056 /* AssistantSubscriptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantSubscriptionView.swift; sourceTree = "<group>"; };
+        A2000057 /* AssistantReminderCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantReminderCoordinator.swift; sourceTree = "<group>"; };
+        A2000058 /* AssistantNotificationRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantNotificationRouter.swift; sourceTree = "<group>"; };
+        A2000059 /* AssistantIdentityClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantIdentityClient.swift; sourceTree = "<group>"; };
+        A2000063 /* AssistantEntitlements.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantEntitlements.swift; sourceTree = "<group>"; };
+        A2000065 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+        A2000066 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
+        A2000067 /* AssistantConversationClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantConversationClient.swift; sourceTree = "<group>"; };
+        A2000068 /* AssistantLocalization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantLocalization.swift; sourceTree = "<group>"; };
+        A2000069 /* AssistantModelCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantModelCatalog.swift; sourceTree = "<group>"; };
+        A2000070 /* AssistantModelPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantModelPreferences.swift; sourceTree = "<group>"; };
+        A2000071 /* AssistantConnectionProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantConnectionProbe.swift; sourceTree = "<group>"; };
+        A2000072 /* AssistantLocalizedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantLocalizedView.swift; sourceTree = "<group>"; };
+        A2000073 /* AssistantDataManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantDataManagementView.swift; sourceTree = "<group>"; };
+        A2000074 /* AssistantDataExport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantDataExport.swift; sourceTree = "<group>"; };
+        A2000091 /* AssistantDataImport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantDataImport.swift; sourceTree = "<group>"; };
+        A2000092 /* AssistantChatViewport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantChatViewport.swift; sourceTree = "<group>"; };
+        A2000075 /* AssistantDeletionNotice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantDeletionNotice.swift; sourceTree = "<group>"; };
+        A2000077 /* AssistantQuietHours.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantQuietHours.swift; sourceTree = "<group>"; };
+        A2000076 /* AssistantDeletionNoticeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantDeletionNoticeView.swift; sourceTree = "<group>"; };
+        A2000078 /* AssistantQuietHoursSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantQuietHoursSettingsView.swift; sourceTree = "<group>"; };
+        A2000079 /* AssistantMarkdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantMarkdown.swift; sourceTree = "<group>"; };
+        A2000080 /* AssistantMarkdownInline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantMarkdownInline.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		A4000001 /* Frameworks */ = {
@@ -205,6 +332,10 @@
 		};
 /* End PBXFrameworksBuildPhase section */
 
+/* Begin PBXVariantGroup section */
+        A2000060 /* Localizable.strings */ = {isa = PBXVariantGroup; children = (A2000061, A2000062); name = Localizable.strings; sourceTree = "<group>"; };
+        A2000064 /* InfoPlist.strings */ = {isa = PBXVariantGroup; children = (A2000065, A2000066); name = InfoPlist.strings; sourceTree = "<group>"; };
+/* End PBXVariantGroup section */
 /* Begin PBXGroup section */
 		A5000001 = {
 			isa = PBXGroup;
@@ -218,6 +349,8 @@
 		A5000002 /* Caobao */ = {
 			isa = PBXGroup;
 			children = (
+                A2000060 /* Localizable.strings */,
+                A2000064 /* InfoPlist.strings */,
 				A2000001 /* CaobaoApp.swift */,
 				A5000007 /* Models */,
 				A5000004 /* Views */,
@@ -261,6 +394,13 @@
 		A5000004 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+                A2000056 /* AssistantSubscriptionView.swift */,
+                A2000072 /* AssistantLocalizedView.swift */,
+                A2000073 /* AssistantDataManagementView.swift */,
+                A2900005 /* AssistantTaskToolProposalView.swift */,
+                A2000076 /* AssistantDeletionNoticeView.swift */,
+                A2000078 /* AssistantQuietHoursSettingsView.swift */,
+				A2000052 /* AssistantWorkspaceViews.swift */,
 				A2000002 /* ContentView.swift */,
 				A2000003 /* FortuneView.swift */,
 				A2000004 /* HistoryView.swift */,
@@ -268,6 +408,8 @@
 				A2000010 /* LoginView.swift */,
 				A2000011 /* AccountSettingsView.swift */,
 				A2000012 /* MacContentView.swift */,
+				A2000097 /* AssistantMacPreferencesView.swift */,
+				A2000098 /* MacChatView.swift */,
 				A2000014 /* AudioPlayerView.swift */,
 				A2000015 /* SettingsView.swift */,
 				A2000016 /* LegalView.swift */,
@@ -307,8 +449,41 @@
 		A5000006 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+                A2000059 /* AssistantIdentityClient.swift */,
+                A2000063 /* AssistantEntitlements.swift */,
+                A2000067 /* AssistantConversationClient.swift */,
+                A2000068 /* AssistantLocalization.swift */,
+                A2000069 /* AssistantModelCatalog.swift */,
+                A2000070 /* AssistantModelPreferences.swift */,
+                A2000071 /* AssistantConnectionProbe.swift */,
+                A2000074 /* AssistantDataExport.swift */,
+                A2000091 /* AssistantDataImport.swift */,
+                A2000092 /* AssistantChatViewport.swift */,
+                A2000075 /* AssistantDeletionNotice.swift */,
+                A2000079 /* AssistantMarkdown.swift */,
+                A2000080 /* AssistantMarkdownInline.swift */,
+                A2000077 /* AssistantQuietHours.swift */,
+                A2000058 /* AssistantNotificationRouter.swift */,
+                A2000057 /* AssistantReminderCoordinator.swift */,
+                A2000055 /* AssistantSubscriptionStore.swift */,
+                A2000054 /* AssistantSpeechController.swift */,
+                A2000053 /* AssistantMedia.swift */,
+				A2000051 /* AssistantChatArchive.swift */,
+				A2800001 /* AssistantChatDatabase.swift */,
+				A2800002 /* AssistantArchiveOperationGate.swift */,
+				A2900001 /* AssistantTaskTools.swift */,
+				A2900002 /* AssistantTaskToolReceipt.swift */,
+				A2900003 /* AssistantTaskToolExecution.swift */,
+				A2900004 /* AssistantTaskToolCapabilityProbe.swift */,
+				A2900006 /* AssistantOwnerIdentity.swift */,
+				A2000050 /* AssistantProtocol.swift */,
 				A2000007 /* APIService.swift */,
 				A2000009 /* AuthService.swift */,
+				A2000049 /* AssistantLocalRepository.swift */,
+				A2000093 /* AssistantCloudMemorySync.swift */,
+				A2000094 /* AssistantCloudConversationSync.swift */,
+                A2000095 /* AssistantDeviceRegistration.swift */,
+				A2000096 /* AssistantPreferences.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -414,6 +589,7 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+                "zh-Hans",
 				Base,
 				"zh-Hans",
 			);
@@ -437,6 +613,10 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+
+
+                A1000060 /* Localizable.strings in Resources */,
+                A1000064 /* InfoPlist.strings in Resources */,
 				A1000008 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -464,6 +644,41 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+                A1000059 /* AssistantIdentityClient.swift in Sources */,
+                A1000063 /* AssistantEntitlements.swift in Sources */,
+                A1000067 /* AssistantConversationClient.swift in Sources */,
+                A1000068 /* AssistantLocalization.swift in Sources */,
+                A1000069 /* AssistantModelCatalog.swift in Sources */,
+                A1000070 /* AssistantModelPreferences.swift in Sources */,
+                A1000071 /* AssistantConnectionProbe.swift in Sources */,
+                A1000072 /* AssistantLocalizedView.swift in Sources */,
+                A1000073 /* AssistantDataManagementView.swift in Sources */,
+                A1000074 /* AssistantDataExport.swift in Sources */,
+                A1000091 /* AssistantDataImport.swift in Sources */,
+                A1000092 /* AssistantChatViewport.swift in Sources */,
+                A1000075 /* AssistantDeletionNotice.swift in Sources */,
+                A1000079 /* AssistantMarkdown.swift in Sources */,
+                A1000080 /* AssistantMarkdownInline.swift in Sources */,
+                A1000077 /* AssistantQuietHours.swift in Sources */,
+                A1000076 /* AssistantDeletionNoticeView.swift in Sources */,
+                A1000078 /* AssistantQuietHoursSettingsView.swift in Sources */,
+                A1000058 /* AssistantNotificationRouter.swift in Sources */,
+                A1000057 /* AssistantReminderCoordinator.swift in Sources */,
+                A1000056 /* AssistantSubscriptionView.swift in Sources */,
+                A1000055 /* AssistantSubscriptionStore.swift in Sources */,
+                A1000054 /* AssistantSpeechController.swift in Sources */,
+                A1000053 /* AssistantMedia.swift in Sources */,
+				A1000052 /* AssistantWorkspaceViews.swift in Sources */,
+				A1000051 /* AssistantChatArchive.swift in Sources */,
+				A1800001 /* AssistantChatDatabase.swift in Sources */,
+				A1800002 /* AssistantArchiveOperationGate.swift in Sources */,
+				A1900001 /* AssistantTaskTools.swift in Sources */,
+				A1900002 /* AssistantTaskToolReceipt.swift in Sources */,
+				A1900003 /* AssistantTaskToolExecution.swift in Sources */,
+				A1900004 /* AssistantTaskToolCapabilityProbe.swift in Sources */,
+				A1900006 /* AssistantOwnerIdentity.swift in Sources */,
+				A1900005 /* AssistantTaskToolProposalView.swift in Sources */,
+				A1000050 /* AssistantProtocol.swift in Sources */,
 				A1000001 /* CaobaoApp.swift in Sources */,
 				A1000002 /* ContentView.swift in Sources */,
 				A1000003 /* FortuneView.swift in Sources */,
@@ -506,6 +721,11 @@
 				A1000040 /* StatsView.swift in Sources */,
 				A1000041 /* FavoriteItem.swift in Sources */,
 				A1000044 /* HapticManager.swift in Sources */,
+				A1000049 /* AssistantLocalRepository.swift in Sources */,
+				A1000093 /* AssistantCloudMemorySync.swift in Sources */,
+				A1000094 /* AssistantCloudConversationSync.swift in Sources */,
+                A1000095 /* AssistantDeviceRegistration.swift in Sources */,
+				A1000096 /* AssistantPreferences.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -513,15 +733,52 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+                B1000059 /* AssistantIdentityClient.swift in Sources */,
+                B1000063 /* AssistantEntitlements.swift in Sources */,
+                B1000067 /* AssistantConversationClient.swift in Sources */,
+                B1000068 /* AssistantLocalization.swift in Sources */,
+                B1000069 /* AssistantModelCatalog.swift in Sources */,
+                B1000070 /* AssistantModelPreferences.swift in Sources */,
+                B1000071 /* AssistantConnectionProbe.swift in Sources */,
+                B1000072 /* AssistantLocalizedView.swift in Sources */,
+                B1000073 /* AssistantDataManagementView.swift in Sources */,
+                B1000074 /* AssistantDataExport.swift in Sources */,
+                B1000091 /* AssistantDataImport.swift in Sources */,
+                B1000092 /* AssistantChatViewport.swift in Sources */,
+				B1000096 /* AssistantPreferences.swift in Sources */,
+                B1000075 /* AssistantDeletionNotice.swift in Sources */,
+                B1000079 /* AssistantMarkdown.swift in Sources */,
+                B1000080 /* AssistantMarkdownInline.swift in Sources */,
+                B1000046 /* MarkdownTextView.swift in Sources */,
+                B1000077 /* AssistantQuietHours.swift in Sources */,
+                B1000076 /* AssistantDeletionNoticeView.swift in Sources */,
+                B1000078 /* AssistantQuietHoursSettingsView.swift in Sources */,
+                B1000057 /* AssistantReminderCoordinator.swift in Sources */,
+                B1000053 /* AssistantMedia.swift in Sources */,
+				B1000055 /* AssistantSubscriptionStore.swift in Sources */,
+				B1000051 /* AssistantChatArchive.swift in Sources */,
+				B1800001 /* AssistantChatDatabase.swift in Sources */,
+				B1800002 /* AssistantArchiveOperationGate.swift in Sources */,
+				B1900001 /* AssistantTaskTools.swift in Sources */,
+				B1900002 /* AssistantTaskToolReceipt.swift in Sources */,
+				B1900003 /* AssistantTaskToolExecution.swift in Sources */,
+				B1900004 /* AssistantTaskToolCapabilityProbe.swift in Sources */,
+				B1900006 /* AssistantOwnerIdentity.swift in Sources */,
+				B1900005 /* AssistantTaskToolProposalView.swift in Sources */,
+				B1000050 /* AssistantProtocol.swift in Sources */,
+				B1000049 /* AssistantLocalRepository.swift in Sources */,
+				B1000093 /* AssistantCloudMemorySync.swift in Sources */,
+				B1000094 /* AssistantCloudConversationSync.swift in Sources */,
 				B1000001 /* CaobaoApp.swift in Sources */,
 				B1000002 /* MacContentView.swift in Sources */,
+				B1000097 /* AssistantMacPreferencesView.swift in Sources */,
+				B1000098 /* MacChatView.swift in Sources */,
+				B1000100 /* AssistantWorkspaceViews.swift in Sources */,
 				B1000003 /* ChatViewModel.swift in Sources */,
 				B1000004 /* APIService.swift in Sources */,
 				B1000005 /* AuthService.swift in Sources */,
 				B1000006 /* User.swift in Sources */,
 				B1000007 /* FortuneView.swift in Sources */,
-				B1000008 /* HistoryView.swift in Sources */,
-				B1000009 /* ProfileView.swift in Sources */,
 				B1000010 /* SettingsView.swift in Sources */,
 				B1000013 /* FortuneData.swift in Sources */,
 				B1000024 /* AvatarImageView.swift in Sources */,
@@ -624,6 +881,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				OTHER_LDFLAGS = ("$(inherited)", "-lsqlite3",);
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -680,6 +938,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				OTHER_LDFLAGS = ("$(inherited)", "-lsqlite3",);
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -688,6 +947,7 @@
 		A9000003 /* Debug (iOS) */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				APS_ENVIRONMENT = development;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Caobao/Caobao.entitlements;
@@ -726,6 +986,7 @@
 		A9000004 /* Release (iOS) */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				APS_ENVIRONMENT = production;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Caobao/Caobao.entitlements;
@@ -764,6 +1025,7 @@
 		B9000003 /* Debug (macOS) */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				APS_ENVIRONMENT = development;
 				ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon-macOS";
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Caobao/Caobao.entitlements;
@@ -786,6 +1048,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = caobao.chat.mac;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
+				OTHER_LDFLAGS = ("$(inherited)", "-lsqlite3",);
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};
@@ -794,6 +1057,7 @@
 		B9000004 /* Release (macOS) */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				APS_ENVIRONMENT = production;
 				ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon-macOS";
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Caobao/Caobao.entitlements;
@@ -816,6 +1080,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = caobao.chat.mac;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
+				OTHER_LDFLAGS = ("$(inherited)", "-lsqlite3",);
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};

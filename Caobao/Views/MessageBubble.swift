@@ -11,7 +11,14 @@ struct MessageBubble: View {
     let message: ChatMessage
     let userSettings: UserSettings
     let autoPlayAudio: Bool
+    let allowsMutatingActions: Bool
+    /// The assistant v2 contract has no reporting endpoint. Legacy reporting is opt-in.
+    let allowsReporting: Bool
+    let allowsRegeneration: Bool
+    /// Assistant text is untrusted. URL detection must not silently fetch media.
+    let allowsRemoteMedia: Bool
     let onCopy: () -> Void
+    let onCopyCode: (@MainActor (Int, String) async -> Bool)?
     let onLike: () -> Void
     let onDislike: () -> Void
     let onRegenerate: () -> Void
@@ -24,7 +31,12 @@ struct MessageBubble: View {
     init(message: ChatMessage, 
          userSettings: UserSettings, 
          autoPlayAudio: Bool = false,
+         allowsMutatingActions: Bool = true,
+         allowsReporting: Bool = false,
+         allowsRegeneration: Bool = true,
+         allowsRemoteMedia: Bool = false,
          onCopy: @escaping () -> Void = {},
+         onCopyCode: (@MainActor (Int, String) async -> Bool)? = nil,
          onLike: @escaping () -> Void = {},
          onDislike: @escaping () -> Void = {},
          onRegenerate: @escaping () -> Void = {},
@@ -32,7 +44,12 @@ struct MessageBubble: View {
         self.message = message
         self.userSettings = userSettings
         self.autoPlayAudio = autoPlayAudio
+        self.allowsMutatingActions = allowsMutatingActions
+        self.allowsReporting = allowsReporting
+        self.allowsRegeneration = allowsRegeneration
+        self.allowsRemoteMedia = allowsRemoteMedia
         self.onCopy = onCopy
+        self.onCopyCode = onCopyCode
         self.onLike = onLike
         self.onDislike = onDislike
         self.onRegenerate = onRegenerate
@@ -41,53 +58,12 @@ struct MessageBubble: View {
     
     // 提取所有媒体链接
     private var mediaLinks: [MediaLink] {
-        MediaLinkDetector.extractMediaLinks(from: message.content)
+        allowsRemoteMedia ? MediaLinkDetector.extractMediaLinks(from: message.content) : []
     }
     
     // 移除媒体链接后的文本
     private var displayText: String {
-        MediaLinkDetector.removeMediaLinks(from: message.content)
-    }
-    
-    // 格式化 Markdown 文本
-    private func formatMarkdown(_ text: String) -> AttributedString {
-        // 预处理文本，移除 Markdown 语法标记
-        var processedText = text
-        
-        // 移除标题标记 (# ## ### 等)
-        processedText = processedText.replacingOccurrences(of: "^#{1,6}\\s+", with: "", options: .regularExpression)
-        
-        // 移除粗体标记 (**text** 或 __text__)
-        processedText = processedText.replacingOccurrences(of: "\\*\\*([^*]+)\\*\\*", with: "$1", options: .regularExpression)
-        processedText = processedText.replacingOccurrences(of: "__([^_]+)__", with: "$1", options: .regularExpression)
-        
-        // 移除斜体标记 (*text* 或 _text_)
-        processedText = processedText.replacingOccurrences(of: "\\*([^*]+)\\*", with: "$1", options: .regularExpression)
-        processedText = processedText.replacingOccurrences(of: "_([^_]+)_", with: "$1", options: .regularExpression)
-        
-        // 移除删除线标记 (~~text~~)
-        processedText = processedText.replacingOccurrences(of: "~~([^~]+)~~", with: "$1", options: .regularExpression)
-        
-        // 移除行内代码标记 (`code`)
-        processedText = processedText.replacingOccurrences(of: "`([^`]+)`", with: "$1", options: .regularExpression)
-        
-        // 移除分隔线 (--- 或 ***)
-        processedText = processedText.replacingOccurrences(of: "^[-]{3,}$", with: "————————", options: .regularExpression)
-        processedText = processedText.replacingOccurrences(of: "^[*]{3,}$", with: "————————", options: .regularExpression)
-        
-        // 处理列表项 (- item 或 * item)
-        processedText = processedText.replacingOccurrences(of: "^[\\-\\*]\\s+", with: "• ", options: .regularExpression)
-        
-        // 处理有序列表 (1. item)
-        processedText = processedText.replacingOccurrences(of: "^(\\d+)\\.\\s+", with: "$1. ", options: .regularExpression)
-        
-        // 尝试解析为 AttributedString
-        do {
-            return try AttributedString(markdown: processedText, options: AttributedString.MarkdownParsingOptions(interpretedSyntax: .inlineOnlyPreservingWhitespace))
-        } catch {
-            // 如果解析失败，返回普通文本
-            return AttributedString(processedText)
-        }
+        allowsRemoteMedia ? MediaLinkDetector.removeMediaLinks(from: message.content) : message.content
     }
     
     var body: some View {
@@ -102,7 +78,7 @@ struct MessageBubble: View {
                     if message.role == .assistant {
                         // AI消息使用美观的Markdown渲染
                         #if os(iOS)
-                        MarkdownTextView(markdown: displayText)
+                        MarkdownTextView(markdown: displayText, onCopyCode: onCopyCode)
                             .font(.body)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 10)
@@ -124,7 +100,7 @@ struct MessageBubble: View {
                                 }
                             )
                         #else
-                        Text(displayText)
+                        MarkdownTextView(markdown: displayText, onCopyCode: onCopyCode)
                             .font(.body)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 10)
@@ -147,7 +123,8 @@ struct MessageBubble: View {
                         #endif
                     } else {
                         // 用户消息使用简单的文本渲染
-                        Text(formatMarkdown(displayText))
+                        Text(verbatim: displayText)
+                            .textSelection(.enabled)
                             .font(.body)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 10)
@@ -205,50 +182,57 @@ struct MessageBubble: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
+                        .accessibilityLabel("复制")
                         
-                        // 点赞
-                        Button {
-                            onLike()
-                        } label: {
-                            Image(systemName: message.liked ? "hand.thumbsup.fill" : "hand.thumbsup")
-                                .font(.caption)
-                                .foregroundStyle(message.liked ? .blue : .secondary)
-                        }
+                        if allowsMutatingActions {
+                            // 点赞
+                            Button {
+                                onLike()
+                            } label: {
+                                Image(systemName: message.liked ? "hand.thumbsup.fill" : "hand.thumbsup")
+                                    .font(.caption)
+                                    .foregroundStyle(message.liked ? .blue : .secondary)
+                            }
                         
-                        // 踩
-                        Button {
-                            onDislike()
-                        } label: {
-                            Image(systemName: message.disliked ? "hand.thumbsdown.fill" : "hand.thumbsdown")
-                                .font(.caption)
-                                .foregroundStyle(message.disliked ? .red : .secondary)
-                        }
+                            // 踩
+                            Button {
+                                onDislike()
+                            } label: {
+                                Image(systemName: message.disliked ? "hand.thumbsdown.fill" : "hand.thumbsdown")
+                                    .font(.caption)
+                                    .foregroundStyle(message.disliked ? .red : .secondary)
+                            }
                         
-                        // 重新生成
-                        Button {
-                            onRegenerate()
-                        } label: {
-                            Image(systemName: "arrow.counterclockwise")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
+                            if allowsRegeneration {
+                                Button {
+                                    onRegenerate()
+                                } label: {
+                                    Image(systemName: "arrow.counterclockwise")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                .accessibilityLabel("重新生成回复")
+                            }
                         
-                        // 删除
-                        Button {
-                            onDelete()
-                        } label: {
-                            Image(systemName: "trash")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
+                            // 删除
+                            Button {
+                                onDelete()
+                            } label: {
+                                Image(systemName: "trash")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
                         
-                        // 举报
-                        Button {
-                            showReportSheet = true
-                        } label: {
-                            Image(systemName: "flag")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                            if allowsReporting {
+                                Button {
+                                    showReportSheet = true
+                                } label: {
+                                    Image(systemName: "flag")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                .accessibilityLabel("举报内容")
+                            }
                         }
                     }
                     .padding(.top, 4)
@@ -403,7 +387,7 @@ struct MessageBubble: View {
 
 // MARK: - Quick Action Button
 struct QuickActionButton: View {
-    let title: String
+    let title: LocalizedStringKey
     let icon: String
     let action: () -> Void
     

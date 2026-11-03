@@ -7,6 +7,8 @@
 
 import SwiftUI
 
+#if os(iOS)
+
 struct StatsData {
     var totalMessages: Int = 0
     var userMessages: Int = 0
@@ -362,3 +364,17 @@ struct StatsView: View {
 #Preview {
     StatsView()
 }
+#else
+struct StatsView: View {
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "chart.bar").font(.system(size: 36)).foregroundStyle(.secondary)
+            Text("数据统计").font(.title3.bold())
+            Text("统计数据将在账号服务可用后显示。").foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(32)
+        .navigationTitle("数据统计")
+    }
+}
+#endif

@@ -1,5 +1,17 @@
 import SwiftUI
 import AuthenticationServices
+#if os(macOS)
+import AppKit
+#endif
+
+#if !os(iOS)
+// ProfileView belongs to the macOS target, whose sources omit ContentView.
+// Keep the shared root-page call sites available without iOS column APIs.
+extension View {
+    func assistantSidebarRoot(isAtRoot: Bool = true) -> some View { self }
+    func assistantSidebarChild() -> some View { self }
+}
+#endif
 
 struct ProfileView: View {
     @EnvironmentObject var appState: AppState
@@ -11,6 +23,12 @@ struct ProfileView: View {
     @State private var isUpgrading = false
     @State private var upgradeError: String?
     @State private var newNickname = ""
+    @State private var profileOwnerEpoch = UUID()
+    @State private var avatarOwnerSource: ProfileOwnerSource?
+    @State private var nicknameOwnerSource: ProfileOwnerSource?
+    @State private var logoutOwnerSource: ProfileOwnerSource?
+    private struct ProfileOwnerSource { let ownerId: String; let epoch: UUID }
+    private var liveOwnerId: String { authService.user?.id ?? "local-device" }
     
     var body: some View {
         NavigationStack {
@@ -33,6 +51,7 @@ struct ProfileView: View {
                         HStack(spacing: 16) {
                             // Avatar
                             Button {
+                                avatarOwnerSource = ProfileOwnerSource(ownerId: liveOwnerId, epoch: profileOwnerEpoch)
                                 showAvatarPicker = true
                             } label: {
                                 avatarView
@@ -65,6 +84,8 @@ struct ProfileView: View {
                         .padding(.vertical, 8)
                         .contentShape(Rectangle())
                         .onTapGesture {
+                            nicknameOwnerSource = ProfileOwnerSource(ownerId: liveOwnerId, epoch: profileOwnerEpoch)
+                            newNickname = appState.userSettings.nickname
                             showNicknameEditor = true
                         }
                     }
@@ -213,6 +234,7 @@ struct ProfileView: View {
                 // Account Actions
                 Section {
                     Button(role: .destructive) {
+                        logoutOwnerSource = ProfileOwnerSource(ownerId: liveOwnerId, epoch: profileOwnerEpoch)
                         showLogoutConfirm = true
                     } label: {
                         Label("退出登录", systemImage: "rectangle.portrait.and.arrow.right")
@@ -220,41 +242,55 @@ struct ProfileView: View {
                     }
                 }
             }
-            .navigationTitle("我的")
+            .assistantNavigationTitle("我的")
+            .assistantSidebarRoot()
             #if os(iOS)
-            .sheet(isPresented: $showAvatarPicker) {
-                AvatarPickerView(selectedSettings: $appState.userSettings)
+            .sheet(isPresented: Binding(get: { showAvatarPicker && profileSourceIsCurrent(avatarOwnerSource) }, set: { showAvatarPicker = $0 })) {
+                if let source = avatarOwnerSource, profileSourceIsCurrent(source) {
+                AvatarPickerView(selectedSettings: avatarSettings(for: source))
                     .presentationDetents([.medium])
+                    .id(AssistantOwnerIdentity.ownerKey(source.ownerId))
+                }
             }
             #else
-            .sheet(isPresented: $showAvatarPicker) {
-                AvatarPickerView(selectedSettings: $appState.userSettings)
+            .sheet(isPresented: Binding(get: { showAvatarPicker && profileSourceIsCurrent(avatarOwnerSource) }, set: { showAvatarPicker = $0 })) {
+                if let source = avatarOwnerSource, profileSourceIsCurrent(source) {
+                AvatarPickerView(selectedSettings: avatarSettings(for: source))
                     .frame(width: 400, height: 500)
+                    .id(AssistantOwnerIdentity.ownerKey(source.ownerId))
+                }
             }
             #endif
-            .alert("修改昵称", isPresented: $showNicknameEditor) {
+            .alert("修改昵称", isPresented: Binding(get: { showNicknameEditor && profileSourceIsCurrent(nicknameOwnerSource) }, set: { showNicknameEditor = $0 }),
+                   presenting: nicknameOwnerSource) { source in
                 TextField("昵称", text: $newNickname)
                 Button("取消", role: .cancel) {}
                 Button("保存") {
+                    guard profileSourceIsCurrent(source) else { return }
                     if !newNickname.trimmingCharacters(in: .whitespaces).isEmpty {
                         appState.userSettings.nickname = newNickname
                         appState.saveUserSettings()
                     }
                 }
-            } message: {
+            } message: { _ in
                 Text("请输入新昵称")
             }
-            .alert("确认退出", isPresented: $showLogoutConfirm) {
+            .alert("确认退出", isPresented: Binding(get: { showLogoutConfirm && profileSourceIsCurrent(logoutOwnerSource) }, set: { showLogoutConfirm = $0 }),
+                   presenting: logoutOwnerSource) { source in
                 Button("取消", role: .cancel) {}
                 Button("退出", role: .destructive) {
+                    guard profileSourceIsCurrent(source) else { return }
                     authService.logout()
                 }
-            } message: {
+            } message: { _ in
                 Text("确定要退出登录吗？")
             }
             .onAppear {
                 newNickname = appState.userSettings.nickname
             }
+            .onChange(of: AssistantOwnerIdentity.ownerKey(liveOwnerId)) { _ in resetProfileOwnerScope() }
+            .onReceive(NotificationCenter.default.publisher(for: .loginSuccess)) { _ in resetProfileOwnerScope() }
+            .onReceive(NotificationCenter.default.publisher(for: .logoutSuccess)) { _ in resetProfileOwnerScope() }
             #if os(iOS)
             .sheet(isPresented: $showUpgradeSheet) {
                 GuestUpgradeSheet(
@@ -285,6 +321,23 @@ struct ProfileView: View {
         }
     }
     
+    private func profileSourceIsCurrent(_ source: ProfileOwnerSource?) -> Bool {
+        guard let source else { return false }
+        return source.epoch == profileOwnerEpoch && AssistantOwnerIdentity.matches(source.ownerId, liveOwnerId)
+    }
+    private func avatarSettings(for source: ProfileOwnerSource) -> Binding<UserSettings> {
+        Binding(get: { appState.userSettings }, set: { value in
+            guard profileSourceIsCurrent(source) else { return }
+            appState.userSettings = value
+        })
+    }
+    private func resetProfileOwnerScope() {
+        profileOwnerEpoch = UUID()
+        showAvatarPicker = false; showNicknameEditor = false; showLogoutConfirm = false; showUpgradeSheet = false
+        avatarOwnerSource = nil; nicknameOwnerSource = nil; logoutOwnerSource = nil
+        newNickname = ""; upgradeError = nil
+    }
+
     // MARK: - Avatar View
     @ViewBuilder
     private var avatarView: some View {
@@ -292,7 +345,7 @@ struct ProfileView: View {
             Text(emoji)
                 .font(.system(size: 36))
                 .frame(width: 70, height: 70)
-                .background(Color(.systemGray5))
+                .background(Color.caobaoGroupedBackground)
                 .clipShape(Circle())
         } else if let url = appState.userSettings.avatarUrl, !url.isEmpty {
             AsyncImage(url: URL(string: url)) { phase in
@@ -330,10 +383,10 @@ struct ProfileView: View {
     // MARK: - Toxic Level Text
     private var toxicLevelText: String {
         switch appState.userSettings.toxicLevel {
-        case "light": return "温和"
-        case "normal": return "标准"
-        case "fierce": return "爆辣"
-        default: return "标准"
+        case "light": return AssistantLocalization.string("温和")
+        case "normal": return AssistantLocalization.string("标准")
+        case "fierce": return AssistantLocalization.string("爆辣")
+        default: return AssistantLocalization.string("标准")
         }
     }
 }
@@ -346,7 +399,7 @@ struct StatRow: View {
     
     var body: some View {
         HStack {
-            Label(title, systemImage: icon)
+            Label(AssistantLocalization.string(title), systemImage: icon)
                 .foregroundStyle(.primary)
             Spacer()
             Text(value)
@@ -395,18 +448,30 @@ struct AvatarPickerView: View {
                     .padding()
                     .tag(1)
                 }
+                #if os(iOS)
                 .tabViewStyle(.page(indexDisplayMode: .never))
+                #else
+                .tabViewStyle(.automatic)
+                #endif
             }
-            .navigationTitle("选择头像")
+            .assistantNavigationTitle("选择头像")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
             .toolbar {
+                #if os(iOS)
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("完成") {
                         dismiss()
                     }
                 }
+                #else
+                ToolbarItem(placement: .primaryAction) {
+                    Button("完成") {
+                        dismiss()
+                    }
+                }
+                #endif
             }
         }
     }
@@ -418,7 +483,7 @@ struct AvatarPickerView: View {
         } label: {
             ZStack {
                 Circle()
-                    .fill(Color(.systemGray6))
+                    .fill(Color.caobaoGroupedBackground)
                     .frame(width: 80, height: 80)
                 
                 // 加载预设头像图片
@@ -457,7 +522,7 @@ struct AvatarPickerView: View {
                 Text(emoji)
                     .font(.system(size: 40))
                     .frame(width: 70, height: 70)
-                    .background(Color(.systemGray6))
+                    .background(Color.caobaoGroupedBackground)
                     .clipShape(Circle())
                 
                 if selectedSettings.avatarType == "emoji" && selectedSettings.avatarValue == emoji {
@@ -512,7 +577,8 @@ struct GuestUpgradeSheet: View {
                 SignInWithAppleButton(
                     .signIn,
                     onRequest: { request in
-                        request.requestedScopes = [.fullName, .email]
+                        do { try AuthService.shared.configureAppleRequest(request) }
+                        catch { self.error = error.localizedDescription }
                     },
                     onCompletion: { result in
                         handleAppleSignIn(result: result)
@@ -547,16 +613,24 @@ struct GuestUpgradeSheet: View {
                 }
                 .padding(.bottom, 20)
             }
-            .navigationTitle("账号升级")
+            .assistantNavigationTitle("账号升级")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
             .toolbar {
+                #if os(iOS)
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("关闭") {
                         isPresented = false
                     }
                 }
+                #else
+                ToolbarItem(placement: .primaryAction) {
+                    Button("关闭") {
+                        isPresented = false
+                    }
+                }
+                #endif
             }
         }
     }
@@ -564,8 +638,8 @@ struct GuestUpgradeSheet: View {
     private func handleAppleSignIn(result: Result<ASAuthorization, Error>) {
         switch result {
         case .success(let authorization):
-            guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential else {
-                error = "无效的凭证"
+            guard authorization.credential is ASAuthorizationAppleIDCredential else {
+                error = AssistantLocalization.string("无效的凭证")
                 return
             }
             
@@ -574,15 +648,8 @@ struct GuestUpgradeSheet: View {
             
             Task {
                 do {
-                    let identityToken = appleIDCredential.identityToken?.base64EncodedString() ?? ""
-                    let authorizationCode = appleIDCredential.authorizationCode?.base64EncodedString() ?? ""
-                    
-                    _ = try await AuthService.shared.guestUpgrade(
-                        provider: "apple",
-                        identityToken: identityToken,
-                        authorizationCode: authorizationCode
-                    )
-                    
+                    try await AuthService.shared.handleAppleSignIn(result: authorization)
+
                     await MainActor.run {
                         isUpgrading = false
                         isPresented = false
@@ -658,6 +725,7 @@ struct AvatarImageView: View {
             let (data, _) = try await URLSession.shared.data(from: url)
             
             // 验证图片数据
+            #if os(iOS)
             if let uiImage = UIImage(data: data) {
                 await MainActor.run {
                     self.image = Image(uiImage: uiImage)
@@ -673,6 +741,21 @@ struct AvatarImageView: View {
                     await handleError()
                 }
             }
+            #else
+            if let nsImage = NSImage(data: data) {
+                await MainActor.run {
+                    self.image = Image(nsImage: nsImage)
+                    self.isLoading = false
+                    self.loadError = false
+                }
+            } else {
+                if format == "webp" {
+                    await loadAvatar(format: "png")
+                } else {
+                    await handleError()
+                }
+            }
+            #endif
         } catch {
             // 下载失败
             if format == "webp" {
@@ -693,6 +776,5 @@ struct AvatarImageView: View {
         }
     }
 }
-
 }
 #endif

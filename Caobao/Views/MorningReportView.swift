@@ -8,6 +8,15 @@ struct MorningReportView: View {
     @State private var notAvailable: NotAvailableInfo?
     @State private var isLoading = true
     @State private var error: String?
+
+    @ViewBuilder
+    private var chatDestination: some View {
+        #if os(iOS)
+        ChatView()
+        #else
+        Text("请在左侧对话中继续")
+        #endif
+    }
     
     var body: some View {
         NavigationStack {
@@ -45,6 +54,7 @@ struct MorningReportView: View {
             .navigationBarTitleDisplayMode(.inline)
             #endif
             .toolbar {
+                #if os(iOS)
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         Task { await loadReport() }
@@ -53,6 +63,16 @@ struct MorningReportView: View {
                             .foregroundStyle(.white)
                     }
                 }
+                #else
+                ToolbarItem(placement: .automatic) {
+                    Button {
+                        Task { await loadReport() }
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                            .foregroundStyle(.white)
+                    }
+                }
+                #endif
             }
         }
         .task {
@@ -94,7 +114,7 @@ struct MorningReportView: View {
             }
             .padding(.top, 8)
             
-            NavigationLink(destination: ChatView()) {
+            NavigationLink(destination: chatDestination) {
                 Text("开始对话")
                     .font(.headline)
                     .foregroundStyle(.white)
@@ -204,7 +224,7 @@ struct MorningReportView: View {
             }
             
             // 去对话
-            NavigationLink(destination: ChatView()) {
+            NavigationLink(destination: chatDestination) {
                 Text("开始今日对话")
                     .font(.headline)
                     .foregroundStyle(.white)

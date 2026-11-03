@@ -7,6 +7,8 @@
 
 import SwiftUI
 
+#if os(iOS)
+
 struct OfficialView: View {
     @Environment(\.dismiss) private var dismiss
     
@@ -345,3 +347,17 @@ struct OfficialView: View {
 #Preview {
     OfficialView()
 }
+#else
+struct OfficialView: View {
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "building.2").font(.system(size: 36)).foregroundStyle(.secondary)
+            Text("草台班子").font(.title3.bold())
+            Text("官方信息暂未配置。").foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(32)
+        .navigationTitle("草台班子")
+    }
+}
+#endif

@@ -3,6 +3,7 @@ import SwiftUI
 // MARK: - Settings View (设置)
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
+    @State private var showAssistantPreferences = false
     @AppStorage("selectedModel") private var selectedModel = "qwen-plus"
     @AppStorage("colorScheme") private var colorScheme = "system"
     @AppStorage("toxicLevel") private var toxicLevel = "normal"
@@ -40,6 +41,19 @@ struct SettingsView: View {
                 .ignoresSafeArea()
                 
                 List {
+                    // Account preferences are server-owned. Present the
+                    // shared assistant settings flow so macOS and iOS use
+                    // the same GET/PATCH contract and validation.
+                    Section {
+                        Button {
+                            showAssistantPreferences = true
+                        } label: {
+                            Label("助理账号偏好", systemImage: "slider.horizontal.3")
+                        }
+                    } header: {
+                        Text("助理")
+                    }
+
                     // 模型选择
                     Section {
                         ForEach(models, id: \.0) { model in
@@ -195,6 +209,10 @@ struct SettingsView: View {
                 colorScheme == "dark" ? .dark : 
                 colorScheme == "light" ? .light : nil
             )
+            .sheet(isPresented: $showAssistantPreferences) {
+                AssistantSettingsSheet()
+                    .environmentObject(appState)
+            }
         }
     }
 }

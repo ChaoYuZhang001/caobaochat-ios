@@ -7,8 +7,18 @@
 
 import SwiftUI
 
+#if os(iOS)
+
 struct AboutView: View {
     @Environment(\.dismiss) private var dismiss
+
+    private var platformBackground: Color {
+        #if os(iOS)
+        return Color(uiColor: .systemBackground)
+        #else
+        return Color(nsColor: .windowBackgroundColor)
+        #endif
+    }
     
     private let features = [
         (icon: "bubble.left.and.bubble.right", title: "多模型对话", desc: "支持37+AI模型切换", color: Color.green),
@@ -72,13 +82,21 @@ struct AboutView: View {
                     .padding()
                 }
             }
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     Text("关于我们")
                         .font(.headline)
                 }
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: {
+                    #if os(iOS)
+                    return ToolbarItemPlacement.navigationBarLeading
+                    #else
+                    return ToolbarItemPlacement.navigation
+                    #endif
+                }()) {
                     Button("返回") {
                         dismiss()
                     }
@@ -132,7 +150,7 @@ struct AboutView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
-                .background(Color(.systemBackground))
+                .background(platformBackground)
                 .cornerRadius(12)
             }
         }
@@ -200,7 +218,7 @@ struct AboutView: View {
                         Spacer()
                     }
                     .padding()
-                    .background(Color(.systemBackground))
+                    .background(platformBackground)
                     .cornerRadius(12)
                 }
             }
@@ -238,7 +256,7 @@ struct AboutView: View {
                 }
             }
             .padding()
-            .background(Color(.systemBackground))
+            .background(platformBackground)
             .cornerRadius(12)
         }
     }
@@ -272,7 +290,7 @@ struct AboutView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color(.systemBackground))
+                    .background(platformBackground)
                     .cornerRadius(12)
                 }
                 
@@ -297,7 +315,7 @@ struct AboutView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(Color(.systemBackground))
+                .background(platformBackground)
                 .cornerRadius(12)
             }
         }
@@ -330,3 +348,17 @@ struct AboutView: View {
 #Preview {
     AboutView()
 }
+#else
+struct AboutView: View {
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "info.circle").font(.system(size: 36)).foregroundStyle(.secondary)
+            Text("关于草包").font(.title3.bold())
+            Text("CaoBao 个人 AI 助理。").foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(32)
+        .navigationTitle("关于草包")
+    }
+}
+#endif

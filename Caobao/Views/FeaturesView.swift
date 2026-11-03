@@ -56,7 +56,7 @@ struct FeaturesView: View {
                             ], spacing: 12) {
                                 ForEach(mainFeatures, id: \.title) { feature in
                                     NavigationLink {
-                                        destinationView(for: feature.title)
+                                        destinationView(for: feature.title).assistantSidebarChild()
                                     } label: {
                                         CaobaoFeatureCard(
                                             icon: feature.icon,
@@ -84,7 +84,7 @@ struct FeaturesView: View {
                             ], spacing: 12) {
                                 ForEach(moreFeatures, id: \.title) { feature in
                                     NavigationLink {
-                                        destinationView(for: feature.title)
+                                        destinationView(for: feature.title).assistantSidebarChild()
                                     } label: {
                                         CaobaoFeatureCard(
                                             icon: feature.icon,
@@ -109,7 +109,7 @@ struct FeaturesView: View {
                             VStack(spacing: 10) {
                                 ForEach(quickActions, id: \.title) { action in
                                     NavigationLink {
-                                        destinationView(for: action.title)
+                                        destinationView(for: action.title).assistantSidebarChild()
                                     } label: {
                                         CaobaoQuickActionRow(
                                             icon: action.icon,
@@ -127,6 +127,7 @@ struct FeaturesView: View {
                 }
             }
             .navigationTitle("更多功能")
+            .assistantSidebarRoot()
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif

@@ -6,6 +6,12 @@
 !*.xcworkspace/contents.xcworkspacedata
 !*.xcworkspace/xcshareddata/
 
+# Commit only the shared SwiftPM lock used by this Xcode project.
+!Caobao.xcodeproj/project.xcworkspace/
+!Caobao.xcodeproj/project.xcworkspace/xcshareddata/
+!Caobao.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
+!Caobao.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+
 # Build
 build/
 DerivedData/

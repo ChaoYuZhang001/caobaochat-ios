@@ -66,7 +66,7 @@ struct NicknameView: View {
                             }
                         }
                         .padding()
-                        .background(Color(.systemBackground))
+                        .background(Color.caobaoGroupedBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         
                         // 特点选择
@@ -115,7 +115,7 @@ struct NicknameView: View {
                             }
                         }
                         .padding()
-                        .background(Color(.systemBackground))
+                        .background(Color.caobaoGroupedBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         
                         // 名字输入
@@ -127,7 +127,7 @@ struct NicknameView: View {
                                 .textFieldStyle(.roundedBorder)
                         }
                         .padding()
-                        .background(Color(.systemBackground))
+                        .background(Color.caobaoGroupedBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         
                         // 生成按钮
@@ -179,7 +179,7 @@ struct NicknameView: View {
                                 }
                             }
                             .padding()
-                            .background(Color(.systemBackground))
+                            .background(Color.caobaoGroupedBackground)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
                     }
@@ -187,7 +187,9 @@ struct NicknameView: View {
                 }
             }
             .navigationTitle("")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     Text("个性昵称")
@@ -300,7 +302,7 @@ struct TraitChip: View {
                 .font(.caption)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(isSelected ? color : Color(.systemGray5))
+                .background(isSelected ? color : Color.caobaoGroupedBackground)
                 .foregroundStyle(isSelected ? .white : .primary)
                 .clipShape(Capsule())
         }
@@ -329,19 +331,11 @@ struct StyleCard: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
-            .background(
-                Group {
-                    if isSelected {
-                        LinearGradient(
-                            gradient: Gradient(colors: [gradient.0, gradient.1]),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    } else {
-                        Color(.systemGray6)
-                    }
-                }
-            )
+            .background(isSelected
+                ? AnyShapeStyle(LinearGradient(
+                    gradient: Gradient(colors: [gradient.0, gradient.1]),
+                    startPoint: .topLeading, endPoint: .bottomTrailing))
+                : AnyShapeStyle(Color.caobaoGroupedBackground))
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .shadow(color: isSelected ? gradient.0.opacity(0.3) : .clear, radius: 4, y: 2)
         }
@@ -389,7 +383,7 @@ struct NicknameCard: View {
             }
         }
         .padding()
-        .background(Color(.systemGray6))
+        .background(Color.caobaoGroupedBackground)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }

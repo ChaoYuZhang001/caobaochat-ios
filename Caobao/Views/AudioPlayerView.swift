@@ -13,6 +13,14 @@ struct AudioPlayerView: View {
     @State private var duration: Double = 0
     @State private var isLoaded = false
     @State private var timeObserver: Any?
+
+    private var playerBackground: Color {
+        #if os(iOS)
+        return Color(uiColor: .systemGray6)
+        #else
+        return Color(nsColor: .controlBackgroundColor)
+        #endif
+    }
     
     init(url: URL, autoPlay: Bool = false) {
         self.url = url
@@ -64,7 +72,7 @@ struct AudioPlayerView: View {
             }
         }
         .padding(12)
-        .background(Color(.systemGray6))
+        .background(playerBackground)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .onAppear {
             setupPlayer()

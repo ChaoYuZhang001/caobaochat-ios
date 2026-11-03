@@ -1,0 +1,5 @@
+/* Localized app name and active permission purposes. */
+"CFBundleDisplayName" = "草包";
+"NSMicrophoneUsageDescription" = "只有当你主动开始语音输入时，草包才使用麦克风将你的语音转为文字。不支持设备端识别时，语音可能由 Apple 处理。";
+"NSSpeechRecognitionUsageDescription" = "草包将语音识别为消息文字。优先使用设备端识别；当前语言不支持时，语音可能由 Apple 处理。";
+"NSCameraUsageDescription" = "草包使用相机拍摄你选择发送给 AI 分析的照片。";

@@ -156,11 +156,11 @@ struct FeedbackView: View {
                     TextEditor(text: $content)
                         .frame(minHeight: 120)
                         .padding(8)
-                        .background(Color(.systemGray6).opacity(1))
+                        .background(Color.caobaoGroupedBackground)
                         .cornerRadius(12)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color(.systemGray4).opacity(1), lineWidth: 1)
+                                .stroke(Color.secondary.opacity(0.25), lineWidth: 1)
                         )
                     
                     HStack {
@@ -230,19 +230,29 @@ struct FeedbackView: View {
                             .foregroundColor(.secondary)
                     }
                     .padding()
-                    .background(Color(.systemGray6).opacity(1))
+                    .background(Color.caobaoGroupedBackground)
                     .cornerRadius(12)
                 }
             }
             .padding()
         }
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
         .toolbar {
+            #if os(iOS)
             ToolbarItem(placement: .navigationBarLeading) {
                 Button("取消") {
                     dismiss()
                 }
             }
+            #else
+            ToolbarItem(placement: .cancellationAction) {
+                Button("取消") {
+                    dismiss()
+                }
+            }
+            #endif
         }
     }
     
@@ -270,7 +280,7 @@ struct FeedbackView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding()
-            .background(selectedType == type ? Color.green.opacity(0.1) : Color(.systemGray6))
+            .background(selectedType == type ? Color.green.opacity(0.1) : Color.caobaoGroupedBackground)
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
@@ -292,7 +302,7 @@ struct FeedbackView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
-            .background(rating == value ? Color.green.opacity(0.1) : Color(.systemGray6))
+            .background(rating == value ? Color.green.opacity(0.1) : Color.caobaoGroupedBackground)
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)

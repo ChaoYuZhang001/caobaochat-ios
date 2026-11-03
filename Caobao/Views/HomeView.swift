@@ -1,360 +1,852 @@
 import SwiftUI
 
-// MARK: - Home View (首页概览)
-// 与 Web 端保持一致的设计风格
+// Presentation adapters keep known app-localized error semantics while the
+// standalone localization helper rejects unknown OS/provider descriptions.
+extension AssistantTransportError: AssistantLocalizedNetworkFailure {}
+extension AssistantConnectionProbeError: AssistantLocalizedNetworkFailure {}
+extension AssistantTaskToolError: AssistantLocalizedNetworkFailure {}
 
+@MainActor
 struct HomeView: View {
-    @EnvironmentObject var appState: AppState
-    @State private var fortune: FortuneData?
-    @State private var loading = false
-    
-    // 与 Web 端对齐的快捷功能
-    private let mainFeatures: [(icon: String, title: String, subtitle: String)] = [
-        ("message.fill", "找人聊聊", "随时待命"),
-        ("sun.max.fill", "阳光明媚", "算一卦"),
-        ("doc.text.magnifyingglass", "图片分析", "扔进来我看看"),
-        ("quote.bubble", "扎心金句", "发朋友圈专用"),
-    ]
+    @EnvironmentObject private var appState: AppState
+    @Environment(\.scenePhase) private var scenePhase
+    @ObservedObject private var auth = AuthService.shared
+    @ObservedObject private var chat = ChatViewModel.shared
+    @ObservedObject private var proactiveStore = AssistantProactiveStore.shared
+    @State private var tasks: [AssistantTask] = []
+    @State private var recentReloadId = UUID()
+    @State private var navigationEpoch = UUID()
+    @State private var navigationRun: UUID?
+    @State private var navigationTask: Task<Void, Never>?
+    @State private var preparationError: String?
+    private var owner: String { auth.user?.id ?? "local-device" }
+    private var currentTasks: [AssistantTask] { tasks.filter { AssistantOwnerIdentity.matches($0.userId, owner) } }
+    private var canNavigate: Bool {
+        AssistantOwnerIdentity.matches(owner, chat.activeOwner) && chat.archiveIsReady && !chat.archiveIsLoading && !chat.isArchiveBusy && navigationRun == nil
+    }
+    private var canCreateConversation: Bool {
+        AssistantOwnerIdentity.matches(owner, chat.activeOwner) && (chat.archiveIsReady || chat.archiveRequiresRecovery)
+            && !chat.archiveIsLoading && !chat.isArchiveBusy && navigationRun == nil
+    }
 
-    private let moreFeatures: [(icon: String, title: String, subtitle: String)] = [
-        ("flame", "吐槽大会", "专治各种不服"),
-        ("wand.and.stars", "个性昵称", "给你起个名"),
-        ("chart.line.uptrend.xyaxis", "犀利点评", "来评评理"),
-        ("target", "选择困难", "帮你决定"),
-    ]
-    
-    private let quickActions: [(icon: String, title: String, subtitle: String)] = [
-        ("sun.max.fill", "早报", "开启元气满满的一天"),
-        ("moon.fill", "晚报", "总结今日收获"),
-    ]
-    
-    private var greeting: String {
-        let hour = Calendar.current.component(.hour, from: Date())
-        switch hour {
-        case 5..<12: return "早上好"
-        case 12..<14: return "中午好"
-        case 14..<18: return "下午好"
-        case 18..<22: return "晚上好"
-        default: return "夜深了"
-        }
-    }
-    
     var body: some View {
-        NavigationStack {
-            ZStack {
-                // 渐变背景 - 温暖的橙黄渐变（代表草包的热情）
-                LinearGradient(
-                    gradient: Gradient(colors: [
-                        Color(hex: "fbbf24").opacity(0.15),
-                        Color(hex: "f59e0b").opacity(0.1),
-                        Color.caobaoGroupedBackground
-                    ]),
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
-                
-                ScrollView {
-                    VStack(spacing: 20) {
-                        // Hero 区域
-                        CaobaoHeroSection(
-                            greeting: greeting,
-                            nickname: appState.userSettings.nickname
-                        )
-                        
-                        // 今日运势摘要
-                        if let fortune = fortune {
-                            CaobaoFortuneCard(fortune: fortune)
-                        }
-                        
-                        // 主功能入口 - 4列网格
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("核心功能")
-                                .font(.headline)
-                                .foregroundStyle(.secondary)
-                            
-                            LazyVGrid(columns: [
-                                GridItem(.flexible()),
-                                GridItem(.flexible()),
-                                GridItem(.flexible()),
-                                GridItem(.flexible()),
-                            ], spacing: 12) {
-                                ForEach(mainFeatures, id: \.title) { feature in
-                                    if feature.title == "找人聊聊" {
-                                        // 找人聊聊 - 切换 TabBar
-                                        Button(action: {
-                                            withAnimation {
-                                                appState.selectedTab = .chat
-                                            }
-                                        }) {
-                                            CaobaoFeatureCard(
-                                                icon: feature.icon,
-                                                title: feature.title,
-                                                subtitle: feature.subtitle,
-                                                color: .featureColor(for: feature.title),
-                                                iconSize: 22
-                                            )
-                                        }
-                                        .buttonStyle(.plain)
-                                    } else {
-                                        NavigationLink {
-                                            destinationView(for: feature.title)
-                                        } label: {
-                                            CaobaoFeatureCard(
-                                                icon: feature.icon,
-                                                title: feature.title,
-                                                subtitle: feature.subtitle,
-                                                color: .featureColor(for: feature.title),
-                                                iconSize: 22
-                                            )
-                                        }
-                                        .buttonStyle(.plain)
-                                    }
-                                }
-                            }
-                        }
-                        
-                        // 早晚报入口
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("每日报告")
-                                .font(.headline)
-                                .foregroundStyle(.secondary)
-                            
-                            VStack(spacing: 10) {
-                                ForEach(quickActions, id: \.title) { action in
-                                    NavigationLink {
-                                        destinationView(for: action.title)
-                                    } label: {
-                                        CaobaoQuickActionRow(
-                                            icon: action.icon,
-                                            title: action.title,
-                                            subtitle: action.subtitle,
-                                            color: .featureColor(for: action.title)
-                                        )
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                            }
-                        }
-                        
-                        // 更多功能 - 4列网格
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("特色功能")
-                                .font(.headline)
-                                .foregroundStyle(.secondary)
-                            
-                            LazyVGrid(columns: [
-                                GridItem(.flexible()),
-                                GridItem(.flexible()),
-                                GridItem(.flexible()),
-                                GridItem(.flexible()),
-                            ], spacing: 12) {
-                                ForEach(moreFeatures, id: \.title) { feature in
-                                    NavigationLink {
-                                        destinationView(for: feature.title)
-                                    } label: {
-                                        CaobaoFeatureCard(
-                                            icon: feature.icon,
-                                            title: feature.title,
-                                            subtitle: feature.subtitle,
-                                            color: .featureColor(for: feature.title),
-                                            iconSize: 22
-                                        )
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                            }
-                        }
-                        
-                        // 使用统计
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("使用统计")
-                                .font(.headline)
-                                .foregroundStyle(.secondary)
-                            
+        let displayedOwner = chat.activeOwner
+        let loadIdentity = HomeConversationLoad(ownerId: owner, reloadId: recentReloadId)
+        return NavigationStack(path: $appState.assistantHomePath) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    proactiveCard
+                    if chat.archiveIsLoading { ProgressView("正在准备本地对话…") }
+                    if let error = preparationError ?? chat.archiveOperationError {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(verbatim: error).font(.caption).foregroundStyle(.red)
+                            if chat.archiveRequiresRecovery {
+                                Button("重试清理并新建") { beginNavigation(ownerId: displayedOwner) }
+                                    .frame(minHeight: 44).disabled(!canCreateConversation)
+                            } else { Button("重试读取会话") { recentReloadId = UUID() }.frame(minHeight: 44) }
+                        }.caobaoCard()
+                    }
+                    if let syncError = chat.memorySyncError {
+                        Text("记忆同步暂未完成：\(syncError)")
+                            .font(.caption).foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    sectionHeader(title: "今天要处理", actionTitle: "查看全部") { appState.selectedTab = .fortune }
+                    if currentTasks.isEmpty {
+                        Button { appState.selectedTab = .fortune } label: {
                             HStack(spacing: 12) {
-                                CaobaoStatCard(title: "对话次数", value: "\(appState.userStats.totalChats)", icon: "message.fill", color: .caobaoPrimary)
-                                CaobaoStatCard(title: "使用天数", value: "\(appState.userStats.usageDays)", icon: "calendar", color: .blue)
-                                CaobaoStatCard(title: "连续打卡", value: "\(appState.userStats.streak)天", icon: "flame.fill", color: .orange)
+                                Image(systemName: "plus.circle.fill")
+                                    .font(.title3)
+                                    .foregroundStyle(.caobaoPrimary)
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text("添加第一项任务").font(.subheadline.weight(.semibold))
+                                    Text("把想做的事交给我，随时可以继续")
+                                        .font(.caption).foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption.weight(.bold))
+                                    .foregroundStyle(.tertiary)
+                            }
+                            .frame(maxWidth: .infinity, minHeight: 58, alignment: .leading)
+                        }
+                        .buttonStyle(.plain)
+                        .caobaoCard(padding: 14, cornerRadius: 18, hasShadow: false)
+                    } else {
+                        VStack(alignment: .leading, spacing: 12) {
+                            ForEach(currentTasks.prefix(3)) { task in
+                                Label(task.title, systemImage: "circle").font(.subheadline)
                             }
                         }
-                        
-                        // 快捷入口
-                        VStack(spacing: 10) {
-                            NavigationLink {
-                                HistoryView()
-                            } label: {
-                                HStack(spacing: 14) {
-                                    Image(systemName: "clock.fill")
-                                        .font(.title3)
-                                        .foregroundStyle(.purple)
-                                        .frame(width: 42, height: 42)
-                                        .background(
-                                            Circle()
-                                                .fill(Color.purple.opacity(0.15))
-                                        )
-                                    
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text("历史记录")
-                                            .font(.subheadline)
-                                            .fontWeight(.semibold)
-                                            .foregroundStyle(.primary)
-                                        
-                                        Text("查看所有对话记录")
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                    
-                                    Spacer()
-                                    
-                                    Image(systemName: "chevron.right")
-                                        .font(.caption)
-                                        .foregroundStyle(.tertiary)
-                                }
-                                .padding(14)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 14)
-                                        .fill(.ultraThinMaterial)
-                                        .shadow(color: .black.opacity(0.05), radius: 4, y: 2)
-                                )
-                            }
-                            .buttonStyle(.plain)
-                            
-                            NavigationLink {
-                                ProfileView()
-                            } label: {
-                                HStack(spacing: 14) {
-                                    Image(systemName: "person.fill")
-                                        .font(.title3)
-                                        .foregroundStyle(.blue)
-                                        .frame(width: 42, height: 42)
-                                        .background(
-                                            Circle()
-                                                .fill(Color.blue.opacity(0.15))
-                                        )
-                                    
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text("个人中心")
-                                            .font(.subheadline)
-                                            .fontWeight(.semibold)
-                                            .foregroundStyle(.primary)
-                                        
-                                        Text("管理你的账户信息")
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                    
-                                    Spacer()
-                                    
-                                    Image(systemName: "chevron.right")
-                                        .font(.caption)
-                                        .foregroundStyle(.tertiary)
-                                }
-                                .padding(14)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 14)
-                                        .fill(.ultraThinMaterial)
-                                        .shadow(color: .black.opacity(0.05), radius: 4, y: 2)
-                                )
-                            }
-                            .buttonStyle(.plain)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .caobaoCard(padding: 14, cornerRadius: 18, hasShadow: false)
+                    }
+                    welcomeCard
+                    quotaCard
+                    Text("快速开始").font(.headline)
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 12)], spacing: 12) {
+                        quickAction("制定计划", icon: "checklist", prompt: "帮我制定今天的计划")
+                        quickAction("总结内容", icon: "doc.text.magnifyingglass", prompt: "帮我总结这段内容")
+                        quickAction("整理思路", icon: "lightbulb", prompt: "帮我整理一下思路")
+                        Button { appState.selectedTab = .fortune } label: {
+                            actionTile(title: "添加待办", subtitle: "记录并提醒", icon: "plus.circle.fill", tint: .orange)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    sectionHeader(title: "继续使用")
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                        NavigationLink(value: AssistantHomeRoute.memories) {
+                            actionTile(title: "我的记忆", subtitle: "查看与管理", icon: "brain.head.profile", tint: .purple)
+                        }
+                        NavigationLink(value: AssistantHomeRoute.tools) {
+                            actionTile(title: "更多工具", subtitle: "探索能力", icon: "square.grid.2x2.fill", tint: .blue)
                         }
                     }
-                    .padding()
+                    if AssistantOwnerIdentity.matches(chat.activeOwner, owner), !chat.conversations.isEmpty {
+                        sectionHeader(title: "最近对话", actionTitle: "全部历史") { appState.assistantHomePath.append(.history) }
+                        ForEach(chat.conversations.prefix(3)) { conversation in
+                            Button {
+                                beginNavigation(ownerId: displayedOwner, conversationId: conversation.id)
+                            } label: {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(conversation.title).font(.subheadline.bold()).lineLimit(1)
+                                    Text(conversation.preview).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+                                    if conversation.messageCount == 0 { Text("尚无已发送消息").font(.caption2).foregroundStyle(.secondary) }
+                                }.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                            }.buttonStyle(.plain).caobaoCard().disabled(!canNavigate)
+                        }
+                    }
+                    NavigationLink(value: AssistantHomeRoute.dataManagement) {
+                        Label("数据与隐私", systemImage: "externaldrive")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                 }
+                .frame(maxWidth: 900)
+                .frame(maxWidth: .infinity)
+                .padding(20)
             }
-            .navigationTitle("")
-            .navigationBarTitleDisplayMode(.inline)
+            .background(Color.caobaoGroupedBackground)
+            .assistantNavigationTitle("今日助理")
+            .assistantSidebarRoot(isAtRoot: appState.assistantHomePath.isEmpty)
             .toolbar {
-                ToolbarItem(placement: .principal) {
-                    HStack(spacing: 8) {
-                        Image("Logo")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 28, height: 28)
-                            .clipShape(RoundedRectangle(cornerRadius: 6))
-                        
-                        Text("草包")
-                            .font(.headline)
-                            .fontWeight(.bold)
-                            .foregroundStyle(.primary)
-                    }
-                }
-                
-                ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink {
-                        ProfileView()
-                    } label: {
-                        Image(systemName: "person.circle.fill")
-                            .font(.title2)
-                            .foregroundStyle(.caobaoPrimary)
-                    }
+                ToolbarItem(placement: .primaryAction) {
+                    Button { appState.isShowingAssistantSettings = true } label: { Image(systemName: "slider.horizontal.3") }
+                        .accessibilityLabel("助理设置")
                 }
             }
-        }
-        .onAppear {
-            // 只在没有运势数据时加载，且设置超时保护
-            if fortune == nil {
-                loadFortuneWithTimeout()
+            .navigationDestination(for: AssistantHomeRoute.self) { route in
+                switch route {
+                case .memories: AssistantMemoriesView(userId: owner)
+                case .history: HistoryView(embeddedInHome: true)
+                case .historyConversation(let id, let ownerId):
+                    ConversationDetailView(conversationId: id, ownerId: ownerId)
+                case .tools: FeaturesView()
+                case .proactive: AssistantProactiveView(userId: owner)
+                case .subscription: SubscriptionView()
+                case .dataManagement: AssistantDataManagementView(ownerId: owner)
+                }
             }
-        }
-    }
-    
-    // MARK: - Helper
-    private func loadFortuneWithTimeout() {
-        loading = true
-        Task {
-            do {
-                let response = try await APIService.shared.getFortune(userId: appState.user?.id ?? "guest")
-                await MainActor.run {
-                    if response.success {
-                        fortune = response.toFortuneData()
-                    }
-                    loading = false
+            .task(id: loadIdentity) {
+                guard !Task.isCancelled, AssistantOwnerIdentity.matches(loadIdentity.ownerId, owner), loadIdentity.reloadId == recentReloadId else { return }
+                let sourceOwner = loadIdentity.ownerId
+                let epoch = navigationEpoch
+                preparationError = nil
+                tasks = AssistantLocalRepository.shared.tasks(for: sourceOwner).filter { $0.status == .active }
+                chat.activateOwner()
+                do {
+                    try await chat.waitForArchiveReady(ownerId: sourceOwner)
+                    guard !Task.isCancelled, AssistantOwnerIdentity.matches(owner, sourceOwner), navigationEpoch == epoch, loadIdentity.reloadId == recentReloadId else { return }
+                    await chat.syncFromCloud()
+                    guard !Task.isCancelled, AssistantOwnerIdentity.matches(owner, sourceOwner), navigationEpoch == epoch, loadIdentity.reloadId == recentReloadId else { return }
+                    await appState.refreshAssistantState()
+                } catch {
+                    guard !Task.isCancelled, AssistantOwnerIdentity.matches(owner, sourceOwner), navigationEpoch == epoch, loadIdentity.reloadId == recentReloadId else { return }
+                    preparationError = error.localizedDescription
                 }
-            } catch {
-                await MainActor.run {
-                    // 加载失败不阻塞
-                    loading = false
-                    print("运势加载失败: \(error.localizedDescription)")
-                }
+            }
+            .onAppear { tasks = AssistantLocalRepository.shared.tasks(for: owner).filter { $0.status == .active } }
+            .onChange(of: AssistantOwnerIdentity.ownerKey(owner)) { _ in resetNavigation() }
+            .onChange(of: scenePhase) { phase in
+                guard phase == .active, !chat.isSyncing else { return }
+                Task { @MainActor in await chat.syncFromCloud() }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .loginSuccess)) { _ in resetNavigation() }
+            .onReceive(NotificationCenter.default.publisher(for: .logoutSuccess)) { _ in resetNavigation() }
+            .onDisappear { resetNavigation(reload: false) }
+            .refreshable {
+                recentReloadId = UUID()
+                await chat.syncFromCloud()
+                await appState.refreshAssistantState(force: true)
             }
         }
     }
-    
-    @ViewBuilder
-    private func destinationView(for title: String) -> some View {
-        switch title {
-        case "找人聊聊":
-            // 不使用 NavigationLink，而是切换 TabBar
-            EmptyView()
-        case "阳光明媚": FortuneView()
-        case "今日运势": FortuneView()
-        case "图片分析": AnalyzeView()
-        case "扎心金句": QuoteView()
-        case "吐槽大会": RoastView()
-        case "个性昵称": NicknameView()
-        case "犀利点评": RateView()
-        case "选择困难": DecisionView()
-        case "早报": MorningReportView()
-        case "晚报": EveningReportView()
-        default: Text("功能开发中")
+
+    private var welcomeCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("CaoBao")
+                        .font(.system(.largeTitle, design: .rounded).weight(.bold))
+                    Text("少点空话，把事情做好。")
+                        .font(.title3.weight(.semibold))
+                    Text("规划、总结、记忆与任务，都可以从这里开始。")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 12)
+                Image(systemName: "sparkles")
+                    .font(.title2.weight(.semibold))
+                    .foregroundStyle(.caobaoPrimary)
+                    .padding(12)
+                    .background(.caobaoPrimary.opacity(0.12), in: Circle())
+            }
+            Button {
+                let displayedOwner = chat.activeOwner
+                beginNavigation(ownerId: displayedOwner)
+            } label: {
+                HStack {
+                    Image(systemName: "message.fill")
+                    Text("开始一段对话").fontWeight(.semibold)
+                    Spacer()
+                    Image(systemName: "arrow.up.right")
+                }
+                .frame(maxWidth: .infinity, minHeight: 48)
+                .foregroundStyle(.white)
+                .background(LinearGradient.caobaoPrimary, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            }
+            .buttonStyle(.plain)
+            .disabled(!canCreateConversation)
+            .opacity(canCreateConversation ? 1 : 0.55)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(18)
+        .background(
+            LinearGradient(
+                colors: [.caobaoPrimary.opacity(0.16), .caobaoAccent.opacity(0.04)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            ),
+            in: RoundedRectangle(cornerRadius: 24, style: .continuous)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(.caobaoPrimary.opacity(0.12), lineWidth: 1)
         }
     }
-    
-    // 处理功能点击
-    private func handleFeatureTap(for title: String) {
-        switch title {
-        case "找人聊聊":
-            // 切换到对话 Tab
-            appState.selectedTab = .chat
-        default:
-            break
+
+    private func sectionHeader(title: LocalizedStringKey, actionTitle: LocalizedStringKey? = nil, action: (() -> Void)? = nil) -> some View {
+        HStack {
+            Text(title).font(.headline)
+            Spacer()
+            if let actionTitle, let action {
+                Button(actionTitle, action: action)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.caobaoPrimary)
+            }
         }
+    }
+
+    private func actionTile(title: LocalizedStringKey, subtitle: LocalizedStringKey, icon: String, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Image(systemName: icon)
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(tint)
+                .frame(width: 34, height: 34)
+                .background(tint.opacity(0.13), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            Text(title).font(.subheadline.weight(.semibold))
+            Text(subtitle).font(.caption).foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, minHeight: 92, alignment: .leading)
+        .caobaoCard(padding: 14, cornerRadius: 18, hasShadow: false)
+    }
+
+    private var quotaCard: some View {
+        TimelineView(.periodic(from: .now, by: 30)) { _ in quotaContents }
+    }
+
+    private var quotaContents: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Label("助理额度", systemImage: "bolt.fill").font(.headline)
+                Spacer()
+                NavigationLink("订阅", value: AssistantHomeRoute.subscription)
+            }
+            if appState.assistantMode == "byok" {
+                Text("自定义 API 不消耗平台次数").font(.subheadline)
+            } else if let remaining = appState.dailyQuotaRemaining, !appState.isQuotaStale {
+                Text("剩余 \(remaining) / 8 次").font(.title3.bold())
+            } else {
+                Text("额度尚未验证").font(.title3.bold())
+            }
+            if appState.assistantMode == "platform",
+               let balance = appState.subscriptionBalance, !appState.isSubscriptionQuotaStale {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("订阅周期额度").font(.subheadline.bold())
+                    Text("剩余 \(balance.remaining) / \(balance.included) 次").font(.subheadline)
+                    (Text("本周期截止：") + Text(balance.periodEndsAt, style: .date))
+                        .font(.caption).foregroundStyle(.secondary)
+                }.accessibilityElement(children: .combine)
+            }
+            (Text("区域：") + Text(LocalizedStringKey(appState.serviceRegionLabel)) + Text(" · ")
+                + Text("模式：") + Text(LocalizedStringKey(appState.assistantModeLabel)))
+                .font(.caption).foregroundStyle(.secondary)
+            (Text("模型：") + Text(appState.currentModelLabel))
+                .font(.caption).foregroundStyle(.secondary).textSelection(.enabled)
+            if let message = appState.quotaStatusMessage {
+                Text(LocalizedStringKey(message)).font(.caption).foregroundStyle(.secondary)
+            }
+            if appState.isRefreshingEntitlements { ProgressView() }
+            else {
+                Button("刷新权益") { Task { await appState.refreshAssistantState(force: true) } }
+                    .font(.caption).frame(minHeight: 44)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .caobaoCard()
+    }
+
+    private var proactiveCard: some View {
+        let profile = proactiveStore.profile(for: owner)
+        return NavigationLink(value: AssistantHomeRoute.proactive) {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: profile.enabled ? "bell.badge.fill" : "bell.slash")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(profile.enabled ? Color.caobaoPrimary : .secondary)
+                    .frame(width: 38, height: 38)
+                    .background((profile.enabled ? Color.caobaoPrimary : Color.secondary).opacity(0.12), in: Circle())
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text("主动更新").font(.headline)
+                        Spacer()
+                        Text(profile.enabled ? profile.mode.title : "未开启")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(profile.enabled ? Color.caobaoPrimary : .secondary)
+                    }
+                    Text(profile.enabled ? "按你的规则提醒、跟进和生成更新" : "开启后，曹宝会按你的规则主动提醒")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text("消息来源、安静时段和频率都由你控制")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.tertiary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .buttonStyle(.plain)
+        .caobaoCard(padding: 14, cornerRadius: 18, hasShadow: false)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("主动更新")
+        .accessibilityValue(profile.enabled ? Text(profile.mode.title) : Text("未开启"))
+    }
+
+    private func quickAction(_ title: LocalizedStringKey, icon: String, prompt: String) -> some View {
+        let displayedOwner = chat.activeOwner
+        return Button {
+            let preferred = appState.assistantLanguage == "system" ? Locale.preferredLanguages.first ?? "en" : appState.assistantLanguage
+            let resource = preferred.hasPrefix("zh") ? "zh-Hans" : "en"
+            let bundle = Bundle.main.path(forResource: resource, ofType: "lproj").flatMap(Bundle.init(path:)) ?? .main
+            let initialText = bundle.localizedString(forKey: prompt, value: prompt, table: nil)
+            beginNavigation(ownerId: displayedOwner, initialText: initialText)
+        } label: {
+            actionTile(title: title, subtitle: "点击开始", icon: icon, tint: .caobaoPrimary)
+        }
+        .buttonStyle(.plain)
+        .disabled(!canCreateConversation)
+        .opacity(canCreateConversation ? 1 : 0.55)
+    }
+
+    private func beginNavigation(ownerId: String, conversationId: String? = nil, initialText: String = "") {
+        guard conversationId == nil ? canCreateConversation : canNavigate else { return }
+        let run = UUID(), epoch = navigationEpoch
+        navigationRun = run
+        navigationTask = Task {
+            defer { if navigationRun == run { navigationRun = nil; navigationTask = nil } }
+            guard !Task.isCancelled, navigationRun == run, navigationEpoch == epoch,
+                  AssistantOwnerIdentity.matches(owner, ownerId), AssistantOwnerIdentity.matches(chat.activeOwner, ownerId) else { return }
+            let succeeded: Bool
+            if let conversationId { succeeded = await chat.requestOpenConversation(id: conversationId, ownerId: ownerId) }
+            else { succeeded = await chat.requestNewConversation(ownerId: ownerId, initialText: initialText) }
+            guard succeeded, !Task.isCancelled, navigationRun == run, navigationEpoch == epoch,
+                  AssistantOwnerIdentity.matches(owner, ownerId), AssistantOwnerIdentity.matches(chat.activeOwner, ownerId) else { return }
+            AssistantConversationNavigation.activateChat(appState: appState, ownerId: ownerId)
+        }
+    }
+    private func resetNavigation(reload: Bool = true) {
+        navigationTask?.cancel(); navigationTask = nil; navigationRun = nil; navigationEpoch = UUID()
+        preparationError = nil
+        if reload { recentReloadId = UUID() }
     }
 }
 
-#Preview {
-    HomeView()
-        .environmentObject(AppState())
+private struct HomeConversationLoad: Hashable {
+    let ownerId: String
+    let ownerIdentityKey: String
+    let reloadId: UUID
+    init(ownerId: String, reloadId: UUID) {
+        self.ownerId = ownerId; ownerIdentityKey = AssistantOwnerIdentity.ownerKey(ownerId); self.reloadId = reloadId
+    }
+}
+
+@MainActor
+struct AssistantSettingsSheet: View {
+    @EnvironmentObject private var appState: AppState
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var auth = AuthService.shared
+    @State private var baseURL = ""
+    @State private var protocolKind = AssistantWireProtocol.chatCompletions
+    @State private var model = ""
+    @State private var apiKey = ""
+    @State private var language = "system"
+    @State private var mode = "platform"
+    @State private var persona = "normal"
+    @State private var region = ""
+    @State private var platformModel = ""
+    @State private var probeTask: Task<Void, Never>?
+    @State private var probeRunId: UUID?
+    @State private var probeStatus: String?
+    @State private var showProbeConfirmation = false
+    @State private var taskToolsEnabled = false
+    @State private var verifiedToolFingerprint: String?
+    @State private var toolProbeTask: Task<Void, Never>?
+    @State private var toolProbeRunId: UUID?
+    @State private var toolProbeStatus: String?
+    @State private var showToolProbeConfirmation = false
+    @State private var settingsEpoch = UUID()
+    @State private var observedToolConnection: ToolConnectionIdentity?
+    @State private var observedToolMode: String?
+    @State private var errorMessage: String?
+    @State private var isSaving = false
+    @State private var loadedOwnerId: String?
+    private var owner: String { auth.user?.id ?? "local-device" }
+    private var prefix: String { "assistant.byok.\(owner)." }
+    private var languageKey: String { "caobao.assistant.\(Data(owner.utf8).base64EncodedString()).language" }
+    private struct ToolConnectionIdentity: Equatable, Sendable {
+        let baseURL: String
+        let protocolKind: AssistantWireProtocol
+        let model: String
+        let apiKey: String
+    }
+    private struct ToolProbeSource: Sendable {
+        let ownerId: String
+        let epoch: UUID
+        let runId: UUID
+        let connection: ToolConnectionIdentity
+        let fingerprint: String
+    }
+    private var toolConnection: ToolConnectionIdentity {
+        .init(baseURL: baseURL, protocolKind: protocolKind, model: model, apiKey: apiKey)
+    }
+    private var toolConfiguration: BYOKConfiguration {
+        .init(baseURL: baseURL.trimmingCharacters(in: .whitespacesAndNewlines), protocolKind: protocolKind,
+              model: model.trimmingCharacters(in: .whitespacesAndNewlines), apiKey: apiKey)
+    }
+    private var toolFingerprint: String? { try? toolConfiguration.consentIdentifier() }
+    private var hasCurrentToolProof: Bool {
+        guard let verifiedToolFingerprint else { return false }
+        return AssistantOwnerIdentity.matches(loadedOwnerId, owner) && toolFingerprint == verifiedToolFingerprint
+    }
+
+    var body: some View {
+        NavigationStack { settingsConfirmations }
+    }
+
+    private var settingsForm: some View {
+        Group {
+            if AssistantOwnerIdentity.matches(loadedOwnerId, owner) {
+                Form {
+                    basicSettingsSections
+                    if mode == "byok" { byokConfigurationSection }
+                    else { platformModelSection }
+                    if let errorMessage { Section { Text(errorMessage).foregroundStyle(.red).font(.caption) } }
+                }
+            } else if let errorMessage { Text(verbatim: errorMessage).padding() }
+            else { ProgressView() }
+        }
+        .disabled(isSaving || !AssistantOwnerIdentity.matches(loadedOwnerId, owner))
+    }
+
+    private var settingsNavigation: some View {
+        settingsForm
+            .assistantNavigationTitle("助理设置")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("保存") { Task { await save() } }
+                        .disabled(isSaving || probeTask != nil || toolProbeTask != nil || !AssistantOwnerIdentity.matches(loadedOwnerId, owner))
+                }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("关闭") { cancelProbe(); cancelToolProbe(); settingsEpoch = UUID(); dismiss() }.disabled(isSaving)
+                }
+            }
+    }
+
+    private var settingsConnectionObservers: some View {
+        settingsNavigation
+            .onAppear(perform: loadSettings)
+            .task(id: mode + "." + region + "." + AssistantOwnerIdentity.ownerKey(owner)) {
+                if mode == "platform" { await appState.refreshModelCatalog(region: region) }
+            }
+            .onChange(of: region) { (value: String) in platformModel = appState.savedPlatformModel(for: value) }
+            .onChange(of: toolConnection) { (value: ToolConnectionIdentity) in
+                guard observedToolConnection != value else { return }
+                observedToolConnection = value; invalidateProbe(); invalidateToolVerification()
+            }
+            .onChange(of: mode) { (value: String) in
+                guard observedToolMode != value else { return }
+                observedToolMode = value; invalidateProbe(); invalidateToolVerification()
+            }
+    }
+
+    private var settingsLifecycle: some View {
+        settingsConnectionObservers
+            .onChange(of: AssistantOwnerIdentity.ownerKey(owner)) { _ in invalidateSettingsIdentity() }
+            .onReceive(NotificationCenter.default.publisher(for: .loginSuccess)) { _ in invalidateSettingsIdentity() }
+            .onReceive(NotificationCenter.default.publisher(for: .logoutSuccess)) { _ in invalidateSettingsIdentity() }
+            .onDisappear { cancelProbe(); cancelToolProbe(); settingsEpoch = UUID() }
+            .interactiveDismissDisabled(isSaving || probeTask != nil || toolProbeTask != nil)
+    }
+
+    private var settingsConfirmations: some View {
+        settingsLifecycle
+            .alert("测试自定义 API 连接？", isPresented: $showProbeConfirmation) {
+                Button("取消", role: .cancel) { }
+                Button("继续测试") { startProbe() }
+            } message: {
+                Text("将使用填写的 API Key 向 \(probeDestination) 发送固定测试消息，服务商可能收费。不会发送会话历史、记忆或任务，也不会扣除 CaoBao 平台次数。")
+            }
+            .confirmationDialog("验证待办工具能力？", isPresented: $showToolProbeConfirmation, titleVisibility: .visible) {
+                Button("取消", role: .cancel) { }
+                Button("继续验证") { startToolProbe() }
+            } message: {
+                Text("将使用填写的 API Key 向当前自定义服务发送固定的 caobao_task_probe 测试，服务商可能收费。不会发送历史、记忆或任务，也不会创建待办或申请通知权限。")
+            }
+    }
+
+    private func loadSettings() {
+        guard !AssistantOwnerIdentity.matches(loadedOwnerId, owner) else { return }
+        loadedOwnerId = owner
+        let defaults = UserDefaults.standard
+        mode = appState.assistantMode
+        persona = appState.userSettings.toxicLevel
+        region = appState.serviceRegion
+        platformModel = appState.savedPlatformModel(for: region)
+        baseURL = defaults.string(forKey: prefix + "url") ?? ""
+        model = defaults.string(forKey: prefix + "model") ?? ""
+        protocolKind = AssistantWireProtocol(rawValue: defaults.string(forKey: prefix + "protocol") ?? "") ?? .chatCompletions
+        apiKey = KeychainStore.read(account: "byok-api-key.\(owner)") ?? ""
+        language = defaults.string(forKey: languageKey) ?? "system"
+        observedToolConnection = toolConnection; observedToolMode = mode
+        let fingerprint = toolFingerprint
+        verifiedToolFingerprint = AssistantTaskToolPreferences.verifiedFingerprint(defaults: defaults, ownerId: owner)
+        taskToolsEnabled = fingerprint.map { AssistantTaskToolPreferences.isEnabled(defaults: defaults, ownerId: owner, configurationFingerprint: $0) } ?? false
+        if verifiedToolFingerprint != fingerprint { verifiedToolFingerprint = nil; taskToolsEnabled = false }
+    }
+
+    @ViewBuilder
+    private var basicSettingsSections: some View {
+        Section("语言") {
+            Picker("助理语言", selection: $language) {
+                Text("跟随系统").tag("system")
+                Text("简体中文").tag("zh-Hans")
+                Text("English").tag("en")
+            }
+        }
+        Section("表达风格") {
+            Picker("草包风格", selection: $persona) {
+                Text("温和").tag("gentle")
+                Text("标准").tag("normal")
+                Text("犀利").tag("sharp")
+            }
+        }
+        Section("服务区域") {
+            Picker("默认模型区域", selection: $region) {
+                Text("未选择").tag("")
+                Text("中国大陆模型").tag("CN")
+                Text("海外模型").tag("INTL")
+            }
+            Text("App Store 地区仅提供默认建议。保存后以你的选择为准。")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+        Section("语音与隐私") {
+            Text("语音识别优先在设备上进行；当前语言不支持离线识别时，可能由 Apple 处理。只有点击麦克风后才开始。")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+        Section("通知与提醒") {
+            NavigationLink("主动更新") { AssistantProactiveView(userId: owner) }
+            NavigationLink("安静时段") { AssistantQuietHoursSettingsView(ownerId: owner) }
+                .disabled(isSaving || probeTask != nil)
+        }
+        Section("接入方式") {
+            Picker("当前模式", selection: $mode) {
+                Text("CaoBao 平台").tag("platform")
+                Text("自定义 API（BYOK）").tag("byok")
+            }
+            Text("平台使用新版助理接口；服务未开通时会显示错误，不自动调用旧接口。")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+        Section("数据管理") {
+            NavigationLink("数据与隐私") { AssistantDataManagementView(ownerId: owner) }
+                .disabled(isSaving || probeTask != nil)
+        }
+    }
+
+    private var byokConfigurationSection: some View {
+        Section("自定义 API") {
+            Picker("协议", selection: $protocolKind) {
+                Text("OpenAI Chat Completions").tag(AssistantWireProtocol.chatCompletions)
+                Text("OpenAI Responses").tag(AssistantWireProtocol.responses)
+                Text("Anthropic Messages").tag(AssistantWireProtocol.anthropic)
+            }
+            TextField("Base URL（HTTPS）", text: $baseURL)
+                #if os(iOS)
+                .textInputAutocapitalization(.never)
+                #endif
+                .autocorrectionDisabled()
+            TextField("模型名称", text: $model)
+                #if os(iOS)
+                .textInputAutocapitalization(.never)
+                #endif
+                .autocorrectionDisabled()
+            SecureField("API Key（仅存 Keychain）", text: $apiKey)
+                #if os(iOS)
+                .textInputAutocapitalization(.never)
+                #endif
+                .autocorrectionDisabled()
+            Text("会话历史与相关记忆可能发送到此地址。首次发送前需要确认。不会自动切回平台。")
+                .font(.caption).foregroundStyle(.secondary)
+            Button("清除 API Key", role: .destructive) {
+                KeychainStore.delete(account: "byok-api-key.\(owner)"); apiKey = ""
+                NotificationCenter.default.post(name: Notification.Name("assistant.generationConfigurationChanged"), object: owner)
+            }
+            connectionTestControls
+            taskToolControls
+        }
+    }
+
+    @ViewBuilder
+    private var connectionTestControls: some View {
+        if probeTask != nil {
+            HStack {
+                ProgressView()
+                Text("正在测试连接…")
+                Spacer()
+                Button("停止") { cancelProbe() }
+            }
+        } else {
+            Button("测试连接") { showProbeConfirmation = true }
+                .disabled(baseURL.isEmpty || model.isEmpty || apiKey.isEmpty || isSaving || toolProbeTask != nil)
+        }
+        if let probeStatus { Text(probeStatus).font(.caption).textSelection(.enabled) }
+        Text("连接测试可能产生 API 费用，只发送固定测试消息，不包含历史、记忆或任务。")
+            .font(.caption).foregroundStyle(.secondary)
+    }
+
+    @ViewBuilder
+    private var taskToolControls: some View {
+        Toggle("启用 AI 待办建议", isOn: $taskToolsEnabled)
+            .disabled(!hasCurrentToolProof || toolProbeTask != nil || probeTask != nil || isSaving)
+        Text("工具默认关闭。请先验证当前 API 的工具能力，再明确启用并保存；每条待办仍需你确认。")
+            .font(.caption).foregroundStyle(.secondary)
+        if toolProbeTask != nil {
+            HStack {
+                ProgressView(); Text("正在验证待办工具…"); Spacer()
+                Button("停止") { cancelToolProbe() }
+            }
+        } else {
+            Button("验证待办工具") { showToolProbeConfirmation = true }
+                .disabled(baseURL.isEmpty || model.isEmpty || apiKey.isEmpty || probeTask != nil || isSaving)
+        }
+        if let toolProbeStatus { Text(verbatim: toolProbeStatus).font(.caption) }
+        else if hasCurrentToolProof { Text("当前配置的待办工具能力已验证。").font(.caption).foregroundStyle(.secondary) }
+        else { Text("尚未验证当前配置的待办工具能力。").font(.caption).foregroundStyle(.secondary) }
+        Text("修改地址、协议、模型或 API Key 后需重新验证。平台模式当前不启用工具执行。")
+            .font(.caption).foregroundStyle(.secondary)
+    }
+
+    private var platformModelSection: some View {
+        Section("平台模型") {
+            Picker("当前模型", selection: $platformModel) {
+                Text("自动（区域默认）").tag("")
+                ForEach(availableModels) { item in Text(item.displayName).tag(item.id) }
+                if !platformModel.isEmpty, !availableModels.contains(where: { $0.id == platformModel }) {
+                    Text(platformModel).tag(platformModel)
+                }
+            }
+            if let selected = selectedModel {
+                Label(LocalizedStringKey(selected.capabilities.vision ? "支持图片输入" : "仅文字输入"),
+                      systemImage: selected.capabilities.vision ? "photo" : "text.bubble")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            if appState.isRefreshingModels { ProgressView("正在读取模型列表…") }
+            if let message = appState.modelCatalogStatusMessage {
+                Text(message).font(.caption).foregroundStyle(.secondary)
+            } else if appState.modelCatalog?.serviceRegion == region, availableModels.isEmpty {
+                Text("当前账号暂无可用的平台模型").font(.caption).foregroundStyle(.secondary)
+            }
+            Button("刷新模型列表") { Task { await appState.refreshModelCatalog(region: region, force: true) } }
+                .disabled(appState.isRefreshingModels || !["CN", "INTL"].contains(region))
+            Text("模型列表由当前账号和服务区域决定。自动模式使用该区域的默认模型，不会静默切换到自定义 API。")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
+    private var availableModels: [AssistantModelDescriptor] {
+        guard !appState.isModelCatalogStale, appState.modelCatalog?.serviceRegion == region else { return [] }
+        return appState.modelCatalog?.models.filter { $0.capabilities.streaming } ?? []
+    }
+
+    private var probeDestination: String {
+        URL(string: baseURL.trimmingCharacters(in: .whitespacesAndNewlines))?.host
+            ?? AssistantLocalization.string("配置的服务")
+    }
+
+    private var selectedModel: AssistantModelDescriptor? {
+        let id = platformModel.isEmpty ? appState.modelCatalog?.defaultModelId : platformModel
+        return availableModels.first { $0.id == id }
+    }
+
+    private func cancelProbe() {
+        probeRunId = nil; probeTask?.cancel(); probeTask = nil
+    }
+
+    private func invalidateProbe() { cancelProbe(); probeStatus = nil }
+
+    private func cancelToolProbe() {
+        toolProbeRunId = nil; toolProbeTask?.cancel(); toolProbeTask = nil
+    }
+    private func invalidateToolVerification() {
+        cancelToolProbe(); verifiedToolFingerprint = nil; taskToolsEnabled = false
+        toolProbeStatus = nil; showToolProbeConfirmation = false
+    }
+    private func invalidateSettingsIdentity() {
+        settingsEpoch = UUID(); cancelProbe(); invalidateToolVerification()
+        loadedOwnerId = nil; observedToolConnection = nil; observedToolMode = nil
+        showProbeConfirmation = false
+        apiKey = ""; baseURL = ""; model = ""
+        errorMessage = AssistantLocalization.string("账号已变化，请关闭并重新打开设置。")
+    }
+    private func validateToolProbe(_ source: ToolProbeSource) throws {
+        try Task.checkCancellation()
+        guard AssistantOwnerIdentity.matches(owner, source.ownerId), AssistantOwnerIdentity.matches(loadedOwnerId, source.ownerId), settingsEpoch == source.epoch,
+              toolProbeRunId == source.runId, mode == "byok", toolConnection == source.connection,
+              toolFingerprint == source.fingerprint else { throw CancellationError() }
+    }
+    private func startToolProbe() {
+        guard AssistantOwnerIdentity.matches(loadedOwnerId, owner), mode == "byok", !isSaving, probeTask == nil else { return }
+        invalidateToolVerification()
+        do {
+            let configuration = toolConfiguration, fingerprint = try configuration.consentIdentifier()
+            let source = ToolProbeSource(ownerId: owner, epoch: settingsEpoch, runId: UUID(), connection: toolConnection, fingerprint: fingerprint)
+            toolProbeRunId = source.runId
+            toolProbeTask = Task { @MainActor in
+                defer { if toolProbeRunId == source.runId { toolProbeRunId = nil; toolProbeTask = nil } }
+                do {
+                    let proof = try await AssistantTaskToolCapabilityProbe().check(configuration: configuration,
+                        beforeStart: { try validateToolProbe(source) }, beforeStartWait: { try validateToolProbe(source) })
+                    try validateToolProbe(source)
+                    guard proof == source.fingerprint else { throw AssistantTaskToolError.capabilityRequired }
+                    verifiedToolFingerprint = proof
+                    toolProbeStatus = AssistantLocalization.string("待办工具验证通过；请明确启用并保存设置。")
+                } catch {
+                    guard !Task.isCancelled, toolProbeRunId == source.runId, AssistantOwnerIdentity.matches(owner, source.ownerId), settingsEpoch == source.epoch else { return }
+                    verifiedToolFingerprint = nil; taskToolsEnabled = false; toolProbeStatus = AssistantLocalization.networkErrorDescription(error)
+                }
+            }
+        } catch { toolProbeStatus = AssistantLocalization.networkErrorDescription(error) }
+    }
+
+    private func startProbe() {
+        cancelProbe()
+        let runId = UUID(); probeRunId = runId
+        let savedOwner = owner
+        let configuration = BYOKConfiguration(baseURL: baseURL, protocolKind: protocolKind, model: model, apiKey: apiKey)
+        probeStatus = nil
+        probeTask = Task { @MainActor in
+            do {
+                let result = try await AssistantConnectionProbe().check(configuration: configuration)
+                guard !Task.isCancelled, probeRunId == runId, AssistantOwnerIdentity.matches(owner, savedOwner) else { return }
+                probeStatus = String(format: AssistantLocalization.string("连接成功（%.1f 秒），仅验证文字响应。"), result.elapsedSeconds)
+            } catch {
+                guard !Task.isCancelled, probeRunId == runId, AssistantOwnerIdentity.matches(owner, savedOwner) else { return }
+                probeStatus = AssistantLocalization.networkErrorDescription(error)
+            }
+            guard probeRunId == runId else { return }
+            probeRunId = nil; probeTask = nil
+        }
+    }
+
+    @MainActor private func save() async {
+        let savedOwner = owner
+        guard AssistantOwnerIdentity.matches(loadedOwnerId, savedOwner) else { return }
+        isSaving = true; errorMessage = nil
+        defer { isSaving = false }
+        do {
+            if mode == "platform", !["CN", "INTL"].contains(region) {
+                throw AssistantTransportError.configuration(AssistantLocalization.string("请先确认服务区域"))
+            }
+            if mode == "platform", !platformModel.isEmpty,
+               !availableModels.contains(where: { $0.id == platformModel }),
+               platformModel != appState.savedPlatformModel(for: region) || (appState.modelCatalog?.serviceRegion == region && !appState.isModelCatalogStale) {
+                throw AssistantTransportError.configuration(AssistantLocalization.string("所选模型当前不可用，请刷新列表或选择自动模式"))
+            }
+            let storedDefaults = UserDefaults.standard
+            let verifiedProof = mode == "byok" && hasCurrentToolProof ? verifiedToolFingerprint : nil
+            guard !taskToolsEnabled || (mode == "byok" && verifiedProof != nil) else { throw AssistantTaskToolError.capabilityRequired }
+            let hasStoredConnection = !(storedDefaults.string(forKey: prefix + "url") ?? "").isEmpty
+                || !(storedDefaults.string(forKey: prefix + "model") ?? "").isEmpty
+            let connectionIsBlank = baseURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                && model.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && apiKey.isEmpty
+            if mode == "byok", !connectionIsBlank || hasStoredConnection {
+                let configuration = toolConfiguration
+                _ = try configuration.endpoint()
+                try KeychainStore.save(apiKey, account: "byok-api-key.\(savedOwner)")
+                let defaults = UserDefaults.standard
+                defaults.set(baseURL.trimmingCharacters(in: .whitespacesAndNewlines), forKey: prefix + "url")
+                defaults.set(model.trimmingCharacters(in: .whitespacesAndNewlines), forKey: prefix + "model")
+                defaults.set(protocolKind.rawValue, forKey: prefix + "protocol")
+                NotificationCenter.default.post(name: Notification.Name("assistant.generationConfigurationChanged"), object: savedOwner)
+            }
+            try AssistantTaskToolPreferences.set(enabled: mode == "byok" && taskToolsEnabled, verifiedFingerprint: verifiedProof,
+                defaults: storedDefaults, ownerId: savedOwner)
+            UserDefaults.standard.set(language, forKey: languageKey)
+            NotificationCenter.default.post(name: Notification.Name("assistant.generationConfigurationChanged"), object: savedOwner)
+            appState.assistantLanguage = language
+            appState.userSettings.toxicLevel = persona
+            appState.serviceRegion = region
+            if ["CN", "INTL"].contains(region) { try appState.savePlatformModel(platformModel, for: region) }
+            appState.assistantMode = mode
+            appState.regionConfirmed = ["CN", "INTL"].contains(region)
+            appState.saveUserSettings(); appState.saveAssistantPreferences()
+            if appState.assistantMode == "platform", AuthService.shared.isLoggedIn {
+                let request = AssistantPreferencesRequest(locale: language == "system" ? Locale.preferredLanguages.first ?? "en" : language,
+                    personaLevel: appState.userSettings.toxicLevel, serviceRegion: appState.serviceRegion,
+                    regionConfirmed: appState.regionConfirmed, assistantMode: appState.assistantMode,
+                    // The account timezone is established by identity/first-claim
+                    // flows and is immutable afterwards. A settings save must
+                    // never fail merely because the device moved to another zone.
+                    timeZone: nil, proactiveLevel: appState.proactiveLevel)
+                do {
+                    let token = try await AuthService.shared.validAccessToken()
+                    guard AssistantOwnerIdentity.matches(owner, savedOwner) else { return }
+                    _ = try await APIService.shared.updateAssistantPreferences(token: token, request: request)
+                }
+                catch { errorMessage = AssistantLocalization.string("设置已保存在设备，服务器暂时无法同步。可稍后重试。"); return }
+            }
+            guard AssistantOwnerIdentity.matches(owner, savedOwner) else { return }
+            dismiss()
+        } catch { errorMessage = error.localizedDescription }
+    }
+}
+
+struct SubscriptionView: View {
+    @EnvironmentObject private var appState: AppState
+    var body: some View {
+        AssistantSubscriptionView {
+            Task { await appState.refreshAssistantState(force: true) }
+        }
+    }
 }

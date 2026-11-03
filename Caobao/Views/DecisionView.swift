@@ -75,7 +75,7 @@ struct DecisionView: View {
                                 }
                         }
                         .padding()
-                        .background(Color(.systemBackground))
+                        .background(Color.caobaoGroupedBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         
                         // 选项输入
@@ -121,7 +121,7 @@ struct DecisionView: View {
                             }
                         }
                         .padding()
-                        .background(Color(.systemBackground))
+                        .background(Color.caobaoGroupedBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         
                         // 决策按钮
@@ -334,7 +334,7 @@ struct ResultCard: View {
             }
         }
         .padding()
-        .background(Color(.systemBackground))
+        .background(Color.caobaoGroupedBackground)
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 }

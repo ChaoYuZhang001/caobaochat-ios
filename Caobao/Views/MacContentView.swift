@@ -6,9 +6,10 @@ import AppKit
 // MARK: - Mac Content View (三栏布局)
 struct MacContentView: View {
     @EnvironmentObject var appState: AppState
+    @Environment(\.scenePhase) private var scenePhase
     @StateObject private var chatViewModel = ChatViewModel()
-    @State private var selectedFeature: MacFeature = .chat
-    @State private var selectedConversation: Conversation?
+    @State private var selectedFeature: MacFeature = .home
+    @State private var selectedConversationId: String?
     @State private var showSettings = false
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
     
@@ -17,7 +18,7 @@ struct MacContentView: View {
             // 左侧边栏 - 功能导航
             MacSidebarView(
                 selectedFeature: $selectedFeature,
-                selectedConversation: $selectedConversation,
+                selectedConversationId: $selectedConversationId,
                 conversations: chatViewModel.conversations
             )
             .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 280)
@@ -25,7 +26,7 @@ struct MacContentView: View {
             // 右侧内容区
             MacDetailView(
                 selectedFeature: selectedFeature,
-                conversation: selectedConversation,
+                conversationId: selectedConversationId,
                 chatViewModel: chatViewModel
             )
         }
@@ -47,26 +48,141 @@ struct MacContentView: View {
             }
         }
         .sheet(isPresented: $showSettings) {
-            SettingsView()
-                .frame(width: 500, height: 600)
+            // The assistant settings flow owns the account preference PATCH
+            // and uses the server snapshot loaded by AppState. Keep the
+            // generic app settings separate so macOS has the same preference
+            // contract as iOS instead of silently saving only local values.
+            AssistantSettingsSheet()
+                .environmentObject(appState)
+                .frame(width: 560, height: 700)
         }
         .onReceive(NotificationCenter.default.publisher(for: .newChat)) { _ in
-            selectedConversation = nil
+            selectedConversationId = nil
             selectedFeature = .chat
         }
         .task {
-            // 登录后自动同步云端数据
+            // Login/foreground on macOS has no iOS scene task. Refresh the
+            // server-authoritative preferences before bootstrapping local
+            // cloud data so the settings sheet starts from the account state.
             if AuthService.shared.isLoggedIn {
-                await chatViewModel.syncFromCloud()
+                await appState.refreshAssistantState()
+                do {
+                    try await chatViewModel.waitForArchiveReady(ownerId: chatViewModel.ownerUserId)
+                    await chatViewModel.syncFromCloud()
+                } catch {
+                    // The archive bootstrap publishes its own user-visible error.
+                }
+            }
+        }
+        .onChange(of: scenePhase) { phase in
+            guard phase == .active, AuthService.shared.isLoggedIn else { return }
+            Task { @MainActor in
+                await appState.refreshAssistantState()
             }
         }
     }
 }
 
+/// Desktop home keeps the same information hierarchy without importing the
+/// iPhone-only home shell. Detailed proactive rules and task management remain
+/// shared workspace screens.
+struct MacHomeView: View {
+    @EnvironmentObject private var appState: AppState
+    @ObservedObject private var proactiveStore = AssistantProactiveStore.shared
+    private var ownerId: String { AuthService.shared.user?.id ?? "local-device" }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("今天继续做什么？").font(.largeTitle.bold())
+                    Text("对话、任务和主动更新都在同一个工作区。")
+                        .foregroundStyle(.secondary)
+                }
+                HStack(spacing: 12) {
+                    Button {
+                        appState.selectedTab = .chat
+                    } label: {
+                        Label("开始对话", systemImage: "message.fill")
+                    }
+                    .buttonStyle(.borderedProminent)
+                    NavigationLink {
+                        AssistantTasksView(userId: ownerId)
+                    } label: {
+                        Label("查看任务", systemImage: "checklist")
+                    }
+                    .buttonStyle(.bordered)
+                }
+                GroupBox {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Label("主动更新", systemImage: "bell.badge.fill")
+                            .font(.headline)
+                        Text(proactiveStore.profile(for: ownerId).enabled
+                             ? "已开启 · \(proactiveStore.profile(for: ownerId).mode.rawValue)"
+                             : "默认关闭，可在主动规则中开启")
+                            .foregroundStyle(.secondary)
+                        NavigationLink("管理主动规则") {
+                            AssistantProactiveView(userId: ownerId)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            .padding(32)
+            .frame(maxWidth: 900, alignment: .leading)
+        }
+        .navigationTitle("首页")
+    }
+}
+
+struct MacSubscriptionPlaceholder: View {
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "creditcard").font(.system(size: 36)).foregroundStyle(.secondary)
+            Text("订阅").font(.title3.bold())
+            Text("订阅状态将在账号服务可用后显示。").foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(32)
+        .navigationTitle("订阅")
+    }
+}
+
+struct MacProfilePlaceholder: View {
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "person.crop.circle").font(.system(size: 36)).foregroundStyle(.secondary)
+            Text("我的").font(.title3.bold())
+            Text("账号、隐私和数据管理请从工作区设置进入。").foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(32)
+        .navigationTitle("我的")
+    }
+}
+
+struct MacHistoryPlaceholder: View {
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "clock").font(.system(size: 36)).foregroundStyle(.secondary)
+            Text("历史").font(.title3.bold())
+            Text("最近对话已常驻左侧栏。").foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(32)
+        .navigationTitle("历史")
+    }
+}
+
 // MARK: - Mac Feature Enum
 enum MacFeature: String, CaseIterable, Identifiable {
+    case home = "首页"
     case chat = "自由对话"
-    case fortune = "今日运势"
+    case memories = "记忆"
+    case proactive = "主动规则"
+    case subscription = "订阅"
+    case settings = "设置与隐私"
+    case fortune = "任务"
     case analyze = "文件秒懂"
     case quote = "扎心金句"
     case roast = "毒舌吐槽"
@@ -83,8 +199,13 @@ enum MacFeature: String, CaseIterable, Identifiable {
     
     var icon: String {
         switch self {
+        case .home: return "house.fill"
         case .chat: return "message.fill"
-        case .fortune: return "star.fill"
+        case .memories: return "brain.head.profile"
+        case .proactive: return "bell.badge.fill"
+        case .subscription: return "creditcard.fill"
+        case .settings: return "gearshape.fill"
+        case .fortune: return "checklist"
         case .analyze: return "photo.fill"
         case .quote: return "quote.bubble.fill"
         case .roast: return "flame.fill"
@@ -101,8 +222,13 @@ enum MacFeature: String, CaseIterable, Identifiable {
     
     var iconColor: Color {
         switch self {
+        case .home: return .green
         case .chat: return .green
-        case .fortune: return .orange
+        case .memories: return .purple
+        case .proactive: return .orange
+        case .subscription: return .blue
+        case .settings: return .gray
+        case .fortune: return .green
         case .analyze: return .blue
         case .quote: return .purple
         case .roast: return .red
@@ -121,8 +247,8 @@ enum MacFeature: String, CaseIterable, Identifiable {
 // MARK: - Mac Sidebar View
 struct MacSidebarView: View {
     @Binding var selectedFeature: MacFeature
-    @Binding var selectedConversation: Conversation?
-    let conversations: [Conversation]
+    @Binding var selectedConversationId: String?
+    let conversations: [AssistantConversationSummary]
     
     var body: some View {
         ZStack {
@@ -141,11 +267,21 @@ struct MacSidebarView: View {
             List {
             // 核心功能
             Section("核心功能") {
-                ForEach([MacFeature.chat, .fortune, .analyze]) { feature in
+                ForEach([MacFeature.home, .chat, .fortune]) { feature in
                     MacFeatureRow(feature: feature, isSelected: selectedFeature == feature)
                         .onTapGesture {
                             selectedFeature = feature
-                            selectedConversation = nil
+                            selectedConversationId = nil
+                        }
+                }
+            }
+
+            Section("工作区") {
+                ForEach([MacFeature.memories, .proactive, .subscription, .settings]) { feature in
+                    MacFeatureRow(feature: feature, isSelected: selectedFeature == feature)
+                        .onTapGesture {
+                            selectedFeature = feature
+                            selectedConversationId = nil
                         }
                 }
             }
@@ -156,7 +292,7 @@ struct MacSidebarView: View {
                     MacFeatureRow(feature: feature, isSelected: selectedFeature == feature)
                         .onTapGesture {
                             selectedFeature = feature
-                            selectedConversation = nil
+                            selectedConversationId = nil
                         }
                 }
             }
@@ -167,7 +303,7 @@ struct MacSidebarView: View {
                     MacFeatureRow(feature: feature, isSelected: selectedFeature == feature)
                         .onTapGesture {
                             selectedFeature = feature
-                            selectedConversation = nil
+                            selectedConversationId = nil
                         }
                 }
             }
@@ -178,7 +314,7 @@ struct MacSidebarView: View {
                     MacFeatureRow(feature: feature, isSelected: selectedFeature == feature)
                         .onTapGesture {
                             selectedFeature = feature
-                            selectedConversation = nil
+                            selectedConversationId = nil
                         }
                 }
             }
@@ -214,16 +350,26 @@ struct MacFeatureRow: View {
 // MARK: - Mac Detail View
 struct MacDetailView: View {
     let selectedFeature: MacFeature
-    let conversation: Conversation?
+    let conversationId: String?
     @ObservedObject var chatViewModel: ChatViewModel
     
     var body: some View {
         Group {
             switch selectedFeature {
+            case .home:
+                MacHomeView()
             case .chat:
-                ChatView()
+                MacChatView(chatViewModel: chatViewModel)
+            case .memories:
+                AssistantMemoriesView(userId: AuthService.shared.user?.id ?? "local-device")
+            case .proactive:
+                AssistantProactiveView(userId: AuthService.shared.user?.id ?? "local-device")
+            case .subscription:
+                MacSubscriptionPlaceholder()
+            case .settings:
+                AssistantSettingsSheet()
             case .fortune:
-                FortuneView()
+                AssistantTasksView(userId: AuthService.shared.user?.id ?? "local-device")
             case .analyze:
                 AnalyzeView()
             case .quote:
@@ -243,9 +389,9 @@ struct MacDetailView: View {
             case .favorites:
                 FavoritesView()
             case .history:
-                HistoryView()
+                MacHistoryPlaceholder()
             case .profile:
-                ProfileView()
+                MacProfilePlaceholder()
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

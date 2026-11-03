@@ -1,4 +1,7 @@
 import SwiftUI
+#if os(macOS)
+import AppKit
+#endif
 
 struct RateView: View {
     @State private var content: String = ""
@@ -66,13 +69,16 @@ struct RateView: View {
                 }
             }
             .navigationTitle("")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     Text("犀利点评")
                         .font(.headline)
                         .foregroundStyle(.purple)
                 }
+                #if os(iOS)
                 ToolbarItem(placement: .topBarTrailing) {
                     if result != nil {
                         Button(action: { showingShareSheet = true }) {
@@ -81,6 +87,16 @@ struct RateView: View {
                         }
                     }
                 }
+                #else
+                ToolbarItem(placement: .automatic) {
+                    if result != nil {
+                        Button(action: { showingShareSheet = true }) {
+                            Image(systemName: "square.and.arrow.up")
+                                .foregroundStyle(.purple)
+                        }
+                    }
+                }
+                #endif
             }
             .sheet(isPresented: $showingShareSheet) {
                 if let result = result {
@@ -175,7 +191,7 @@ struct RateView: View {
                                 .font(.caption)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 6)
-                                .background(content == example ? selectedTypeColors.0 : Color(.secondarySystemBackground))
+                                .background(content == example ? selectedTypeColors.0 : Color.caobaoGroupedBackground)
                                 .foregroundStyle(content == example ? .white : .primary)
                                 .clipShape(Capsule())
                         }
@@ -191,11 +207,11 @@ struct RateView: View {
             TextEditor(text: $content)
                 .frame(minHeight: 100)
                 .padding(8)
-                .background(Color(.secondarySystemBackground))
+                .background(Color.caobaoGroupedBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color(.separator), lineWidth: 0.5)
+                        .stroke(Color.secondary.opacity(0.25), lineWidth: 0.5)
                 )
                 .overlay(alignment: .topLeading) {
                     if content.isEmpty {
@@ -349,7 +365,7 @@ struct RateView: View {
                     Label("再评一个", systemImage: "arrow.clockwise")
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color(.secondarySystemBackground))
+                        .background(Color.caobaoGroupedBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
                 
@@ -516,11 +532,21 @@ struct ShareSheet: UIViewControllerRepresentable {
 struct ShareSheet: NSViewRepresentable {
     let items: [Any]
     
-    func makeNSView(context: Context) -> NSShareView {
-        NSShareView(sharingItems: items)
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView(frame: .zero)
+        // NSSharingServicePicker is the supported AppKit share surface. The
+        // representable only hosts it; it does not retain credentials or
+        // mutate the shared item payload.
+        DispatchQueue.main.async {
+            guard let window = view.window else { return }
+            let picker = NSSharingServicePicker(items: items)
+            picker.show(relativeTo: view.bounds, of: view, preferredEdge: .minY)
+            _ = window
+        }
+        return view
     }
     
-    func updateNSView(_ nsView: NSShareView, context: Context) {}
+    func updateNSView(_ nsView: NSView, context: Context) {}
 }
 #endif
 
@@ -547,19 +573,11 @@ struct RateTypeCard: View {
             }
             .padding()
             .frame(maxWidth: .infinity)
-            .background(
-                Group {
-                    if isSelected {
-                        LinearGradient(
-                            gradient: Gradient(colors: [type.4, type.5]),
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    } else {
-                        Color(.secondarySystemBackground)
-                    }
-                }
-            )
+            .background(isSelected
+                ? AnyShapeStyle(LinearGradient(
+                    gradient: Gradient(colors: [type.4, type.5]),
+                    startPoint: .leading, endPoint: .trailing))
+                : AnyShapeStyle(Color.caobaoGroupedBackground))
             .foregroundStyle(isSelected ? .white : .primary)
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }

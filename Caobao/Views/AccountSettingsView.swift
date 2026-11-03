@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 // MARK: - Account Settings View
 /// 账号设置视图
@@ -11,8 +12,15 @@ struct AccountSettingsView: View {
     @State private var isLoading = false
     @State private var alertMessage: String?
     @State private var showSuccessAlert = false
-    @State private var alertTitle = "提示"
+    @State private var alertTitle = AssistantLocalization.string("提示")
     @State private var exportedData: IdentifiableString?
+    @State private var accountOperationId: UUID?
+    @State private var deletionSource: AccountOwnerConfirmation?
+    @State private var accountOwnerEpoch = UUID()
+    private struct AccountOwnerConfirmation { let id = UUID(); let ownerId: String?; let epoch: UUID }
+    private var ownerObservationKey: String {
+        authService.user.map { AssistantOwnerIdentity.ownerKey($0.id) } ?? "signed-out"
+    }
     
     var body: some View {
         List {
@@ -39,7 +47,7 @@ struct AccountSettingsView: View {
                     HStack {
                         Text("登录方式")
                         Spacer()
-                        Text(user.isGuest == true ? "游客" : user.authProvider.capitalized)
+                        Text(user.isGuest == true ? AssistantLocalization.string("游客") : user.authProvider.capitalized)
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -49,16 +57,21 @@ struct AccountSettingsView: View {
             
             // MARK: - 数据管理
             Section {
+                NavigationLink {
+                    AssistantDataManagementView(ownerId: authService.user?.id ?? "local-device")
+                } label: { Label("导出此设备的数据", systemImage: "externaldrive") }
                 // 导出数据
                 Button {
+                    let owner = authService.user?.id
+                    let epoch = accountOwnerEpoch
                     Task {
-                        await exportUserData()
+                        await exportUserData(expectedOwner: owner, expectedEpoch: epoch)
                     }
                 } label: {
                     HStack {
                         Image(systemName: "square.and.arrow.up")
                             .foregroundStyle(.green)
-                        Text("导出我的数据")
+                        Text("导出服务器账号数据")
                             .foregroundStyle(.primary)
                         Spacer()
                         if isLoading {
@@ -66,9 +79,9 @@ struct AccountSettingsView: View {
                         }
                     }
                 }
-                .disabled(isLoading)
+                .disabled(isLoading || !authService.isLoggedIn)
                 
-                Text("根据《个人信息保护法》第45条，您有权获取您的个人数据副本")
+                Text("本机助理数据与服务器账号资料分别导出，避免把其中一部分误认为全部数据。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } header: {
@@ -80,6 +93,7 @@ struct AccountSettingsView: View {
             // MARK: - 账号注销
             Section {
                 Button(role: .destructive) {
+                    deletionSource = AccountOwnerConfirmation(ownerId: authService.user?.id, epoch: accountOwnerEpoch)
                     showDeleteConfirmation = true
                 } label: {
                     HStack {
@@ -87,14 +101,15 @@ struct AccountSettingsView: View {
                         Text("注销账号")
                     }
                 }
+                .disabled(isLoading)
                 
-                Text("注销后，您的所有数据将被永久删除且无法恢复")
+                Text("提交后将申请删除账号及相关个人数据。删除完成后无法恢复，请先导出需要保留的数据。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } header: {
                 Text("账号注销")
             } footer: {
-                Text("根据《个人信息保护法》第15条和第47条，您有权撤回同意并要求删除您的个人信息。注销后15个工作日内完成数据处理。")
+                Text("服务器受理后将按删除流程处理，处理状态以服务器返回为准。")
             }
             
             // MARK: - 法律信息
@@ -149,29 +164,37 @@ struct AccountSettingsView: View {
             } header: {
                 Text("联系我们")
             } footer: {
-                Text("如有任何问题或投诉，我们将在15个工作日内回复")
+                Text("如有问题或投诉，请通过客服邮箱联系我们。")
             }
         }
-        .navigationTitle("账号设置")
+        .assistantNavigationTitle("账号设置")
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif
         // 注销确认弹窗
-        .alert("注销账号", isPresented: $showDeleteConfirmation) {
-            TextField("请输入\"确认注销\"", text: $deleteConfirmationText)
+        .alert("注销账号", isPresented: Binding(
+            get: { showDeleteConfirmation && deletionSource.map { $0.epoch == accountOwnerEpoch && AssistantOwnerIdentity.matches($0.ownerId, authService.user?.id) } == true },
+            set: { showDeleteConfirmation = $0 }), presenting: deletionSource) { source in
+            TextField(AuthService.accountDeletionConfirmationToken, text: $deleteConfirmationText)
+                #if os(iOS)
+                .textInputAutocapitalization(.never)
+                #endif
+                .autocorrectionDisabled()
             
             Button("取消", role: .cancel) {
                 deleteConfirmationText = ""
+                if deletionSource?.id == source.id { deletionSource = nil }
             }
             
             Button("确认注销", role: .destructive) {
+                let confirmation = deleteConfirmationText
                 Task {
-                    await deleteAccount()
+                    await deleteAccount(expectedOwner: source.ownerId, confirmation: confirmation, sourceId: source.id, expectedEpoch: source.epoch)
                 }
             }
-            .disabled(deleteConfirmationText != "确认注销")
-        } message: {
-            Text("此操作不可撤销，所有数据将被永久删除。\n请输入\"确认注销\"以继续")
+            .disabled(isLoading || deleteConfirmationText != AuthService.accountDeletionConfirmationToken)
+        } message: { _ in
+            Text(String(format: AssistantLocalization.string("此操作将提交账号删除请求。删除完成后无法恢复。\n请输入“%@”以继续"), AuthService.accountDeletionConfirmationToken))
         }
         // 提示弹窗
         .alert(alertTitle, isPresented: $showSuccessAlert) {
@@ -181,33 +204,53 @@ struct AccountSettingsView: View {
         }
         // 导出数据结果
         .sheet(item: $exportedData) { identifiableData in
-            ExportDataSheet(data: identifiableData.value)
+            if let owner = identifiableData.ownerId, AssistantOwnerIdentity.matches(authService.user?.id, owner) {
+                ExportDataSheet(data: identifiableData.value, ownerId: owner)
+            }
         }
+        .onChange(of: ownerObservationKey) { _ in resetAccountOwnerScope() }
+        .onReceive(NotificationCenter.default.publisher(for: .loginSuccess)) { _ in resetAccountOwnerScope() }
+        .onReceive(NotificationCenter.default.publisher(for: .logoutSuccess)) { _ in resetAccountOwnerScope() }
     }
     
     // MARK: - 导出数据
-    private func exportUserData() async {
+    private func resetAccountOwnerScope() {
+        accountOwnerEpoch = UUID()
+        accountOperationId = nil; isLoading = false; exportedData = nil
+        deletionSource = nil; showDeleteConfirmation = false; showExportConfirmation = false
+        showSuccessAlert = false; deleteConfirmationText = ""; alertMessage = nil
+    }
+
+    private func exportUserData(expectedOwner owner: String?, expectedEpoch: UUID) async {
+        guard expectedEpoch == accountOwnerEpoch, AssistantOwnerIdentity.matches(authService.user?.id, owner) else { return }
+        let operation = UUID()
+        accountOperationId = operation
         isLoading = true
+        defer { if accountOperationId == operation { isLoading = false; accountOperationId = nil } }
         do {
             let result = try await authService.exportData()
+            guard accountOperationId == operation, AssistantOwnerIdentity.matches(authService.user?.id, owner) else { return }
             if result.success {
-                if let data = result.data,
+                if let rawJSON = result.rawJSON {
+                    exportedData = IdentifiableString(rawJSON, ownerId: owner)
+                } else if let data = result.data,
                    let jsonData = try? JSONSerialization.data(withJSONObject: data, options: .prettyPrinted),
                    let jsonString = String(data: jsonData, encoding: .utf8) {
-                    exportedData = IdentifiableString(jsonString)
+                    exportedData = IdentifiableString(jsonString, ownerId: owner)
                 }
             } else {
-                alertTitle = "导出失败"
-                alertMessage = "服务器返回了失败响应"
+                alertTitle = AssistantLocalization.string("导出失败")
+                alertMessage = AssistantLocalization.string("服务器返回了失败响应")
                 showSuccessAlert = true
             }
         } catch {
-            alertTitle = "导出失败"
+            guard accountOperationId == operation, AssistantOwnerIdentity.matches(authService.user?.id, owner) else { return }
+            alertTitle = AssistantLocalization.string("导出失败")
             // 处理不同类型的错误
             if let authError = error as? AuthError {
                 switch authError {
                 case .notLoggedIn:
-                    alertMessage = "请先登录后再导出数据"
+                    alertMessage = AssistantLocalization.string("请先登录后再导出数据")
                 case .exportFailed(let message):
                     alertMessage = message
                 default:
@@ -218,76 +261,77 @@ struct AccountSettingsView: View {
             }
             showSuccessAlert = true
         }
-        isLoading = false
     }
     
     // MARK: - 注销账号
-    private func deleteAccount() async {
+    private func deleteAccount(expectedOwner owner: String?, confirmation: String, sourceId: UUID, expectedEpoch: UUID) async {
+        guard deletionSource?.id == sourceId, expectedEpoch == accountOwnerEpoch,
+              AssistantOwnerIdentity.matches(authService.user?.id, owner) else { return }
+        let operation = UUID()
+        accountOperationId = operation
         isLoading = true
+        defer { if accountOperationId == operation { isLoading = false; accountOperationId = nil } }
         do {
-            let _ = try await authService.deleteAccount(
-                confirmation: "确认注销",
+            let result = try await authService.deleteAccount(
+                confirmation: confirmation,
                 reason: "用户主动申请注销"
             )
-            // 清除所有本地数据
-            clearAllLocalData()
-            // 导航回首页
-            alertTitle = "操作成功"
-            alertMessage = "账号已成功注销，正在返回首页..."
+            guard accountOperationId == operation,
+                  AssistantOwnerIdentity.matches(authService.user?.id, owner) || authService.user == nil else { return }
+            // AuthService owns scoped cleanup and session changes. A delayed
+            // response must not clear or log out a subsequently signed-in account.
+            alertTitle = AssistantLocalization.string("操作成功")
+            alertMessage = result.message ?? AssistantLocalization.string("账号删除请求已提交，处理状态以服务器返回为准。")
             showSuccessAlert = true
-            // 延迟导航
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                   let window = windowScene.windows.first {
-                    window.rootViewController?.dismiss(animated: true)
-                }
-            }
             deleteConfirmationText = ""
         } catch {
-            alertTitle = "注销失败"
+            guard accountOperationId == operation, AssistantOwnerIdentity.matches(authService.user?.id, owner) else { return }
+            alertTitle = AssistantLocalization.string("操作未完成")
             alertMessage = error.localizedDescription
             showSuccessAlert = true
         }
-        isLoading = false
     }
-    
-    // MARK: - 清除所有本地数据
-    private func clearAllLocalData() {
-        // 清除 UserDefaults 中的数据
-        let keysToRemove = [
-            "conversationHistory",  // 对话历史
-            "caobao_guest_id",
-            "caobao_guest_token",
-            "caobao_guest_created_at",
-            "caobao_chat_history",
-            "caobao_settings",
-            "caobao_user_preferences"
-        ]
-        
-        for key in keysToRemove {
-            UserDefaults.standard.removeObject(forKey: key)
-        }
-        
-        // 清除 AuthService 的登录状态
-        authService.logout()
-        
-        print("已清除所有本地数据")
-    }
+
 }
 
 // MARK: - Export Data Sheet
 struct ExportDataSheet: View {
     let data: String
+    let ownerId: String
+    @ObservedObject private var auth = AuthService.shared
     @Environment(\.dismiss) var dismiss
+    @State private var document: AssistantBackupDocument?
+    @State private var isSavingFile = false
+    @State private var saveMessage: String?
+    @State private var documentOwnerId: String?
+    @State private var sheetOwnerId: String
+    private var hasCurrentOwner: Bool {
+        AssistantOwnerIdentity.matches(ownerId, sheetOwnerId) && AssistantOwnerIdentity.matches(auth.user?.id, ownerId)
+    }
+    private var hasCurrentDocument: Bool { hasCurrentOwner && AssistantOwnerIdentity.matches(documentOwnerId, ownerId) }
+    init(data: String, ownerId: String) {
+        self.data = data; self.ownerId = ownerId; _sheetOwnerId = State(initialValue: ownerId)
+    }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
-                Text(data)
-                    .font(.system(.caption, design: .monospaced))
-                    .padding()
+                if hasCurrentOwner {
+                VStack(alignment: .leading, spacing: 14) {
+                    Text("服务器账号数据").font(.headline)
+                    Text("本机助理数据需在“数据与隐私”中单独备份。此处只展示服务器返回的资料。")
+                        .font(.caption).foregroundStyle(.secondary)
+                    Text(String(decoding: data.utf8.prefix(16_384), as: UTF8.self))
+                        .font(.system(.caption, design: .monospaced)).textSelection(.enabled)
+                    if data.utf8.count > 16_384 {
+                        Text("预览已截断；保存的 JSON 文件包含完整导出数据。")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    if let saveMessage { Text(saveMessage).font(.caption).foregroundStyle(.secondary) }
+                }.frame(maxWidth: .infinity, alignment: .leading).padding()
+                } else { Text("当前账号已变化，请重新打开页面。").padding() }
             }
-            .navigationTitle("导出的数据")
+            .assistantNavigationTitle("导出的数据")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
@@ -299,23 +343,44 @@ struct ExportDataSheet: View {
                 }
                 
                 ToolbarItem(placement: .primaryAction) {
-                    ShareLink(item: data) {
-                        Image(systemName: "square.and.arrow.up")
-                    }
+                    Button("保存 JSON 文件") {
+                        guard hasCurrentOwner else { return }
+                        documentOwnerId = ownerId; document = AssistantBackupDocument(data: Data(data.utf8)); isSavingFile = true
+                    }.disabled(isSavingFile || !hasCurrentOwner)
                 }
             }
+            .fileExporter(isPresented: Binding(get: { isSavingFile && hasCurrentDocument }, set: { isSavingFile = $0 }),
+                          document: hasCurrentDocument ? document : nil, contentType: .json,
+                          defaultFilename: "CaoBao-server-account-data") { result in
+                guard hasCurrentDocument else { return }
+                document = nil
+                switch result {
+                case .success: saveMessage = AssistantLocalization.string("服务器数据文件已保存。")
+                case .failure(let error):
+                    saveMessage = (error as? CocoaError)?.code == .userCancelled
+                        ? AssistantLocalization.string("已取消保存，未导出文件。") : error.localizedDescription
+                }
+            }
+            .onChange(of: auth.user.map { AssistantOwnerIdentity.ownerKey($0.id) } ?? "signed-out") { _ in resetExportOwnerScope() }
+            .onChange(of: AssistantOwnerIdentity.ownerKey(ownerId)) { _ in resetExportOwnerScope() }
+            .onReceive(NotificationCenter.default.publisher(for: .loginSuccess)) { _ in resetExportOwnerScope() }
+            .onReceive(NotificationCenter.default.publisher(for: .logoutSuccess)) { _ in resetExportOwnerScope() }
         }
+    }
+    private func resetExportOwnerScope() {
+        isSavingFile = false; document = nil; documentOwnerId = nil; saveMessage = nil; dismiss()
     }
 }
 
 // Helper struct for identifiable strings (for sheet presentation)
 struct IdentifiableString: Identifiable {
-    let id: String
+    let id = UUID()
     let value: String
+    let ownerId: String?
     
-    init(_ value: String) {
-        self.id = value
+    init(_ value: String, ownerId: String?) {
         self.value = value
+        self.ownerId = ownerId
     }
 }
 
