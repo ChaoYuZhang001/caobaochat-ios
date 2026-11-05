@@ -2173,6 +2173,48 @@ struct CloudTaskUpsertRequest: Codable {
     let expectedVersion: Int64?
 }
 
+// MARK: - Cloud custom character models
+/// An owner-scoped custom AI role. The server owns versioning and tombstones.
+struct CloudCharacter: Codable, Identifiable, Equatable {
+    let id: String
+    let name: String
+    let avatar: String?
+    let description: String?
+    let systemPrompt: String?
+    let greeting: String?
+    let language: String?
+    let memoryScope: String
+    let allowGlobalMemory: Bool
+    let enabled: Bool
+    let version: Int64
+    let createdAt: String
+    let updatedAt: String
+    let deletedAt: String?
+}
+
+struct CloudCharacterListResponse: Codable {
+    let items: [CloudCharacter]
+}
+
+struct CloudCharacterUpsertRequest: Codable {
+    let id: String
+    let name: String
+    let avatar: String?
+    let description: String?
+    let systemPrompt: String
+    let greeting: String?
+    let language: String?
+    let memoryScope: String?
+    let allowGlobalMemory: Bool
+    let enabled: Bool?
+    let expectedVersion: Int64?
+}
+
+struct CloudCharacterDeleteResponse: Codable {
+    let status: String
+}
+
+
 // MARK: - Cloud proactive assistant synchronization models
 struct CloudProactiveQuietHours: Codable, Equatable {
     let enabled: Bool
@@ -2420,6 +2462,47 @@ extension APIService {
                                          headers: authHeaders(token))
             .validate().serializingDecodable(CloudTask.self).value
     }
+
+    /// Lists active custom roles owned by the authenticated account.
+    func listCloudCharacters(token: String, limit: Int? = nil) async throws -> CloudCharacterListResponse {
+        var url = "\(APIConfig.v2BaseURL)/characters"
+        if let limit { url += "?limit=\(max(0, limit))" }
+        return try await session.request(url, method: .get, headers: authHeaders(token))
+            .validate().serializingDecodable(CloudCharacterListResponse.self).value
+    }
+
+    /// Creates or updates a custom role. Updates use the path id and an
+    /// expectedVersion guard; a missing expectedVersion creates through POST.
+    func upsertCloudCharacter(token: String, request: CloudCharacterUpsertRequest) async throws -> CloudCharacter {
+        var safeID = CharacterSet.alphanumerics
+        safeID.insert(charactersIn: "-_.~")
+        let id = request.id.trimmingCharacters(in: .whitespacesAndNewlines)
+        let escapedID = id.addingPercentEncoding(withAllowedCharacters: safeID) ?? id
+        let path = request.expectedVersion == nil
+            ? "\(APIConfig.v2BaseURL)/characters"
+            : "\(APIConfig.v2BaseURL)/characters/\(escapedID)"
+        let method: HTTPMethod = request.expectedVersion == nil ? .post : .patch
+        return try await session.request(path, method: method, parameters: request,
+                                         encoder: JSONParameterEncoder.default,
+                                         headers: authHeaders(token))
+            .validate().serializingDecodable(CloudCharacter.self).value
+    }
+
+    /// Tombstones a custom role. The server clears its prompt and preserves
+    /// the public id so stale devices cannot resurrect it.
+    func deleteCloudCharacter(token: String, id: String, expectedVersion: Int64? = nil) async throws -> CloudCharacterDeleteResponse {
+        var safeID = CharacterSet.alphanumerics
+        safeID.insert(charactersIn: "-_.~")
+        let escaped = id.addingPercentEncoding(withAllowedCharacters: safeID) ?? id
+        var headers = authHeaders(token)
+        if let expectedVersion {
+            headers.add(name: "If-Match-Version", value: String(expectedVersion))
+        }
+        return try await session.request("\(APIConfig.v2BaseURL)/characters/\(escaped)",
+                                         method: .delete, headers: headers)
+            .validate().serializingDecodable(CloudCharacterDeleteResponse.self).value
+    }
+
 
     func fetchProactiveProfile(token: String) async throws -> CloudProactiveProfileResponse {
         try await session.request("\(APIConfig.v2BaseURL)/proactive/profile", method: .get,
