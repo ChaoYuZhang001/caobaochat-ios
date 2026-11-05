@@ -575,3 +575,35 @@ iOS 在应用启动建立 `Transaction.updates` 监听。账号或订阅配置�
 ### 31.3 证据边界
 
 当前本地回归已覆盖会话/任务 feed 的游标、删除墓碑、同秒任务编辑、Bearer 和 owner 约束；这证明代码契约和隔离测试，不证明真实多设备冲突、后台调度、APNs 送达、生产部署或 iPhone Duo 验收。
+
+
+## 32. 自定义角色与 AI 群聊（2026-11-05）
+
+### 32.1 已实现的自定义角色接口
+
+当前服务端已提供 owner-scoped 私有角色 CRUD：
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `/api/v2/characters?limit=<n>` | 返回当前账号的 active 角色 |
+| POST | `/api/v2/characters` | 创建角色；`id` 由客户端生成 |
+| PATCH | `/api/v2/characters/:characterId` | 使用 `expectedVersion` 做乐观锁更新 |
+| DELETE | `/api/v2/characters/:characterId` | 使用 `If-Match-Version`，服务端保留删除墓碑 |
+
+角色字段包含 `name`、`avatar`、`description`、`systemPrompt`、`greeting`、`language`、`memoryScope`、`allowGlobalMemory`、`enabled` 和 `version`。角色提示词属于用户配置，不能覆盖服务端安全规则；账号删除会清理角色数据。
+
+客户端通过 `APIService.listCloudCharacters`、`upsertCloudCharacter` 和 `deleteCloudCharacter` 调用这些接口，使用认证身份确定 owner，不从请求体接收 ownerId。
+
+### 32.2 AI 群聊状态
+
+AI 群聊的产品和数据模型已经记录在 `CUSTOM_PERSONAS_AND_AI_GROUP_CHAT.md`。群聊生成编排、参与者接口、speaker 级 SSE 和停止/重试链路尚未接入当前服务端，因此不能把“自定义角色 CRUD 已完成”表述为“AI 群聊已完成”。
+
+首发实现约束：
+
+- 只支持用户本人和 2–4 个私有 AI 角色；
+- 默认使用 `mention` 模式，后续再开放 `moderated`；
+- 角色记忆与全局用户记忆隔离；
+- 每条用户消息最多 4 轮，角色和子生成分别计量额度；
+- 外部写操作仍需提案和用户确认；
+- 旧单聊请求保持兼容。
+
