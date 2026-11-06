@@ -228,7 +228,7 @@ class OfflineStorage: ObservableObject {
 class OptimizedAPIService {
     static let shared = OptimizedAPIService()
     
-    private let baseURL = "https://caobao.chat/api"
+    private let baseURL = "https://ciyuan2api.com/api"
     private let session: URLSession
     
     private init() {

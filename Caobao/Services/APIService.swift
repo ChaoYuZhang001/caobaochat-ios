@@ -4,8 +4,8 @@ import Security
 
 // MARK: - API Configuration
 struct APIConfig {
-    // API 服务器 - 只使用 caobao.chat
-    static let serverURL = "https://caobao.chat"
+    // Production API server for the deployed CiYuan2API instance.
+    static let serverURL = "https://ciyuan2api.com"
     
     // 当前使用的 API 基础 URL
     static var baseURL: String {
@@ -15,7 +15,7 @@ struct APIConfig {
     static var assistantBaseURL: URL {
         if let configured = Bundle.main.object(forInfoDictionaryKey: "CaoBaoAssistantAPIBaseURL") as? String,
            let url = URL(string: configured), url.scheme == "https", url.host != nil { return url }
-        return URL(string: "https://caobao.chat/api/v2")!
+        return URL(string: "https://ciyuan2api.com/api/v2")!
     }
     static var v2BaseURL: String { assistantBaseURL.absoluteString.trimmingCharacters(in: CharacterSet(charactersIn: "/")) }
     

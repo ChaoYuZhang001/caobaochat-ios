@@ -45,7 +45,7 @@ final class AssistantPreferencesClient {
     private let session: URLSession
     private let maximumResponseBytes: Int
 
-    init(baseURL: URL = URL(string: "https://caobao.chat/api/v2")!,
+    init(baseURL: URL = URL(string: "https://ciyuan2api.com/api/v2")!,
          sessionConfiguration: URLSessionConfiguration = .ephemeral,
          maximumResponseBytes: Int = 128 * 1024) {
         self.baseURL = baseURL

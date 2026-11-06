@@ -5,7 +5,7 @@ import Foundation
 class WatchAPIService {
     static let shared = WatchAPIService()
     
-    private let baseURL = "https://caobao.chat/api"
+    private let baseURL = "https://ciyuan2api.com/api"
     private let session: URLSession
     
     private init() {

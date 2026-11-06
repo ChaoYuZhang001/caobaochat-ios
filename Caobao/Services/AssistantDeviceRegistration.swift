@@ -38,7 +38,7 @@ final class AssistantDeviceRegistrationClient {
     private let session: URLSession
     private let maximumResponseBytes: Int
 
-    init(baseURL: URL = URL(string: "https://caobao.chat/api/v2")!,
+    init(baseURL: URL = URL(string: "https://ciyuan2api.com/api/v2")!,
          sessionConfiguration: URLSessionConfiguration = .ephemeral,
          maximumResponseBytes: Int = 64 * 1024) {
         self.baseURL = baseURL
