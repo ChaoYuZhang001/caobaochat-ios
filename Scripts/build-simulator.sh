@@ -8,7 +8,9 @@ lock="$root/Caobao.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.re
 log="$root/.build/simulator-build.log"
 destination="$(printenv CAOBAO_SIMULATOR_DESTINATION || true)"
 local_package="$(printenv CAOBAO_LOCAL_ALAMOFIRE_PATH || true)"
+signing_allowed="$(printenv CAOBAO_CODE_SIGNING_ALLOWED || true)"
 if [ -z "$destination" ]; then destination='generic/platform=iOS Simulator'; fi
+if [ -z "$signing_allowed" ]; then signing_allowed='YES'; fi
 mkdir -p "$root/.build"
 if [ -n "$local_package" ]; then
     derived="$root/.build/simulator-derived-data"
@@ -38,10 +40,16 @@ if [ -z "$local_package" ]; then
 else
     echo "Dependency mode: explicit local override (not remote-package acceptance)"
 fi
-if xcodebuild "${build_args[@]}" CODE_SIGNING_ALLOWED=NO build > "$log" 2>&1; then
+echo "Simulator signing: CODE_SIGNING_ALLOWED=$signing_allowed"
+if xcodebuild "${build_args[@]}" CODE_SIGNING_ALLOWED="$signing_allowed" build > "$log" 2>&1; then
     if [ -z "$local_package" ]; then
         lock_after="$(shasum -a 256 "$lock" | awk '{print $1}')"
         [ "$lock_before" = "$lock_after" ] || { echo "Shared SwiftPM lock changed during build; review and resolve dependencies before retrying."; exit 1; }
+    fi
+    if [ "$signing_allowed" = "YES" ]; then
+        app="$derived/Build/Products/Debug-iphonesimulator/Caobao.app"
+        codesign --verify --deep --strict --verbose=2 "$app" >/dev/null
+        echo "Code signing: verified"
     fi
     tail -5 "$log"
     echo "Application: $derived/Build/Products/Debug-iphonesimulator/Caobao.app"
