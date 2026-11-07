@@ -100,6 +100,7 @@
 
 - `confirmed` 与 `explicit` 都是已授权记忆；bridge/history 注入逻辑必须接受两者，不能静默丢弃 `confirmed`。
 - 云任务必须返回稳定 `version`，支持 owner-scoped 条件 PATCH、幂等键、冲突错误和删除墓碑；服务端状态 `draft`、`waiting_approval`、`running`、`failed`、`completed`、`cancelled`、`paused` 必须保持可区分。
+- 云任务 `pause`、`cancel` 和恢复写操作也必须接受 `expectedVersion` 或 `If-Match-Version` 并返回新的权威任务；当前部署路由可调用但没有条件版本参数，客户端因此继续禁用云任务的无条件状态按钮，避免双设备覆盖。
 - 任务审批必须有客户端可调用的明确接口（例如 `/approve`），并返回一次性结果；不能让客户端把等待审批或失败任务误显示为 active。
 - 主动 profile 更新必须支持 `expectedVersion`；规则运行重试必须复用稳定幂等键，避免超时后重复执行。
 - APNs sender 必须保留 Worker 写入的 `ownerId`、`route`、`taskId`、`proactiveRunId` 等路由字段；否则客户端收到锁屏通知后无法完成 owner 校验和 conversation deep link。设备 DELETE handler 也必须实际挂载并清理旧 owner 的 outbox。
