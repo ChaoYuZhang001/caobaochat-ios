@@ -6,24 +6,21 @@ import SwiftUI
 struct FeaturesView: View {
     @EnvironmentObject var appState: AppState
     
-    // 与 Web 端对齐的功能入口
+    // 旧工具只在“更多功能”二级入口保留；核心工作流在首页、对话和任务中完成。
     private let mainFeatures: [(icon: String, title: String, subtitle: String)] = [
-        ("message.fill", "找人聊聊", "随时待命"),
-        ("sparkles", "阳光明媚", "算一卦"),
-        ("doc.text.magnifyingglass", "图片分析", "扔进来我看看"),
-        ("quote.bubble", "扎心金句", "发朋友圈专用"),
+        ("message.fill", "找人聊聊", "进入对话工作区"),
     ]
 
     private let moreFeatures: [(icon: String, title: String, subtitle: String)] = [
-        ("chart.line.uptrend.xyaxis", "犀利点评", "来评评理"),
-        ("wand.and.stars", "个性昵称", "给你起个名"),
-        ("flame", "吐槽大会", "专治各种不服"),
-        ("target", "选择困难", "帮你决定"),
+        ("chart.line.uptrend.xyaxis", "犀利点评", "二级工具 · 接口待迁移"),
+        ("wand.and.stars", "个性昵称", "二级工具 · 接口待迁移"),
+        ("flame", "吐槽大会", "二级工具 · 接口待迁移"),
+        ("target", "选择困难", "二级工具 · 接口待迁移"),
     ]
     
     private let quickActions: [(icon: String, title: String, subtitle: String)] = [
-        ("sun.max.fill", "早报", "开启元气满满的一天"),
-        ("moon.fill", "晚报", "总结今日收获"),
+        ("sun.max.fill", "早报", "二级工具 · 接口待迁移"),
+        ("moon.fill", "晚报", "二级工具 · 接口待迁移"),
     ]
     
     var body: some View {
@@ -43,9 +40,18 @@ struct FeaturesView: View {
                 
                 ScrollView {
                     VStack(spacing: 24) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("工具模板")
+                                .font(.title3.bold())
+                            Text("这里是二级能力入口，不占用首页、对话和任务的核心导航。部分旧工具仍等待服务端 v2 接口迁移，遇到不可用提示时请使用对话工作区。")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+
                         // 主功能区
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("核心功能")
+                            Text("对话工具")
                                 .font(.headline)
                                 .foregroundStyle(.secondary)
                                 .padding(.horizontal, 4)
