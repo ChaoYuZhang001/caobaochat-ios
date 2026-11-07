@@ -16,6 +16,7 @@
 | 模型设置统一入口 | 通过 | iPhone 17 Pro Max Simulator，最新签名构建 | 设置页不再展示只写入无效 `selectedModel` 的旧静态列表；仅保留助理设置入口，区域、平台模型、BYOK 和首页使用同一状态源 |
 | 本轮新增界面本地化 | 通过（新增入口） | `Caobao/en.lproj/Localizable.strings`、`Caobao/zh-Hans.lproj/Localizable.strings`；`Scripts/test-assistant-localization.sh`；全新 QA19 Simulator 启动截图 | 主动更新、暂停/恢复、运行记录、自定义角色、macOS 工具模板、本机收藏和对话切换提示已补齐中英文资源；系统原生 Apple 登录按钮随系统语言显示；历史工具仍有既存中文文案，未在本轮扩展范围内 |
 | Apple 撤销通知处理与敏感日志清理 | 客户端修复通过 | `Caobao/CaobaoApp.swift`、`Caobao/Services/APIService.swift`；macOS Debug build | macOS 已补齐 `credentialRevokedNotification` 的退出处理；旧 legacy Apple/删除接口不再打印原始认证响应或 token 前缀。真实 Apple 授权、刷新和撤销仍需真账号验收 |
+| 音频播放器生命周期 | 客户端修复通过 | `Caobao/Views/AudioPlayerView.swift`；签名 iOS/macOS Debug build | 播放结束通知和 periodic time observer 都保存 token，并在离开页面时移除，避免重复进入消息页累积 observer。 |
 | 客户端协议与隔离回归 | 通过 | 多个 `Scripts/test-assistant-*.sh` | Apple 身份 17 套、权益 14 套、设备注册、媒体 12 套、记忆同步 3 套、会话同步均通过；使用 mock HTTP/隔离数据，不替代真实设备验收 |
 
 ## 失败或未完成项
