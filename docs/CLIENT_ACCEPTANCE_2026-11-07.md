@@ -18,6 +18,8 @@
 
 2026-11-08 主动规则真实联调补充：同一真实账号创建一个 7 天后运行的临时 schedule 规则，完成版本更新、列表验证和删除墓碑；运行日志为 `CAOBAO_E2E_PROACTIVE_RULE success version=2 delete=deleted`。规则未执行，探针代码已撤销；本证据只覆盖基础规则 CRUD，不覆盖 Worker、APNs、运行记录状态或多设备阅读/稍后同步。
 
+2026-11-08 云任务真实联调补充：同一真实账号创建一个 7 天后到期的临时任务，完成版本更新、列表验证和删除墓碑；运行日志为 `CAOBAO_E2E_CLOUD_TASK success version=2 delete=deleted`。任务未执行，探针代码已撤销；本证据只覆盖云端任务基础 CRUD，不覆盖已有任务安全编辑、状态枚举、审批、冲突和双设备同步。
+
 签名门禁记录：项目的 iOS Debug/Release `DEVELOPMENT_TEAM` 仍为空，`security find-identity -v -p codesigning` 返回 `0 valid identities found`；因此 Apple Sign In、APNs 和正式 archive/TestFlight 不能在当前环境完成。归类为发布签名环境阻塞，不写入猜测的 Team ID 或证书信息。
 
 服务端需要处理的接口、幂等、owner 隔离和生产门禁见 [SERVER_ACCEPTANCE_REQUIREMENTS_2026-11-07.md](SERVER_ACCEPTANCE_REQUIREMENTS_2026-11-07.md)。
@@ -57,7 +59,7 @@
 | APNs/系统提醒 | 未验收；设备注销真实接口已通过 | 服务端 Worker/APNs + 客户端 | 真实 Bearer 对随机设备 ID 调用 `DELETE /api/v2/devices/{deviceId}` 返回成功，证明注销 handler 已挂载；客户端登出会使用旧 access token best-effort 调用该接口，只读取已有设备 ID，不会在退出时新建 Keychain 设备记录；网络失败不阻塞退出（`603462a`、`6795f73`）。真实已注册设备、旧 owner 失效、outbox 清理、锁屏送达、点击深链和安静时段生产行为仍未验证。 |
 | 图片 | 部分通过 | 客户端 + 上游 | 图片入口和本地预处理测试通过；未在真实账号下发送图片并验证生产上游能力。 |
 | 语音输入/朗读 | iPhone/macOS 客户端入口已实现，真实设备未验收 | 客户端/系统权限 | `AssistantSpeechController` 已覆盖 iOS/macOS 权限、locale、设备端识别回退、60 秒上限、账号切换、中断和 TTS 8,000 字上限；`MacChatView` 已加入麦克风、停止和朗读入口，macOS Debug build 通过。尚未在真实 iPhone/macOS 麦克风环境完成授权、录音、识别和朗读验收，正式包仍需检查 Speech/Microphone 权限和签名。 |
-| 会话/任务/记忆云同步 | 未验收；客户端协议已具备，生产闭环未证实 | 服务端 + 客户端联调 | 客户端已有 owner-scoped 会话 change feed pull、全量回填、消息合并、删除队列和 tombstone 提交；记忆同步支持版本/墓碑；任务页当前只把本地独有任务 POST 到云端，已有云任务的本地编辑/状态变更暂不自动 PATCH（本地没有持久化 server version，避免无版本覆盖）。`syncToCloud` 仍只负责记忆上行，会话消息由对话接口写入。生产未认证探针显示 `/api/v2/sync/conversations`、`/api/v2/conversations/changes`、`/api/v2/conversations` 均返回 401，说明路由已挂载，但尚未用两个真实账号/设备验证增量、冲突、删除墓碑和账号切换闭环。 |
+| 会话/任务/记忆云同步 | 云端任务基础 CRUD 真实通过；完整同步未验收 | 服务端 + 客户端联调 | 真实账号已创建 7 天后到期的临时云任务，完成版本更新、列表验证和删除墓碑；客户端已有 owner-scoped 会话 change feed pull、全量回填、消息合并、删除队列和 tombstone 提交，记忆同步支持版本/墓碑。任务页已有云任务的本地编辑/状态变更仍暂不自动 PATCH（本地没有持久化 server version，避免无版本覆盖），`waiting_approval`、`failed`、`running`、`draft` 也未完整映射。生产尚未用两台真实设备验证增量、冲突、删除墓碑、审批、冷启动和账号切换闭环。 |
 | 记忆授权字段兼容 | 客户端已做兼容；服务端仍需修复 | **客户端 + 服务端协议** | 本地策略把 `confirmed` 和 `explicit` 都视为已授权；当前客户端平台请求把 `confirmed` 规范化为 `explicit`，避免现有 bridge 静默丢失已确认记忆，并有 ChatViewModel 回归覆盖。服务端 bridge 仍需正式接受 `confirmed`，否则其他客户端或旧版本仍会丢上下文。 |
 | 云任务编辑、状态和审批 | 未完成 | **客户端 + 服务端协议** | 客户端没有持久化云端 `version`，已有云任务的编辑/状态变化不会安全 PATCH；`waiting_approval`、`failed`、`running`、`draft` 目前会被压成 active，客户端也没有云端审批调用。需要补 `version`/条件 PATCH、状态枚举映射、`/approve` 闭环、幂等和冲突 UI，再做双设备验收。 |
 | 主动更新 | 基础 profile/规则 CRUD 真实通过；运行与投递闭环未完成 | **客户端 + 服务端** | 当前签名 Simulator 已打开主动更新页，开关从关闭切换到开启再恢复关闭；频率选择、未读数量、下一次运行、陪伴模式和每日上限入口均可见。真实账号已完成 profile/rules 读取，并创建 7 天后运行的临时规则，完成版本更新、列表验证和删除墓碑。二轮 UI 验收实际启用安静时段并保存，页面显示“安静时段已启用”，随后关闭并保存恢复原状态；此前已验证暂停/恢复全部、运行记录的查看/稍后、本机已读状态及通知关联对话回流。客户端现已把服务端会话 ID解析为本地会话 ID，兼容 `readAt`、`snoozedUntil`、`dismissedAt`，并持久化 profile `expectedVersion`、规则运行幂等键。服务端关闭此类、阅读/稍后多设备写入、生产 Worker/APNs、规则真实运行和冲突验收仍未完成；logout/换账号时还需失效旧账号 APNs 设备绑定。 |
