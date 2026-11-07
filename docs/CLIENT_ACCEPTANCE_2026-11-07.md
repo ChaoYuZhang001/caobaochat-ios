@@ -42,6 +42,10 @@
 
 2026-11-08 生产配置复核：`https://ciyuan2api.com/api/status` 返回 HTTP 200，版本头仍为 `v1.0.0-rc.48+ciyuan.reconstructed.20261106.1`；`https://caobao.chat/.well-known/apple-app-site-association` 和根路径均返回 HTTP 200，但 `appIDs` 为空且仍只声明旧工具路径，新的 conversation/task/proactive 深链仍不能验收。
 
+2026-11-08 客户端/服务端设备注销契约复核：客户端 `AssistantDeviceRegistrationClient.unregister()` 发送 `DELETE /api/v2/devices/{deviceId}` 并要求 `status=unregistered`；当前 `feat/caobao-server-v2` 路由源码只注册 `POST /api/v2/devices`，未发现 DELETE handler。此前生产对随机设备 ID 的 DELETE 探针返回成功，和 checkout 不一致，不能继续作为通过证据；必须完成 production-versus-branch 比较并确认正式注销响应、旧账号失效和 outbox 清理。归类为服务端发布/契约核对。
+
+2026-11-08 二级图片分析复核：`AnalyzeView` 仍调用旧 `APIService.analyzeImage`，请求 `/api/analyze`，未携带 Bearer、owner 或额度协议；现代聊天图片附件走 Assistant v2，两者不能混为一谈。归类为客户端 + 服务端协议未验收的二级功能，后续迁移到 Assistant v2 或补齐旧接口契约。
+
 签名门禁记录：项目的 iOS Debug/Release `DEVELOPMENT_TEAM` 仍为空，`security find-identity -v -p codesigning` 返回 `0 valid identities found`；因此 Apple Sign In、APNs 和正式 archive/TestFlight 不能在当前环境完成。归类为发布签名环境阻塞，不写入猜测的 Team ID 或证书信息。
 
 服务端需要处理的接口、幂等、owner 隔离和生产门禁见 [SERVER_ACCEPTANCE_REQUIREMENTS_2026-11-07.md](SERVER_ACCEPTANCE_REQUIREMENTS_2026-11-07.md)。
@@ -78,12 +82,12 @@
 | 数据统计 | 通过 | **客户端** | 新增 owner-scoped `AssistantUsageStatsStore`；仅成功完成的非空回答计数，取消/失败不计数，重试按 message ID 幂等，账号隔离。真实 Simulator 发送后详细页显示累计发送 1、我的消息 1、AI 回复 1、今日/周/月各 2；安装最新构建后“我的”概览同步显示对话 1、使用 1 天、连续 1 天。 |
 | Apple 登录全生命周期 | 未验收；客户端入口已运行时通过 | 服务端 + 系统环境 + 正式签名 | 当前签名 QA19 Simulator 勾选协议后点击“通过 Apple 登录”，成功弹出系统“登录 Apple 账户 / 需要在‘设置’中登录 Apple 账户”提示，证明客户端入口和 `ASAuthorization` 调用链可达；因 Simulator 未登录 Apple 账户，未继续输入凭据。iOS/macOS 已有撤销通知处理、nonce/state/JWT/授权码和 Keychain 会话逻辑；源码 entitlement 含 Apple Sign In、APNs 和 Associated Domains，但当前 `DEVELOPMENT_TEAM` 为空的 Simulator 签名实际嵌入空 entitlement；构建脚本现已明确提示“real-device archive signing still required”（`build-simulator.sh`）。仍未完成真实授权、刷新、退出、撤销及真实 Bearer 验证。 |
 | StoreKit 订阅 | 未验收；服务端配置可读但 StoreKit 无可用商品 | 服务端 + App Store Connect + 客户端 | 真实 Bearer 请求 `subscriptions/apple/config` 返回 HTTP 200 且含 2 个 Product ID；当前签名 Simulator 的 StoreKit 返回 0 个可用自动续订商品，页面显示“订阅暂不可用”。客户端不硬编码 Product ID，筛选和账号绑定逻辑已通过本地测试；仍需 App Store Connect/StoreKit 商品、真机购买、恢复、退款、撤销和额度账本闭环。 |
-| APNs/系统提醒 | 未验收；设备注销真实接口已通过 | 服务端 Worker/APNs + 客户端 | 真实 Bearer 对随机设备 ID 调用 `DELETE /api/v2/devices/{deviceId}` 返回成功，证明注销 handler 已挂载；客户端登出会使用旧 access token best-effort 调用该接口，只读取已有设备 ID，不会在退出时新建 Keychain 设备记录；网络失败不阻塞退出（`603462a`、`6795f73`）。真实已注册设备、旧 owner 失效、outbox 清理、锁屏送达、点击深链和安静时段生产行为仍未验证。 |
-| 图片 | 部分通过 | 客户端 + 上游 | 图片入口和本地预处理测试通过；未在真实账号下发送图片并验证生产上游能力。 |
+| APNs/系统提醒 | 未验收；设备注销契约存在分支/生产不一致 | 服务端 Worker/APNs + 客户端协议 | 客户端登出会使用旧 access token best-effort 调用 `DELETE /api/v2/devices/{deviceId}`，但当前 `feat/caobao-server-v2` 路由源码只看到 `POST /api/v2/devices`；此前随机 DELETE 生产探针成功，不能代替 production-versus-branch 比较。真实已注册 token、旧 owner 失效、outbox 清理、锁屏送达、点击深链和安静时段生产行为仍未验证。 |
+| 图片 | Assistant v2 聊天图片部分通过；旧图片分析未验收 | 客户端 + 服务端协议/功能去处 | 聊天图片入口和本地预处理测试通过；`AnalyzeView` 仍 POST 旧 `/api/analyze`，没有 Bearer、owner 隔离或额度协议，服务端 checkout 也未找到明确路由。旧图片分析保留在二级工具中但不计入核心完成；后续迁移到 Assistant v2，或由服务端补齐旧协议。 |
 | 语音输入/朗读 | iPhone/macOS 客户端入口已实现，真实设备未验收 | 客户端/系统权限 | `AssistantSpeechController` 已覆盖 iOS/macOS 权限、locale、设备端识别回退、60 秒上限、账号切换、中断和 TTS 8,000 字上限；`MacChatView` 已加入麦克风、停止和朗读入口，macOS Debug build 通过。尚未在真实 iPhone/macOS 麦克风环境完成授权、录音、识别和朗读验收，正式包仍需检查 Speech/Microphone 权限和签名。 |
-| 会话/任务/记忆云同步 | 云端任务基础 CRUD 真实通过；完整同步未验收 | 服务端 + 客户端联调 | 真实账号已创建 7 天后到期的临时云任务，完成版本更新、列表验证和删除墓碑；客户端已有 owner-scoped 会话 change feed pull、全量回填、消息合并、删除队列和 tombstone 提交，记忆同步支持版本/墓碑。任务编辑现在持久化 owner-scoped 云端版本和脏任务 ID，拉取时不覆盖本地脏编辑，内容变更使用条件 PATCH，冲突保留本机并提示；状态审批和两台真实设备仍未验收。生产尚未用两台真实设备验证增量、冲突、删除墓碑、审批、冷启动和账号切换闭环。 |
+| 会话/任务/记忆云同步 | 文本和基础记录同步有本地回归；多模态/工具历史与双设备生产闭环未验收 | **客户端 + 服务端联调；功能范围需明确** | 真实账号已创建 7 天后到期的临时云任务，完成版本更新、列表验证和删除墓碑；客户端已有 owner-scoped 会话 change feed pull、全量回填、消息合并、删除队列和 tombstone 提交，记忆同步支持版本/墓碑。任务编辑现在持久化 owner-scoped 云端版本和脏任务 ID，拉取时不覆盖本地脏编辑，内容变更使用条件 PATCH，冲突保留本机并提示。当前会话同步按安全策略只恢复文本，远端图片、tool_call/tool_result 和 taskProposal 不写入本机归档；若“跨设备继续”要求完整多模态/工具历史，需新增安全附件引用、大小校验、提案降权和服务端契约。状态审批和两台真实设备仍未验收。 |
 | 记忆授权字段兼容 | 客户端已做兼容；服务端仍需修复 | **客户端 + 服务端协议** | 本地策略把 `confirmed` 和 `explicit` 都视为已授权；当前客户端平台请求把 `confirmed` 规范化为 `explicit`，避免现有 bridge 静默丢失已确认记忆，并有 ChatViewModel 回归覆盖。服务端 bridge 仍需正式接受 `confirmed`，否则其他客户端或旧版本仍会丢上下文。 |
-| 云任务编辑、状态和审批 | 内容编辑条件同步已补；等待确认审批入口和状态 fail-closed 已补；首页摘要已补；暂停/取消仍未完成 | **客户端 + 服务端协议** | 客户端持久化云端 `version`/脏任务，编辑后使用 `expectedVersion` PATCH；版本不一致时保留本机编辑并提示，不静默覆盖。`waiting_approval` 任务现在使用服务端 `task.reminder` 精确参数哈希调用 `/approve`，成功后刷新权威状态；`draft`、`waiting_approval`、`failed` 和未知云端状态不会再默认显示为本地 active，只有 `scheduled/running` 映射为 active；首页登录同步完成和下拉刷新会读取云任务摘要，读取失败不会清空本地任务。服务端暂停/取消接口仍无 expectedVersion，客户端继续禁用无条件状态写入。需要真实账号验证审批消费、条件 PATCH、状态写入和双设备冲突。 |
+| 云任务编辑、状态和审批 | 内容编辑条件同步已补；等待确认审批入口和状态 fail-closed 已补；首页摘要已补；暂停/取消仍未完成 | **客户端 + 服务端协议** | 客户端持久化云端 `version`/脏任务，编辑后使用 `expectedVersion` PATCH；版本不一致时保留本机编辑并提示，不静默覆盖。`waiting_approval` 任务现在使用服务端 `task.reminder` 精确参数哈希调用 `/approve`，成功后刷新权威状态；`draft`、`waiting_approval`、`failed` 和未知云端状态不会再默认显示为本地 active，只有 `scheduled/running` 映射为 active；首页登录同步完成和下拉刷新会读取云任务摘要，读取失败不会清空本地任务。服务端虽然注册了 pause/cancel 路由，但 handler 没有 expectedVersion，客户端也没有安全的状态写入方法；需要先确定条件状态协议，再完成客户端接入和真实账号验证。 |
 | 主动更新 | 基础 profile/规则 CRUD 真实通过；运行与投递闭环未完成 | **客户端 + 服务端** | 当前签名 Simulator 已打开主动更新页，开关从关闭切换到开启再恢复关闭；频率选择、未读数量、下一次运行、陪伴模式和每日上限入口均可见。未登录时暂停全部、添加规则和刷新运行记录已禁用并显示登录提示；运行记录使用本地化状态文案，macOS 首页主动模式使用本地化标题。真实账号已完成 profile/rules 读取，并创建 7 天后运行的临时规则，完成版本更新、列表验证和删除墓碑。二轮 UI 验收实际启用安静时段并保存，页面显示“安静时段已启用”，随后关闭并保存恢复原状态；此前已验证暂停/恢复全部、运行记录的查看/稍后、本机已读状态及通知关联对话回流。客户端现已把服务端会话 ID解析为本地会话 ID，兼容 `readAt`、`snoozedUntil`、`dismissedAt`，并持久化 profile `expectedVersion`、规则运行幂等键。服务端关闭此类、阅读/稍后多设备写入、生产 Worker/APNs、规则真实运行和冲突验收仍未完成；logout/换账号时还需失效旧账号 APNs 设备绑定。 |
 | 自定义角色 | 基础真实 CRUD 通过；角色聊天接入、冲突和跨设备仍未完成 | **客户端 + 服务端联调** | 客户端已将记忆范围从错误的 `private/workspace` 对齐为服务端接受的 `none/character/group`，默认使用 `character`，避免新建角色必然收到 400。2026-11-08 已在已登录 Simulator 完成 owner-scoped list/create/versioned update-disable/list 验证/delete 墓碑，且已撤销仅 Debug 探针；UI 也已确认名称、头像、简介、语言、启用、行为提示、问候语和记忆范围控件存在。仍需真实版本冲突、多设备墓碑和账号切换验收；角色尚未接入对话请求，需新增 `characterId/version` 与服务端提示词、记忆范围协议。 |
 | AI 群聊 | 未实现 | **客户端 + 服务端新增** | 当前代码没有群聊参与者、编排、speaker/turn 模型或 SSE；不能用现有 personaLevel 代替。 |
@@ -112,8 +116,10 @@
 ## 功能去处与新增
 
 - 运势、晨报、晚报、吐槽、决策、金句、收藏、统计和反馈保留为二级工具/设置入口，不继续扩充一级导航。
+- 旧 `/api/analyze` 图片分析保留为二级兼容入口但不计入核心完成；迁移到 Assistant v2 或补齐认证、owner、额度和流式错误协议后再恢复“已完成”状态。
 - 自定义角色管理页面已补齐，仍需真实账号验证 `/api/v2/characters` 的 CRUD、版本冲突和墓碑同步；AI 群聊是新的跨端功能，必须先补服务端协议、参与者/轮次模型、幂等和执行历史，再接客户端 UI。
 - 主动更新已补暂停/恢复全部、首页未读数/下一次运行、本机查看/稍后和通知点击回流；来源解释使用现有 `triggerReason/sourceRefs`。本机已读/稍后不宣称跨设备同步；服务端仍需提供阅读/稍后状态、关闭此类接口和生产 Worker/APNs。
+- 跨设备会话当前明确采用“文本历史优先”策略：图片、工具调用结果和任务提案不会从远端直接恢复，避免不受控的附件下载或把历史提案当成执行权限；若产品要求完整跨设备继续，这是客户端 + 服务端的新增功能，不应把现有文本同步证据扩大解释。
 
 ## 下一轮验收顺序
 
