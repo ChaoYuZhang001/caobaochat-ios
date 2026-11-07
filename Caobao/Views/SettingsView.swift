@@ -5,8 +5,6 @@ struct SettingsView: View {
     @EnvironmentObject var appState: AppState
     @State private var showAssistantPreferences = false
     @AppStorage("colorScheme") private var colorScheme = "system"
-    @AppStorage("toxicLevel") private var toxicLevel = "normal"
-    @AppStorage("voiceEnabled") private var voiceEnabled = true
     
     // 毒舌程度 - 与后端保持一致
     private let toxicLevels = [
@@ -51,11 +49,8 @@ struct SettingsView: View {
                     Section {
                         ForEach(toxicLevels, id: \.0) { level in
                             Button {
-                                toxicLevel = level.0
-                                // 同步到 appState 以保持联动
                                 appState.userSettings.toxicLevel = level.0
                                 appState.saveUserSettings()
-                                print("🎯 切换毒舌程度: \(level.1)")
                             } label: {
                                 HStack {
                                     Text(level.3)
@@ -73,7 +68,7 @@ struct SettingsView: View {
                                     
                                     Spacer()
                                     
-                                    if toxicLevel == level.0 {
+                                    if appState.userSettings.toxicLevel == level.0 {
                                         Image(systemName: "checkmark.circle.fill")
                                             .foregroundStyle(.green)
                                     }
@@ -98,7 +93,9 @@ struct SettingsView: View {
                         .pickerStyle(.automatic)
                         #endif
                         
-                        Toggle("语音播报", isOn: $voiceEnabled)
+                        Text("语音输入和朗读在对话页按需使用。")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     } header: {
                         Text("外观")
                     }

@@ -54,7 +54,7 @@
 | iPhone Duo、真机/TestFlight | 未验收 | 发布环境 | 当前普通 Simulator 不能证明 Duo 专用设备、正式签名归档、TestFlight 安装和系统级行为。 |
 | macOS 详细统计/关于/官方页 | 部分缺失 | **客户端 UI** | macOS 当前个人页只有摘要统计，详细统计、关于和官方页没有等同 iOS 的完整入口；属于 macOS parity 待补，不影响 iPhone 首发核心闭环。 |
 | macOS 对话图片/任务提案 | 未完成 | **客户端 macOS parity** | `MacChatView` 只有文本输入、麦克风、发送和停止；没有 iOS 的 PhotosPicker、多图预处理、任务提案接受/拒绝/继续操作。macOS 需要补齐后再做真实交互验收。 |
-| 旧设置状态 | 未完成 | **客户端状态整合** | 旧 `SettingsView` 的 `voiceEnabled` 没有消费者，`toxicLevel` 与 owner-scoped `userSettings` 并存，可能导致账号切换后显示和行为分裂；应迁移到统一助理设置或删除旧开关。 |
+| 旧设置状态 | 客户端已修复；真实账号切换未验收 | **客户端状态整合** | 旧 `SettingsView` 已移除无消费者的 `voiceEnabled` 开关，毒舌程度只读写 owner-scoped `appState.userSettings`，避免与旧 `UserDefaults` 键分裂。真实账号切换和服务端 persona 偏好仍需验收。 |
 | 游客升级 | 死链 | **客户端产品/认证** | `AuthService` 的 `canUpgrade` 永远为 false，游客升级区和升级弹窗无法到达；需要重新接通游客转 Apple 账号，或删除误导入口。 |
 | 反馈提交 | 未验收 | **客户端 + 服务端协议** | `FeedbackView` 仍调用旧 `/feedback` 且未带 Bearer；当前只能证明表单可达，不能证明生产提交成功。应迁移到 owner-scoped 认证接口或明确支持匿名反馈后再验收。 |
 | 远程媒体与举报 | 默认关闭/未验收 | **客户端接线 + 服务端协议** | `MessageBubble` 的举报和远程音视频路径由 `allowsReporting/allowsRemoteMedia` 控制，现有聊天/历史调用未显式开启；媒体默认关闭是安全策略，举报若保留需补认证接口和真实提交验收。 |
