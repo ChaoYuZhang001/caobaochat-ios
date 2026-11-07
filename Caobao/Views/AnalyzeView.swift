@@ -144,14 +144,6 @@ struct AnalyzeView: View {
                                                 .foregroundStyle(Color(hex: "10b981"))
                                                 .clipShape(RoundedRectangle(cornerRadius: 12))
                                         }
-                                        .onChange(of: selectedItem) { _ in
-                                            Task {
-                                                if let data = try? await selectedItem?.loadTransferable(type: Data.self),
-                                                   let image = UIImage(data: data) {
-                                                    selectedImage = image
-                                                }
-                                            }
-                                        }
                                         
                                         Button {
                                             showingCamera = true
@@ -291,6 +283,15 @@ struct AnalyzeView: View {
             .navigationTitle("图片分析")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            .photosPicker(isPresented: $showingImagePicker, selection: $selectedItem, matching: .images)
+            .onChange(of: selectedItem) { _ in
+                Task {
+                    if let data = try? await selectedItem?.loadTransferable(type: Data.self),
+                       let image = UIImage(data: data) {
+                        await MainActor.run { selectedImage = image }
+                    }
+                }
+            }
             .sheet(isPresented: $showingCamera) {
                 ImagePicker(sourceType: .camera) { image in
                     selectedImage = image
