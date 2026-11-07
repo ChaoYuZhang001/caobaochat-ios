@@ -81,6 +81,21 @@ enum AssistantTaskStatus: String, Codable, CaseIterable {
     case active, paused, completed, cancelled
 }
 
+/// Maps server-owned cloud task states onto the local task lifecycle without
+/// presenting an approval wait or execution failure as an active task.
+/// Unknown states fail closed until the server contract is explicitly extended.
+enum AssistantCloudTaskStatusPolicy {
+    static func localStatus(for raw: String) -> AssistantTaskStatus {
+        switch raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+        case "completed": return .completed
+        case "cancelled": return .cancelled
+        case "paused", "draft", "waiting_approval", "failed": return .paused
+        case "scheduled", "running": return .active
+        default: return .paused
+        }
+    }
+}
+
 struct AssistantTask: Codable, Identifiable, Hashable {
     let id: String
     let userId: String

@@ -1856,13 +1856,7 @@ struct AssistantTasksView: View {
     private func cloudTaskToLocal(_ remote: CloudTask, existing: AssistantTask?) -> AssistantTask? {
         guard !remote.id.isEmpty, !remote.title.isEmpty,
               let zone = try? AssistantTaskTimeZonePolicy.validatedIdentifier(remote.timeZone) else { return nil }
-        let status: AssistantTaskStatus
-        switch remote.status.lowercased() {
-        case "completed": status = .completed
-        case "cancelled": status = .cancelled
-        case "paused": status = .paused
-        default: status = .active
-        }
+        let status = AssistantCloudTaskStatusPolicy.localStatus(for: remote.status)
         let created = cloudDate(remote.createdAt) ?? existing?.createdAt ?? Date()
         let updated = cloudDate(remote.updatedAt) ?? existing?.updatedAt ?? created
         return AssistantTask(id: remote.id, userId: userId, title: remote.title,
