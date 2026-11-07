@@ -1023,3 +1023,16 @@
 "正在读取主动更新…" = "Loading proactive updates…";
 "暂时无法读取主动更新" = "Proactive updates are temporarily unavailable";
 "进入主动规则管理重试" = "Open proactive rules to retry";
+
+/* macOS workspace shell. */
+"新对话" = "New conversation";
+"今天继续做什么？" = "What would you like to do today?";
+"对话、任务和主动更新都在同一个工作区。" = "Chat, tasks and proactive updates live in one workspace.";
+"开始对话" = "Start chatting";
+"查看任务" = "View tasks";
+"主动更新" = "Proactive updates";
+"管理主动规则" = "Manage proactive rules";
+"订阅状态将在账号服务可用后显示。" = "Subscription status will appear when account services are available.";
+"账号、隐私和数据管理请从工作区设置进入。" = "Manage your account, privacy and data from Workspace Settings.";
+"最近对话已常驻左侧栏。" = "Recent conversations stay in the sidebar.";
+"自由对话" = "Free chat";
