@@ -1,6 +1,7 @@
 #if os(macOS)
 import SwiftUI
 import AppKit
+import UniformTypeIdentifiers
 
 /// Lightweight macOS chat surface backed by the shared archive/view model.
 /// ContentView.swift contains the richer iOS-only ChatView and is not part of
@@ -15,6 +16,7 @@ struct MacChatView: View {
     @State private var continuationSource: AssistantTaskProposalActionSource?
     @State private var taskProposalErrorMessageId: String?
     @State private var taskProposalError: String?
+    @State private var showingImagePicker = false
     @ObservedObject private var speech = AssistantSpeechController.shared
 
     private var ownerId: String { AuthService.shared.user?.id ?? "local-device" }
@@ -48,6 +50,12 @@ struct MacChatView: View {
                 }
             }
             Divider()
+            if !chatViewModel.pendingImages.isEmpty {
+                MacAssistantImagesView(images: chatViewModel.pendingImages, onRemove: { id in
+                    chatViewModel.removePendingImage(id)
+                })
+                .padding(.horizontal, 14)
+            }
             if let error = chatViewModel.error {
                 HStack {
                     Text(error).font(.caption).foregroundStyle(.red).textSelection(.enabled)
@@ -66,6 +74,16 @@ struct MacChatView: View {
                 .padding(.horizontal, 14).padding(.top, 8)
             }
             HStack(alignment: .bottom, spacing: 10) {
+                Button {
+                    showingImagePicker = true
+                } label: {
+                    Image(systemName: "photo")
+                        .frame(width: 32, height: 32)
+                }
+                .buttonStyle(.borderless)
+                .help("添加图片")
+                .accessibilityLabel("添加图片")
+                .disabled(chatViewModel.isLoading || chatViewModel.isPreparingImage || chatViewModel.pendingImages.count >= 3)
                 TextField("输入消息…", text: $chatViewModel.inputText, axis: .vertical)
                     .textFieldStyle(.roundedBorder)
                     .focused($inputFocused)
@@ -109,6 +127,17 @@ struct MacChatView: View {
         .task {
             try? await chatViewModel.waitForArchiveReady(ownerId: ownerId)
             await openSelectedConversation()
+        }
+        .fileImporter(isPresented: $showingImagePicker, allowedContentTypes: [.image], allowsMultipleSelection: false) { result in
+            guard case .success(let urls) = result, let url = urls.first else { return }
+            Task { @MainActor in
+                do {
+                    let data = try Data(contentsOf: url)
+                    await chatViewModel.addImageData(data, ownerId: ownerId, conversationId: chatViewModel.conversationId)
+                } catch {
+                    chatViewModel.error = error.localizedDescription
+                }
+            }
         }
         .onChange(of: selectedConversationId) { _ in
             Task { await openSelectedConversation() }
@@ -344,6 +373,7 @@ struct MacChatView: View {
 
 private struct MacAssistantImagesView: View {
     let images: [AssistantImage]
+    var onRemove: ((String) -> Void)? = nil
 
     var body: some View {
         HStack(spacing: 8) {
@@ -354,6 +384,16 @@ private struct MacAssistantImagesView: View {
                         .scaledToFill()
                         .frame(width: 96, height: 96)
                         .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .overlay(alignment: .topTrailing) {
+                            if let onRemove {
+                                Button { onRemove(image.id) } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundStyle(.white, .black.opacity(0.7))
+                                }
+                                .buttonStyle(.borderless)
+                                .padding(4)
+                            }
+                        }
                 }
             }
         }
