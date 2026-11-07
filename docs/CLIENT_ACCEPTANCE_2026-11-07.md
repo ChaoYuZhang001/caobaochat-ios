@@ -50,6 +50,10 @@
 
 2026-11-08 冷启动 UI smoke：将最新 iOS Simulator 包安装到已启动的 iPhone 17 Pro Max，启动后截图显示首页主动更新、任务、主 CTA、额度卡和四个一级 Tab，2 分钟日志无 Caobao 崩溃记录。该证据只覆盖 Simulator 冷启动和首屏可见性，不替代真实设备权限、签名和网络验收。
 
+2026-11-08 回归复跑补充：当前 checkout 的 `Scripts/test-assistant-chat-viewmodel.sh` 明确退出 `0`，168 个 ChatViewModel 集成套件全部通过；`Scripts/test-assistant-task-tool-protocol.sh` 明确退出 `0`（51/51）；`Scripts/test-assistant-repository.sh` 明确退出 `0`（102/102）。这些测试使用隔离文件、fake 通知和 mock 网络，不代表 Apple、StoreKit、APNs 或双设备生产闭环。
+
+2026-11-08 生产健康复核补充：`GET https://ciyuan2api.com/api/status` curl 退出 `0`、HTTP `200`，响应头 `X-New-Api-Version: v1.0.0-rc.48+ciyuan.reconstructed.20261106.1`，JSON 中 `setup=true` 且 `server_address=https://ciyuan2api.com`。本轮没有重复发送模型请求，避免无必要扣减真实额度；部署后真实 CN `started → delta → usage → completed` 证据沿用本文件既有记录。
+
 签名门禁记录：项目的 iOS Debug/Release `DEVELOPMENT_TEAM` 仍为空，`security find-identity -v -p codesigning` 返回 `0 valid identities found`；因此 Apple Sign In、APNs 和正式 archive/TestFlight 不能在当前环境完成。归类为发布签名环境阻塞，不写入猜测的 Team ID 或证书信息。
 
 服务端需要处理的接口、幂等、owner 隔离和生产门禁见 [SERVER_ACCEPTANCE_REQUIREMENTS_2026-11-07.md](SERVER_ACCEPTANCE_REQUIREMENTS_2026-11-07.md)。
