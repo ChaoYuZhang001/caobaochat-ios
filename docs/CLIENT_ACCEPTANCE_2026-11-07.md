@@ -15,7 +15,7 @@
 | 功能 | 结果 | 证据 | 备注 |
 | --- | --- | --- | --- |
 | 本地核心回归 | 通过 | `Scripts/test-assistant.sh`，`.build/verification/summary.json`；Dynamic Type 与核心本地化修复后于 2026-11-07 重跑 | 18 套、528 个独立组、`exitCode: 0`；覆盖协议、同步、媒体、提醒、删除、备份和 ChatViewModel；使用隔离文件、mock 网络和 fake 通知，不代表生产联调 |
-| iOS/macOS Debug 构建 | 通过 | `xcodebuild -scheme Caobao`（iOS Simulator）与 `xcodebuild -scheme Caobao-macOS -sdk macosx`；2026-11-07 | 两个 target 均返回 `** BUILD SUCCEEDED **`；构建未使用正式签名，因此不替代真机 archive/TestFlight 门禁 |
+| iOS/macOS Debug 构建 | 通过 | `Scripts/build-simulator.sh`、`xcodebuild -scheme Caobao-macOS -sdk macosx`；2026-11-07 | iOS Simulator 脚本和 macOS target 均返回 `** BUILD SUCCEEDED **`；构建未使用正式签名，因此不替代真机 archive/TestFlight 门禁 |
 | 代码卫生 | 通过 | `git diff --check` | 本轮修复、测试和构建完成后检查通过；提交后再确认工作树和 commit |
 | CN 平台对话 | 通过（服务端资金池修复后复测） | iPhone 17 Pro Max Simulator，当前签名包；HTTP 200 网络日志；UI 完成态 | 发送 `: ping` 后返回 `pong 🏓`，界面从“正在连接…”进入完成态；额度从 `6/8` 变为 `5/8`；未出现 `INTERNAL_ERROR`/`UPSTREAM_UNAVAILABLE`。原始 SSE 的逐事件日志未持久化，因此 `started/delta/completed` 的 UI/扣额结果已验证，事件序列仍不作为独立日志证据。 |
 | 任务基础 CRUD | 通过 | iPhone Simulator | 创建 `QA task`、完成/重开入口和编辑/删除入口可用；测试任务暂保留，未确认不可逆删除 |
@@ -28,7 +28,7 @@
 | 音频播放器生命周期 | 客户端修复通过 | `Caobao/Views/AudioPlayerView.swift`；签名 iOS/macOS Debug build | 播放结束通知和 periodic time observer 都保存 token，并在离开页面时移除，避免重复进入消息页累积 observer。 |
 | macOS 首页导航与侧栏无障碍 | 客户端修复通过；真实 UI 未验收 | `Caobao/Views/MacContentView.swift`；macOS Debug build | 首页开始对话/查看任务现在真正切换工作区；侧栏入口改为 Button，支持键盘和 VoiceOver 语义并扩大点击区域。真实 macOS VoiceOver、Dynamic Type 和订阅/账号占位页仍未验收。 |
 | 账号删除后的本地同步清理 | 客户端修复通过 | `Caobao/Services/AuthService.swift`、`Caobao/Views/AssistantWorkspaceViews.swift`；删除/同步测试；`f98f486` | 账号删除会清理记忆、会话、任务同步游标及待删除队列，同时清理本机收藏、主动模式配置和主动更新的已读/稍后状态，避免旧账号同步状态或本地状态残留。 |
-| 冷启动通知路由 | 客户端修复通过；真实锁屏点击未验收 | `Caobao/Services/AssistantNotificationRouter.swift`；签名 iOS Simulator build | 通知回调先保留 owner-bound route，等待认证恢复后再校验，避免冷启动时过早丢弃任务或主动更新跳转。真实 APNs 锁屏点击和生产深链仍需验收。 |
+| 冷启动通知路由 | 客户端修复通过；真实锁屏点击未验收 | `Caobao/Services/AssistantNotificationRouter.swift`、`AssistantWorkspaceViews.swift`；签名 iOS Simulator build | 通知回调先保留 owner-bound route，等待认证恢复后再校验；任务页在登录账号云同步失败时保留待处理任务 ID，只有同步成功后才把缺失任务判为删除，避免临时网络故障丢失深链。真实 APNs 锁屏点击和生产深链仍需验收。 |
 | 客户端协议与隔离回归 | 通过 | 多个 `Scripts/test-assistant-*.sh` | Apple 身份 17 套、权益 14 套、设备注册、媒体 12 套、记忆同步 3 套、会话同步均通过；使用 mock HTTP/隔离数据，不替代真实设备验收 |
 
 ## 失败或未完成项
@@ -41,8 +41,8 @@
 | StoreKit 订阅 | 未验收；Simulator 页面可进入 | 服务端 + App Store Connect + 客户端 | 当前签名 Simulator 已进入订阅页并完成商品加载，显示“订阅暂不可用”和“当前 App Store 地区暂无可购买的订阅商品”；客户端不硬编码 Product ID，会读取服务端 `subscriptions/apple/config` 后调用 StoreKit。客户端入口、恢复购买和管理入口存在，但尚未配置/验证真实商品、购买、恢复、退款、撤销和额度账本闭环。当前失败归因于服务端商品配置/App Store Connect 环境，不能据此判定客户端购买流程通过。 |
 | APNs/系统提醒 | 未验收；客户端注销调用已补，生产注销路由已挂载 | 服务端 Worker/APNs + 客户端 | 本地提醒策略、设备注册协议和签名 iOS 构建通过；客户端登出现在会使用旧 access token best-effort 调用 `DELETE /api/v2/devices/{deviceId}`，只读取已有设备 ID，不会在退出时新建 Keychain 设备记录；网络失败不阻塞退出（`603462a`、`6795f73`）。2026-11-07 最新无认证探针返回 `401 UNAUTHENTICATED`，证明生产路由已挂载；尚未用真实 token 验证 owner 隔离、幂等禁用和 outbox 清理，也未验证锁屏送达、点击深链、安静时段生产行为。 |
 | 图片 | 部分通过 | 客户端 + 上游 | 图片入口和本地预处理测试通过；未在真实账号下发送图片并验证生产上游能力。 |
-| 语音输入/朗读 | iPhone 路径已实现，真实设备未验收；macOS 属于后续功能 | 客户端/系统权限 | `AssistantSpeechController` 已覆盖权限、locale、设备端识别回退、60 秒上限、账号切换、中断和 TTS 8,000 字上限；未真实录音、识别或朗读。macOS 当前是明确 no-op，且 `MacChatView` 没有语音入口；完整实现需要原生 `AVFoundation + Speech`、权限/entitlement、桌面 UI 和真实 macOS 权限验收，按 iPhone 首发计划不作为本轮小修。 |
-| 会话/任务/记忆云同步 | 未验收；客户端协议已具备，生产闭环未证实 | 服务端 + 客户端联调 | 客户端已有 owner-scoped 会话 change feed pull、全量回填、消息合并、删除队列和 tombstone 提交；`syncToCloud` 仍只负责记忆上行，会话消息由对话接口写入。生产未认证探针显示 `/api/v2/sync/conversations`、`/api/v2/conversations/changes`、`/api/v2/conversations` 均返回 401，说明路由已挂载，但尚未用两个真实账号/设备验证增量、冲突、删除墓碑和账号切换闭环。 |
+| 语音输入/朗读 | iPhone/macOS 客户端入口已实现，真实设备未验收 | 客户端/系统权限 | `AssistantSpeechController` 已覆盖 iOS/macOS 权限、locale、设备端识别回退、60 秒上限、账号切换、中断和 TTS 8,000 字上限；`MacChatView` 已加入麦克风、停止和朗读入口，macOS Debug build 通过。尚未在真实 iPhone/macOS 麦克风环境完成授权、录音、识别和朗读验收，正式包仍需检查 Speech/Microphone 权限和签名。 |
+| 会话/任务/记忆云同步 | 未验收；客户端协议已具备，生产闭环未证实 | 服务端 + 客户端联调 | 客户端已有 owner-scoped 会话 change feed pull、全量回填、消息合并、删除队列和 tombstone 提交；记忆同步支持版本/墓碑；任务页当前只把本地独有任务 POST 到云端，已有云任务的本地编辑/状态变更暂不自动 PATCH（本地没有持久化 server version，避免无版本覆盖）。`syncToCloud` 仍只负责记忆上行，会话消息由对话接口写入。生产未认证探针显示 `/api/v2/sync/conversations`、`/api/v2/conversations/changes`、`/api/v2/conversations` 均返回 401，说明路由已挂载，但尚未用两个真实账号/设备验证增量、冲突、删除墓碑和账号切换闭环。 |
 | 主动更新 | 部分补齐，仍未完成 | **客户端 + 服务端** | 当前签名 Simulator 已打开主动更新页，开关从关闭切换到开启再恢复关闭；频率选择、未读数量、下一次运行、陪伴模式和每日上限入口均可见。此前已验证暂停/恢复全部、运行记录的查看/稍后、本机已读状态及通知关联对话回流；客户端现已把服务端会话 ID 解析为本地会话 ID，且兼容服务端返回的 `readAt`、`snoozedUntil`、`dismissedAt`，旧部署仍回退 owner-scoped 本机状态（`5dc27bf`）。本机状态明确不冒充多设备同步。仍缺服务端关闭此类接口、多设备写入闭环和生产 Worker/APNs 验收。服务端还需在 logout/换账号时失效旧账号的 APNs 设备绑定，避免旧账号推送落到新账号设备。 |
 | 自定义角色 | 客户端已补 UI，待真实认证/API 验收 | **客户端 + 服务端联调** | 当前签名 Simulator 已从助理设置进入角色列表和新建编辑器，确认名称、头像、简介、语言、启用、行为提示、问候语和记忆范围控件存在；本次未保存测试角色，避免污染账号。客户端支持 owner-scoped 角色列表、新建/编辑/启用/删除和版本墓碑处理，复用 `/api/v2/characters`；公网未认证只能证明路由返回 401，尚未用真实账号完成 CRUD 闭环。 |
 | AI 群聊 | 未实现 | **客户端 + 服务端新增** | 当前代码没有群聊参与者、编排、speaker/turn 模型或 SSE；不能用现有 personaLevel 代替。 |
