@@ -30,7 +30,7 @@
 | APNs/系统提醒 | 未验收 | 服务端 Worker/APNs + 客户端 | 本地提醒策略和协议测试通过；未验证真实 token、锁屏送达、点击深链、服务端 outbox、安静时段生产行为。 |
 | 图片 | 部分通过 | 客户端 + 上游 | 图片入口和本地预处理测试通过；未在真实账号下发送图片并验证生产上游能力。 |
 | 语音输入/朗读 | iPhone 路径已实现，真实设备未验收 | 客户端/系统权限 | `AssistantSpeechController` 已覆盖权限、locale、设备端识别回退、60 秒上限、账号切换、中断和 TTS 8,000 字上限；未真实录音、识别或朗读。macOS 目前是明确 no-op，若纳入 macOS 首发需新增原生音频入口。 |
-| 会话/任务/记忆云同步 | 未验收；协议能力不完整 | 服务端 + 客户端 | 本地协议和 owner 隔离测试通过；当前会话同步主要是 pull，`syncToCloud` 仅推送记忆；服务端缺会话 push/change feed 时无法完成双设备增量、冲突和删除墓碑闭环。 |
+| 会话/任务/记忆云同步 | 未验收；客户端协议已具备，生产闭环未证实 | 服务端 + 客户端联调 | 客户端已有 owner-scoped 会话 change feed pull、全量回填、消息合并、删除队列和 tombstone 提交；`syncToCloud` 仍只负责记忆上行，会话消息由对话接口写入。生产未认证探针显示 `/api/v2/sync/conversations`、`/api/v2/conversations/changes`、`/api/v2/conversations` 均返回 401，说明路由已挂载，但尚未用两个真实账号/设备验证增量、冲突、删除墓碑和账号切换闭环。 |
 | 主动更新 | 部分补齐，仍未完成 | **客户端 + 服务端** | 已在 iPhone 17 Pro Max Simulator 实际显示并验证暂停/恢复全部、首页未读数和下一次排程、运行记录的查看/稍后、本机已读状态及通知关联对话回流；本机状态明确不冒充多设备同步。仍缺服务端阅读/稍后字段、关闭此类接口、多设备未读闭环和生产 Worker/APNs 验收。 |
 | 自定义角色 | 客户端已补 UI，待真实认证/API 验收 | **客户端 + 服务端联调** | 已在 iPhone 17 Pro Max Simulator 实际进入角色入口和新建编辑器，支持 owner-scoped 角色列表、新建/编辑/启用/删除和版本墓碑处理，复用 `/api/v2/characters`；公网未认证只能证明路由返回 401，尚未用真实账号完成 CRUD 闭环。 |
 | AI 群聊 | 未实现 | **客户端 + 服务端新增** | 当前代码没有群聊参与者、编排、speaker/turn 模型或 SSE；不能用现有 personaLevel 代替。 |
@@ -46,5 +46,5 @@
 ## 下一轮验收顺序
 
 1. 若要跨设备收藏，服务端补 owner-scoped v2 API（含认证、删除墓碑和同步）；当前客户端已明确使用本机金句收藏，不阻塞其他验收。
-2. 在真实账号和真实设备上验收 Apple、StoreKit、APNs、图片/语音、双设备同步、账号删除和 TestFlight。
+2. 在真实账号和真实设备上验收 Apple、StoreKit、APNs、图片/语音、双设备同步（会话 change feed、记忆 change feed、任务 change feed、删除墓碑）、账号删除和 TestFlight。
 3. 完善主动更新剩余交互，完成真实角色 CRUD 验收，再实现 AI 群聊协议/编排。
