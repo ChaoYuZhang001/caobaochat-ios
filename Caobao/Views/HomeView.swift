@@ -17,6 +17,11 @@ struct HomeView: View {
     @State private var tasks: [AssistantTask] = []
     @State private var proactiveRules: [CloudProactiveRule] = []
     @State private var proactiveRuns: [CloudProactiveRun] = []
+    private struct ProactiveSummaryLoadState: Equatable {
+        let ownerId: String
+        let error: String?
+    }
+    @State private var proactiveSummaryLoadState: ProactiveSummaryLoadState?
     @State private var recentReloadId = UUID()
     @State private var navigationEpoch = UUID()
     @State private var navigationRun: UUID?
@@ -318,6 +323,12 @@ struct HomeView: View {
         let profile = proactiveStore.profile(for: owner)
         let unread = proactiveInboxStore.unreadCount(ownerId: owner, runs: proactiveRuns)
         let nextRun = proactiveRules.compactMap { AssistantProactiveDate.parse($0.nextRunAt) }.min()
+        let summaryError = proactiveSummaryLoadState.flatMap {
+            AssistantOwnerIdentity.matches($0.ownerId, owner) ? $0.error : nil
+        }
+        let summaryReady = proactiveSummaryLoadState.map {
+            AssistantOwnerIdentity.matches($0.ownerId, owner)
+        } ?? false
         return NavigationLink(value: AssistantHomeRoute.proactive) {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: profile.enabled ? "bell.badge.fill" : "bell.slash")
@@ -336,20 +347,37 @@ struct HomeView: View {
                     Text(profile.enabled ? "按你的规则提醒、跟进和生成更新" : "开启后，曹宝会按你的规则主动提醒")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    HStack(spacing: 10) {
-                        if unread > 0 {
-                            Label("未读 \(unread)", systemImage: "bell.badge")
-                                .foregroundStyle(Color.caobaoPrimary)
-                        } else {
-                            Label("暂无未读", systemImage: "checkmark.circle")
-                                .foregroundStyle(.secondary)
+                    if let summaryError {
+                        Label {
+                            Text(LocalizedStringKey(summaryError))
+                        } icon: {
+                            Image(systemName: "exclamationmark.triangle")
                         }
-                        if let nextRun {
-                            Text("下次：\(nextRun.formatted(date: .abbreviated, time: .shortened))")
+                        .font(.caption2)
+                        .foregroundStyle(.orange)
+                        Text("进入主动规则管理重试")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                    } else if auth.isLoggedIn && !summaryReady {
+                        Label("正在读取主动更新…", systemImage: "arrow.clockwise")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                    } else {
+                        HStack(spacing: 10) {
+                            if unread > 0 {
+                                Label("未读 \(unread)", systemImage: "bell.badge")
+                                    .foregroundStyle(Color.caobaoPrimary)
+                            } else {
+                                Label("暂无未读", systemImage: "checkmark.circle")
+                                    .foregroundStyle(.secondary)
+                            }
+                            if let nextRun {
+                                Text("下次：\(nextRun.formatted(date: .abbreviated, time: .shortened))")
+                            }
                         }
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
                     }
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
                     Text("消息来源、安静时段和频率都由你控制")
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
@@ -364,13 +392,17 @@ struct HomeView: View {
         .caobaoCard(padding: 14, cornerRadius: 18, hasShadow: false)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("主动更新")
-        .accessibilityValue(Text(profile.enabled ? "\(profile.mode.title), 未读 \(unread)" : "未开启"))
+        .accessibilityValue(summaryError.map { Text(LocalizedStringKey($0)) }
+            ?? Text(auth.isLoggedIn && !summaryReady
+                ? "正在读取主动更新…"
+                : (profile.enabled ? "\(profile.mode.title), 未读 \(unread)" : "未开启")))
     }
 
     private func loadProactiveSummary(ownerId: String) async {
         guard AuthService.shared.isLoggedIn,
               AssistantOwnerIdentity.matches(ownerId, auth.user?.id ?? "local-device"),
               !Task.isCancelled else { return }
+        proactiveSummaryLoadState = ProactiveSummaryLoadState(ownerId: ownerId, error: nil)
         do {
             let token = try await AuthService.shared.validAccessToken()
             async let ruleResponse = APIService.shared.listProactiveRules(token: token, limit: 100)
@@ -381,13 +413,14 @@ struct HomeView: View {
                   AssistantOwnerIdentity.matches(ownerId, auth.user?.id ?? "local-device") else { return }
             proactiveRules = rules
             proactiveRuns = runs
+            proactiveSummaryLoadState = ProactiveSummaryLoadState(ownerId: ownerId, error: nil)
         } catch is CancellationError {
             return
         } catch {
-            // The home card remains usable from local profile state when the
-            // optional summary endpoints are unavailable or unauthenticated.
-            proactiveRules = []
-            proactiveRuns = []
+            guard AssistantOwnerIdentity.matches(ownerId, auth.user?.id ?? "local-device") else { return }
+            // Preserve the last owner-scoped snapshot, but never present it as
+            // a fresh zero count when the summary request failed.
+            proactiveSummaryLoadState = ProactiveSummaryLoadState(ownerId: ownerId, error: "暂时无法读取主动更新")
         }
     }
 
@@ -426,7 +459,12 @@ struct HomeView: View {
     private func resetNavigation(reload: Bool = true) {
         navigationTask?.cancel(); navigationTask = nil; navigationRun = nil; navigationEpoch = UUID()
         preparationError = nil
-        if reload { recentReloadId = UUID() }
+        if reload {
+            proactiveRules = []
+            proactiveRuns = []
+            proactiveSummaryLoadState = nil
+            recentReloadId = UUID()
+        }
     }
 }
 

@@ -1018,3 +1018,8 @@
 "暂无本机金句收藏" = "No on-device quote favorites";
 "在“扎心金句”中收藏内容后，会显示在这里。" = "Quotes saved in Sharp Quotes will appear here.";
 "仅保存在本机" = "Stored only on this device";
+
+/* Proactive summary load-state presentation. */
+"正在读取主动更新…" = "Loading proactive updates…";
+"暂时无法读取主动更新" = "Proactive updates are temporarily unavailable";
+"进入主动规则管理重试" = "Open proactive rules to retry";

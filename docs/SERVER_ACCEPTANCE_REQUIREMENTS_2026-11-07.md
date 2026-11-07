@@ -12,6 +12,8 @@
 | `GET /api/v2/characters` | `401 UNAUTHENTICATED` | 路由存在；需要真实账号验证 CRUD |
 | `GET /api/v2/proactive/profile` | `401 UNAUTHENTICATED` | 路由存在；需要真实账号验证 profile |
 | `GET /api/v2/proactive/rules` | `401 UNAUTHENTICATED` | 路由存在；需要真实账号验证规则和执行记录 |
+| `GET /api/v2/subscriptions/apple/config` | `401 UNAUTHENTICATED` | 路由存在；需要真实账号和 App Store 商品配置验证 |
+| `GET /api/v2/entitlements` | `401 UNAUTHENTICATED` | 路由存在；需要真实账号验证订阅权益和额度账本 |
 
 ## 必须完成的服务端项目
 
@@ -65,7 +67,7 @@
 
 ### 6. 会话、任务和记忆同步
 
-需要至少两台真实设备验证：增量同步、版本冲突、删除墓碑、冷启动恢复、账号切换、账号删除和旧设备离线后重新上线。服务端必须保持 owner 隔离，不能用全量覆盖恢复旧数据。
+当前客户端的会话同步主要是 pull，记忆同步才有 push 路径；服务端需要提供会话变更推送或可游标消费的 change feed。需要至少两台真实设备验证：增量同步、版本冲突、删除墓碑、冷启动恢复、账号切换、账号删除和旧设备离线后重新上线。服务端必须保持 owner 隔离，不能用全量覆盖恢复旧数据。
 
 ### 7. AI 群聊（新增功能）
 

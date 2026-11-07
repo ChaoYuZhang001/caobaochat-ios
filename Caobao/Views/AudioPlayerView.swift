@@ -13,6 +13,7 @@ struct AudioPlayerView: View {
     @State private var duration: Double = 0
     @State private var isLoaded = false
     @State private var timeObserver: Any?
+    @State private var endObserver: NSObjectProtocol?
 
     private var playerBackground: Color {
         #if os(iOS)
@@ -88,7 +89,7 @@ struct AudioPlayerView: View {
         player = AVPlayer(playerItem: playerItem)
         
         // 监听播放状态
-        NotificationCenter.default.addObserver(
+        endObserver = NotificationCenter.default.addObserver(
             forName: .AVPlayerItemDidPlayToEndTime,
             object: playerItem,
             queue: .main
@@ -129,8 +130,13 @@ struct AudioPlayerView: View {
     
     // MARK: - Cleanup
     private func cleanup() {
+        if let observer = endObserver {
+            NotificationCenter.default.removeObserver(observer)
+            endObserver = nil
+        }
         if let observer = timeObserver {
             player?.removeTimeObserver(observer)
+            timeObserver = nil
         }
         player?.pause()
         player = nil

@@ -793,11 +793,6 @@ class APIService {
             )
             .validate()
             .response { response in
-                // 打印原始响应便于调试
-                if let data = response.data {
-                    print("📥 响应数据: \(String(data: data, encoding: .utf8) ?? "无法解码")")
-                }
-                
                 if let error = response.error {
                     print("❌ 网络错误: \(error.localizedDescription)")
                     continuation.resume(throwing: error)
@@ -848,11 +843,6 @@ class APIService {
             )
             .validate()
             .response { response in
-                // 打印原始响应便于调试
-                if let data = response.data {
-                    print("📥 Apple 登录响应: \(String(data: data, encoding: .utf8) ?? "无法解码")")
-                }
-                
                 if let error = response.error {
                     print("❌ Apple 登录网络错误: \(error.localizedDescription)")
                     continuation.resume(throwing: error)
@@ -883,7 +873,6 @@ class APIService {
     ) async throws -> DeleteAccountResponse {
         print("🔄 开始注销账号...")
         print("📍 API URL: \(APIConfig.baseURL)/auth/delete-account")
-        print("🔑 Token: \(token.prefix(20))...")
         
         return try await withCheckedThrowingContinuation { continuation in
             let parameters: [String: Any] = [
@@ -904,11 +893,6 @@ class APIService {
                 headers: headers
             )
             .response { response in
-                // 打印原始响应
-                if let data = response.data {
-                    print("📥 注销响应: \(String(data: data, encoding: .utf8) ?? "无法解码")")
-                }
-                
                 // 检查 HTTP 状态码
                 if let statusCode = response.response?.statusCode {
                     print("📥 HTTP 状态码: \(statusCode)")
@@ -1029,11 +1013,6 @@ class APIService {
             )
             .validate()
             .response { response in
-                // 打印原始响应便于调试
-                if let data = response.data {
-                    print("📥 游客升级响应: \(String(data: data, encoding: .utf8) ?? "无法解码")")
-                }
-                
                 if let error = response.error {
                     print("❌ 游客升级网络错误: \(error.localizedDescription)")
                     continuation.resume(throwing: error)
