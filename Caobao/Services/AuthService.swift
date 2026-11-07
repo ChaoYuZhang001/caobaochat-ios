@@ -190,13 +190,6 @@ final class AuthService: ObservableObject {
         if let previous { Task { try? await api.revoke(accessToken: previous) } }
     }
 
-    var canUpgrade: Bool { false }
-    func guestLogin() async throws { throw AuthError.loginFailed(AssistantLocalization.string("平台账号请使用 Apple 登录；也可以使用自己的 API。")) }
-    func guestUpgrade(provider: String, identityToken: String? = nil, authorizationCode: String? = nil,
-                      email: String? = nil, verifyCode: String? = nil) async throws -> GuestUpgradeResult {
-        throw AuthError.loginFailed(AssistantLocalization.string("请通过 Apple 登录重新验证，不使用旧版游客升级接口。"))
-    }
-
     static var accountDeletionConfirmationToken: String { AssistantLocalization.string("账号删除确认词") }
 
     func deleteAccount(confirmation: String, reason: String? = nil) async throws -> DeleteAccountResult {
@@ -423,12 +416,6 @@ struct ExportDataResult: Codable {
     let data: [String: String]?
     let exportedAt: String?
     var rawJSON: String? = nil
-}
-
-struct GuestUpgradeResult: Codable {
-    let success: Bool
-    let message: String?
-    let upgraded: Bool?
 }
 
 // MARK: - Apple Sign In Button (iOS/macOS)
