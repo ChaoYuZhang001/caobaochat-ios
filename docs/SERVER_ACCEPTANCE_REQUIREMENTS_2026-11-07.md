@@ -108,6 +108,7 @@
 - 云任务 `pause`、`cancel` 和恢复写操作也必须接受 `expectedVersion` 或 `If-Match-Version` 并返回新的权威任务；当前部署路由可调用但没有条件版本参数，客户端因此继续禁用云任务的无条件状态按钮，避免双设备覆盖。
 - 任务审批必须有客户端可调用的明确接口（例如 `/approve`），并返回一次性结果；不能让客户端把等待审批或失败任务误显示为 active。
 - 主动 profile 更新必须支持 `expectedVersion`；规则运行重试必须复用稳定幂等键，避免超时后重复执行。
+- `POST /api/v2/proactive/pause-all` 也必须消费并校验 profile 的 `expectedVersion`，返回新的权威版本；当前 handler 只读取 `paused`，丢弃条件版本，不能作为多设备安全写入契约。
 - APNs sender 必须保留 Worker 写入的 `ownerId`、`route`、`taskId`、`proactiveRunId` 等路由字段；否则客户端收到锁屏通知后无法完成 owner 校验和 conversation deep link。设备 DELETE handler 也必须实际挂载并清理旧 owner 的 outbox。
 - 生产随机设备 DELETE 曾返回 `unregistered`，但当前 checkout 路由未注册 DELETE；必须先解释生产/分支差异，再补充真实已注册设备、owner 隔离、旧账号失效和 outbox 清理证据，不能用随机 ID 的成功替代完整 APNs 验收。
 
