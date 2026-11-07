@@ -109,9 +109,9 @@ struct ProfileView: View {
                     }
                     
                     NavigationLink {
-                        FavoritesView()
+                        LocalQuoteFavoritesView()
                     } label: {
-                        Label("我的收藏", systemImage: "heart.fill")
+                        Label("本机金句收藏", systemImage: "heart.fill")
                     }
                     
                     NavigationLink {

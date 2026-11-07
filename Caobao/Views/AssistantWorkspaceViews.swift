@@ -97,11 +97,98 @@ private extension AssistantQuietHours {
     }
 }
 
+/// Per-device presentation state for proactive runs. The server currently
+/// exposes execution history but not a read/snooze cursor, so this store is
+/// deliberately owner-scoped and never presented as cross-device state.
+@MainActor
+final class AssistantProactiveInboxStore: ObservableObject {
+    static let shared = AssistantProactiveInboxStore()
+
+    private struct State: Codable {
+        var readRunIds: Set<String> = []
+        var snoozedUntil: [String: Date] = [:]
+    }
+
+    @Published private(set) var revision: UInt = 0
+    private let defaults: UserDefaults
+    private let encoder = JSONEncoder()
+    private let decoder = JSONDecoder()
+
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+    }
+
+    func unreadCount(ownerId: String, runs: [CloudProactiveRun], now: Date = Date()) -> Int {
+        runs.filter { run in
+            !isRead(ownerId: ownerId, runId: run.id) && !isSnoozed(ownerId: ownerId, runId: run.id, now: now)
+        }.count
+    }
+
+    func isRead(ownerId: String, runId: String) -> Bool {
+        state(for: ownerId).readRunIds.contains(runId)
+    }
+
+    func isSnoozed(ownerId: String, runId: String, now: Date = Date()) -> Bool {
+        guard let until = state(for: ownerId).snoozedUntil[runId] else { return false }
+        return until > now
+    }
+
+    func markRead(ownerId: String, runId: String) {
+        guard !ownerId.isEmpty, !runId.isEmpty else { return }
+        var current = state(for: ownerId)
+        current.readRunIds.insert(runId)
+        current.snoozedUntil.removeValue(forKey: runId)
+        save(current, ownerId: ownerId)
+    }
+
+    func snooze(ownerId: String, runId: String, for interval: TimeInterval = 3600) {
+        guard !ownerId.isEmpty, !runId.isEmpty, interval > 0 else { return }
+        var current = state(for: ownerId)
+        current.snoozedUntil[runId] = Date().addingTimeInterval(interval)
+        save(current, ownerId: ownerId)
+    }
+
+    private func state(for ownerId: String) -> State {
+        guard !ownerId.isEmpty,
+              let data = defaults.data(forKey: key(for: ownerId)),
+              let decoded = try? decoder.decode(State.self, from: data) else {
+            return State()
+        }
+        return decoded
+    }
+
+    private func save(_ state: State, ownerId: String) {
+        guard let data = try? encoder.encode(state) else { return }
+        defaults.set(data, forKey: key(for: ownerId))
+        revision &+= 1
+    }
+
+    private func key(for ownerId: String) -> String {
+        let encoded = Data(ownerId.utf8).base64EncodedString()
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "+", with: "-")
+        return "caobao.assistant.proactive.inbox.\(encoded)"
+    }
+}
+
+enum AssistantProactiveDate {
+    static func parse(_ value: String?) -> Date? {
+        guard let value, !value.isEmpty else { return nil }
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter.date(from: value) ?? {
+            formatter.formatOptions = [.withInternetDateTime]
+            return formatter.date(from: value)
+        }()
+    }
+}
+
 @MainActor
 struct AssistantProactiveView: View {
     let userId: String
     @ObservedObject private var auth = AuthService.shared
     @ObservedObject private var store = AssistantProactiveStore.shared
+    @ObservedObject private var inboxStore = AssistantProactiveInboxStore.shared
     @EnvironmentObject private var appState: AppState
     @Environment(\.dismiss) private var dismiss
     @State private var profile = AssistantProactiveProfile.default
@@ -127,9 +214,18 @@ struct AssistantProactiveView: View {
         AssistantOwnerIdentity.matches(userId, auth.user?.id ?? "local-device")
     }
 
+    private var unreadRunCount: Int {
+        inboxStore.unreadCount(ownerId: userId, runs: runs)
+    }
+
+    private var nextRunAt: Date? {
+        rules.compactMap { AssistantProactiveDate.parse($0.nextRunAt) }.min()
+    }
+
     var body: some View {
         Form {
             proactiveProfileSection
+            proactiveSummarySection
             proactiveCompanionSection
             proactiveNotificationSection
             proactiveRulesSection
@@ -220,6 +316,32 @@ struct AssistantProactiveView: View {
             Toggle("允许陪伴式主动问候", isOn: $profile.companionEnabled)
                 .disabled(!profile.enabled || !isCurrentOwner)
             Text("陪伴消息与任务提醒分开控制。默认关闭，不会使用情绪施压促使你回复。")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    @ViewBuilder
+    private var proactiveSummarySection: some View {
+        Section("主动更新摘要") {
+            HStack {
+                Label("未读更新", systemImage: unreadRunCount == 0 ? "checkmark.circle" : "bell.badge")
+                Spacer()
+                Text(verbatim: "\(unreadRunCount) 条")
+                    .foregroundStyle(unreadRunCount == 0 ? .secondary : Color.caobaoPrimary)
+            }
+            if let nextRunAt {
+                Label {
+                    Text("下一次运行：\(nextRunAt.formatted(date: .abbreviated, time: .shortened))")
+                } icon: {
+                    Image(systemName: "calendar.badge.clock")
+                }
+            } else {
+                Text("暂无已排程的下一次运行")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Text("未读和稍后状态保存在本设备；多设备同步需要服务端提供阅读状态字段。")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -325,7 +447,7 @@ struct AssistantProactiveView: View {
     private func proactiveRunRow(_ run: CloudProactiveRun) -> some View {
         VStack(alignment: .leading, spacing: 5) {
             HStack {
-                Text(run.triggerReason == "scheduled" ? "按计划运行" : "手动运行")
+                Text(proactiveTriggerTitle(run.triggerReason))
                     .font(.subheadline.weight(.semibold))
                 Spacer()
                 Text(run.status).font(.caption).foregroundStyle(.secondary)
@@ -339,8 +461,40 @@ struct AssistantProactiveView: View {
                 Label("由通知打开", systemImage: "bell.badge")
                     .font(.caption2).foregroundStyle(.caobaoPrimary)
             }
+            HStack(spacing: 8) {
+                Button("查看") { openRun(run) }
+                    .buttonStyle(.bordered)
+                Button("稍后") {
+                    inboxStore.snooze(ownerId: userId, runId: run.id)
+                    savedMessage = "已将这条主动更新延后 1 小时（仅本设备）。"
+                }
+                .buttonStyle(.bordered)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func proactiveTriggerTitle(_ reason: String) -> String {
+        switch reason {
+        case "scheduled", "schedule": return "按计划运行"
+        case "task_due", "due": return "任务即将到期"
+        case "task_overdue", "overdue": return "任务已逾期"
+        case "follow_up", "conversation_follow_up": return "对话后续跟进"
+        case "inactivity": return "一段时间未互动"
+        case "manual", "": return "手动运行"
+        default: return "主动事件：\(reason)"
+        }
+    }
+
+    private func openRun(_ run: CloudProactiveRun) {
+        guard isCurrentOwner else { return }
+        inboxStore.markRead(ownerId: userId, runId: run.id)
+        appState.pendingAssistantProactiveRunId = nil
+        guard let conversationId = run.conversationId, !conversationId.isEmpty else {
+            savedMessage = "已标记为已查看。此执行记录还没有关联对话。"
+            return
+        }
+        appState.assistantHomePath.append(.historyConversation(id: conversationId, ownerId: userId))
     }
 
     private func reload() {
@@ -458,6 +612,10 @@ struct AssistantProactiveView: View {
             guard isCurrentOwner else { return }
             runs = response.items
             runsError = nil
+            if let pending = appState.pendingAssistantProactiveRunId,
+               let run = runs.first(where: { $0.id == pending }) {
+                openRun(run)
+            }
         } catch is CancellationError {
             return
         } catch {

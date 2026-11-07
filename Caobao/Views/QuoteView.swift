@@ -2,6 +2,33 @@ import Foundation
 import Combine
 import SwiftUI
 
+@MainActor
+enum QuoteFavoritesStorage {
+    static func ownerId() -> String {
+        AuthService.shared.user?.id ?? "local-device"
+    }
+
+    static func key(ownerId: String) -> String {
+        let encoded = Data(ownerId.utf8).base64EncodedString()
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "+", with: "-")
+        return "caobao.quote_favorites.\(encoded)"
+    }
+
+    static func load(ownerId: String) -> [QuoteItem] {
+        guard let data = UserDefaults.standard.data(forKey: key(ownerId: ownerId)),
+              let decoded = try? JSONDecoder().decode([QuoteItem].self, from: data) else {
+            return []
+        }
+        return decoded
+    }
+
+    static func save(_ favorites: [QuoteItem], ownerId: String) {
+        guard let encoded = try? JSONEncoder().encode(favorites) else { return }
+        UserDefaults.standard.set(encoded, forKey: key(ownerId: ownerId))
+    }
+}
+
 // MARK: - QuoteViewModel
 @MainActor
 final class QuoteViewModel: ObservableObject {
@@ -26,11 +53,20 @@ final class QuoteViewModel: ObservableObject {
     
     private let apiService: APIService
     private var cancellables = Set<AnyCancellable>()
+    private var loadedOwnerId: String?
     
     // MARK: - Initialization
     init(apiService: APIService = .shared) {
         self.apiService = apiService
-        loadFavorites()
+        refreshFavoritesForCurrentOwner()
+    }
+
+    func refreshFavoritesForCurrentOwner() {
+        let ownerId = QuoteFavoritesStorage.ownerId()
+        guard loadedOwnerId != ownerId else { return }
+        loadedOwnerId = ownerId
+        favorites = QuoteFavoritesStorage.load(ownerId: ownerId)
+        print("📚 已加载 \(favorites.count) 条本机收藏")
     }
     
     // MARK: - Public Methods
@@ -130,22 +166,9 @@ final class QuoteViewModel: ObservableObject {
     }
     
     // MARK: - Private Methods
-    private func loadFavorites() {
-        if let data = UserDefaults.standard.data(forKey: "quote_favorites"),
-           let decoded = try? JSONDecoder().decode([QuoteItem].self, from: data) {
-            favorites = decoded
-            print("📚 已加载 \(favorites.count) 条收藏")
-        } else {
-            favorites = []
-            print("📚 收藏列表为空")
-        }
-    }
-    
     private func saveFavorites() {
-        if let encoded = try? JSONEncoder().encode(favorites) {
-            UserDefaults.standard.set(encoded, forKey: "quote_favorites")
-            print("💾 已保存 \(favorites.count) 条收藏")
-        }
+        QuoteFavoritesStorage.save(favorites, ownerId: QuoteFavoritesStorage.ownerId())
+        print("💾 已保存 \(favorites.count) 条本机收藏")
     }
     
     // MARK: - Computed Properties
@@ -234,11 +257,18 @@ struct QuoteView: View {
             }
         }
         .onAppear {
+            viewModel.refreshFavoritesForCurrentOwner()
             if viewModel.currentQuote == nil {
                 Task {
                     await viewModel.generateQuote()
                 }
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .loginSuccess)) { _ in
+            viewModel.refreshFavoritesForCurrentOwner()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .logoutSuccess)) { _ in
+            viewModel.refreshFavoritesForCurrentOwner()
         }
     }
     
@@ -345,7 +375,7 @@ struct QuoteView: View {
             )
             
             QuoteActionButton(
-                title: "我的收藏",
+                title: "本机收藏",
                 icon: "bookmark.fill",
                 color: .blue,
                 action: {
@@ -532,7 +562,7 @@ struct FavoritesSheet: View {
                     }
                 }
             }
-            .navigationTitle("我的收藏")
+            .navigationTitle("本机金句收藏")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
@@ -544,6 +574,80 @@ struct FavoritesSheet: View {
                 }
             }
         }
+    }
+}
+
+/// Local-only quote favorites. The legacy online favorites endpoint is not
+/// available in the current production contract, so this view deliberately
+/// exposes the same local store used by QuoteView instead of making a request
+/// that will fail with 404. It is labeled as local to avoid implying cloud
+/// synchronization.
+struct LocalQuoteFavoritesView: View {
+    @State private var favorites: [QuoteItem] = []
+    @ObservedObject private var auth = AuthService.shared
+    @State private var loadedOwnerId: String?
+
+    var body: some View {
+        List {
+            if favorites.isEmpty {
+                VStack(spacing: 10) {
+                    Image(systemName: "heart")
+                        .font(.system(size: 32))
+                        .foregroundStyle(.secondary)
+                    Text("暂无本机金句收藏")
+                        .font(.headline)
+                    Text("在“扎心金句”中收藏内容后，会显示在这里。")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity, minHeight: 180)
+            } else {
+                ForEach(favorites) { quote in
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(quote.content)
+                            .foregroundStyle(.primary)
+                            .lineLimit(5)
+                        HStack(spacing: 8) {
+                            Text(quote.category)
+                            Text(quote.timestamp)
+                        }
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    }
+                    .padding(.vertical, 5)
+                    .swipeActions {
+                        Button(role: .destructive) {
+                            remove(quote)
+                        } label: {
+                            Label("删除", systemImage: "trash")
+                        }
+                    }
+                }
+            }
+        }
+        .navigationTitle("本机金句收藏")
+        .toolbar {
+            ToolbarItem(placement: .automatic) {
+                Text("仅保存在本机")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .onAppear(perform: load)
+        .onReceive(NotificationCenter.default.publisher(for: .loginSuccess)) { _ in load() }
+        .onReceive(NotificationCenter.default.publisher(for: .logoutSuccess)) { _ in load() }
+    }
+
+    private func load() {
+        let ownerId = auth.user?.id ?? "local-device"
+        loadedOwnerId = ownerId
+        favorites = QuoteFavoritesStorage.load(ownerId: ownerId)
+    }
+
+    private func remove(_ quote: QuoteItem) {
+        favorites.removeAll { $0.id == quote.id }
+        QuoteFavoritesStorage.save(favorites, ownerId: loadedOwnerId ?? "local-device")
     }
 }
 
