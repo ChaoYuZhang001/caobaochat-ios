@@ -20,6 +20,8 @@
 
 2026-11-08 云任务真实联调补充：同一真实账号创建一个 7 天后到期的临时任务，完成版本更新、列表验证和删除墓碑；运行日志为 `CAOBAO_E2E_CLOUD_TASK success version=2 delete=deleted`。任务未执行，探针代码已撤销；本证据只覆盖云端任务基础 CRUD，不覆盖已有任务安全编辑、状态枚举、审批、冲突和双设备同步。
 
+2026-11-08 云记忆真实联调补充：同一真实账号创建一条临时偏好记忆，完成版本更新、列表验证和删除墓碑；运行日志为 `CAOBAO_E2E_CLOUD_MEMORY success version=2 delete=deleted`。探针代码已撤销；本证据只覆盖云记忆基础 CRUD，不覆盖两台设备的增量冲突和账号删除后的服务端清理。
+
 签名门禁记录：项目的 iOS Debug/Release `DEVELOPMENT_TEAM` 仍为空，`security find-identity -v -p codesigning` 返回 `0 valid identities found`；因此 Apple Sign In、APNs 和正式 archive/TestFlight 不能在当前环境完成。归类为发布签名环境阻塞，不写入猜测的 Team ID 或证书信息。
 
 服务端需要处理的接口、幂等、owner 隔离和生产门禁见 [SERVER_ACCEPTANCE_REQUIREMENTS_2026-11-07.md](SERVER_ACCEPTANCE_REQUIREMENTS_2026-11-07.md)。
