@@ -66,6 +66,8 @@
 
 2026-11-08 legacy 日志修复：`APIService` 及运势、金句、决策、昵称、媒体和触觉页面的诊断输出统一改为 `assistantDebugLog`，Release 包不再输出 URL、服务端错误文本或本地路径，Debug 包仍保留排障能力。协议 9/9+24/24、本地化 19/19、ChatViewModel 168/168、iOS/macOS Debug 构建均通过；二级旧接口本身的 404/认证/额度协议问题仍按兼容功能记录。
 
+2026-11-08 Release 构建复核：日志门控改动后，iOS Simulator Release 和 macOS Release 均明确返回 `** BUILD SUCCEEDED **`（`CODE_SIGNING_ALLOWED=NO`）。构建环境仍没有有效 Apple 签名身份，因此这只是 Release 编译/打包门禁通过，不替代正式 archive、Apple 登录、APNs 或 TestFlight 验收；macOS 仍有未设置 App Category 的 Xcode warning。
+
 2026-11-08 生产健康复核补充：`GET https://ciyuan2api.com/api/status` curl 退出 `0`、HTTP `200`，响应头 `X-New-Api-Version: v1.0.0-rc.48+ciyuan.reconstructed.20261106.1`，JSON 中 `setup=true` 且 `server_address=https://ciyuan2api.com`。本轮没有重复发送模型请求，避免无必要扣减真实额度；部署后真实 CN `started → delta → usage → completed` 证据沿用本文件既有记录。
 
 签名门禁记录：项目的 iOS Debug/Release `DEVELOPMENT_TEAM` 仍为空，`security find-identity -v -p codesigning` 返回 `0 valid identities found`；因此 Apple Sign In、APNs 和正式 archive/TestFlight 不能在当前环境完成。归类为发布签名环境阻塞，不写入猜测的 Team ID 或证书信息。
