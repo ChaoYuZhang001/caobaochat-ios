@@ -97,7 +97,7 @@ Scripts/build-simulator.sh
 
 ## 3. 服务端对接
 
-现有身份、对话、图片、StoreKit 和订阅周期额度结构见 [ASSISTANT_V2_API_CONTRACT.md](ASSISTANT_V2_API_CONTRACT.md)。**CiYuan2API 中的 CaoBao v2 实现、部署和生产验证尚未完成**。客户端代码和隔离测试不能替代服务端验签、额度事务与交易归属验证。
+现有身份、对话、图片、StoreKit 和订阅周期额度结构见 [ASSISTANT_V2_API_CONTRACT.md](ASSISTANT_V2_API_CONTRACT.md)。截至 2026-11-07，CaoBao v2 服务已部署到 `ciyuan2api.com`，健康检查和 CN 对话资金池修复后的客户端复测已通过；Apple 验签、额度事务、交易归属、APNs、同步和主动任务仍未完成真实账号闭环。客户端代码和隔离测试不能替代这些服务端验收。
 
 本轮只读核验本地 CiYuan2API candidate-rc47-reconstructed：现有 /v1 三协议路由不能替代 CaoBao v2 账号、每日额度、会话和 StoreKit 业务契约；该 checkout 未发现对应 CaoBao 实现，127.0.0.1:3000/api/status 当时连接拒绝。本轮未修改或启动服务端，也不据此推断线上部署状态。
 
@@ -107,7 +107,7 @@ Scripts/build-simulator.sh
 2. 真实上游三协议、长上下文与成本、语言质量、弱网和取消的端到端验证。
 3. 真机图片/语音、通知授权与实际送达、StoreKit 沙盒购买/恢复/退款/撤销验证。
 4. 用户授权的工具执行、任务 Worker/APNs 与跨设备同步；本地每日/每周重复已实现，真实通知安排和送达仍需验收。
-5. 旧数据迁移、备份导入/恢复与跨设备同步；更多原生文件供应商/容量/真机保存场景；真实账号的服务器导出及删除完成闭环；旧工具国际化、全量 VoiceOver/Dynamic Type 和剩余语言细节。
+5. 更多原生文件供应商/容量/真机备份保存与恢复场景；真实账号的服务器导出及删除完成闭环；跨设备同步；旧工具国际化、全量 VoiceOver/Dynamic Type 和剩余语言细节。当前本地备份导入/恢复协议、文件读取和 ViewModel 已通过独立测试。
 6. **iPhone Duo 专用设备/姿态 API 与真机或专用模拟器验收，强制发布门禁。** 本机当前只有普通 iPhone/iPad 类型，不能以这些运行结果替代 Duo 验收。
 7. 正式签名/archive/TestFlight；共享锁修复和原工程官方远程依赖构建已完成，见第 14 节。
 
