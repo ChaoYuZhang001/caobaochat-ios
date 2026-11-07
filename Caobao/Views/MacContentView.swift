@@ -164,19 +164,6 @@ struct MacHomeView: View {
     }
 }
 
-struct MacSubscriptionPlaceholder: View {
-    var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "creditcard").font(.system(size: 36)).foregroundStyle(.secondary)
-            Text("订阅").font(.title3.bold())
-            Text("订阅状态将在账号服务可用后显示。").foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(32)
-        .navigationTitle("订阅")
-    }
-}
-
 struct MacProfilePlaceholder: View {
     var body: some View {
         VStack(spacing: 12) {
@@ -472,7 +459,7 @@ struct MacDetailView: View {
             case .proactive:
                 AssistantProactiveView(userId: AuthService.shared.user?.id ?? "local-device")
             case .subscription:
-                MacSubscriptionPlaceholder()
+                AssistantSubscriptionView()
             case .settings:
                 AssistantSettingsSheet()
             case .tools:

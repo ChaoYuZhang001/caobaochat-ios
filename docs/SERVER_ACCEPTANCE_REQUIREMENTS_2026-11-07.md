@@ -15,7 +15,7 @@
 | `GET /api/v2/subscriptions/apple/config` | `401 UNAUTHENTICATED` | 路由存在；需要真实账号和 App Store 商品配置验证 |
 | `GET /api/v2/entitlements` | `401 UNAUTHENTICATED` | 路由存在；需要真实账号验证订阅权益和额度账本 |
 | `GET /api/v2/devices` | `404 Invalid URL` | 当前设备路由是 `POST` 注册；这条 GET 结果不能证明注销接口存在，当前部署仍需单独验收 `DELETE /api/v2/devices/{deviceId}` |
-| `DELETE /api/v2/devices/{deviceId}`（无认证探测） | `401 UNAUTHENTICATED` | 2026-11-07 最新生产探针确认注销路由已挂载并要求认证；仍需真实 token 验证 owner-scoped、幂等禁用和 outbox 清理 |
+| `DELETE /api/v2/devices/{deviceId}`（无认证探测） | `401 UNAUTHENTICATED` | 只能证明认证中间件先行拦截，不能证明 DELETE handler 已挂载；必须用真实 token 和服务端路由审计确认 owner-scoped、幂等禁用和 outbox 清理 |
 | `GET /api/v2/sync/conversations?cursor=0&limit=1` | `401 UNAUTHENTICATED` | 会话 change feed 路由存在；需要真实账号和双设备验证 |
 | `GET /api/v2/conversations/changes?cursor=0&limit=1` | `401 UNAUTHENTICATED` | 会话 change feed 兼容路由存在；需要真实账号和双设备验证 |
 | `GET /api/v2/tasks/changes?cursor=0&limit=1` | `401 UNAUTHENTICATED` | 任务 change feed 路由存在；需要真实账号验证重复规则和墓碑 |
@@ -46,7 +46,7 @@
 - 设备注销或切换 Apple 账号时，必须失效旧 owner 的 APNs 设备绑定；不能只按 `(user_id, device_id_hash)` 保留旧账号 enabled 行，否则旧账号主动推送可能落到新账号设备；
 - 高风险动作只能产生提案，不能由 Worker 直接写外部系统。
 
-认证接口 `DELETE /api/v2/devices/{deviceId}` 已在生产挂载。接口仍必须保持 owner-scoped、幂等，禁用对应设备并清理该设备待发送 outbox；客户端已在 `603462a` 实现 logout 时使用旧 access token 异步 best-effort 调用，网络失败不能阻塞退出。当前仅完成路由存在性和认证门禁探针，不能替代真实 owner/幂等/outbox 验收。
+客户端已在 `603462a` 实现 logout 时使用旧 access token 异步 best-effort 调用 `DELETE /api/v2/devices/{deviceId}`，网络失败不能阻塞退出。当前服务端代码审计尚未确认 DELETE handler；服务端必须挂载该接口，保持 owner-scoped、幂等，禁用对应设备并清理该设备待发送 outbox，再用真实 token 验收。无认证 401 不能替代路由和业务证据。
 
 客户端目前只在本机保存未读/稍后状态，并明确标注不代表多设备同步。
 
@@ -79,6 +79,14 @@
 ### 6. 会话、任务和记忆同步
 
 客户端已经实现会话 change feed pull、全量回填、消息合并、删除队列和 tombstone 提交；记忆和任务也有各自的游标同步路径。生产未认证探针只证明会话路由已挂载，不能证明业务闭环。需要至少两台真实设备验证：增量同步、版本冲突、删除墓碑、冷启动恢复、账号切换、账号删除和旧设备离线后重新上线。服务端必须保持 owner 隔离，不能用全量覆盖恢复旧数据，并应记录 change feed 的保留窗口、resync 语义和删除墓碑生命周期。
+
+本轮客户端静态契约审计还确认以下服务端要求不能省略：
+
+- `confirmed` 与 `explicit` 都是已授权记忆；bridge/history 注入逻辑必须接受两者，不能静默丢弃 `confirmed`。
+- 云任务必须返回稳定 `version`，支持 owner-scoped 条件 PATCH、幂等键、冲突错误和删除墓碑；服务端状态 `draft`、`waiting_approval`、`running`、`failed`、`completed`、`cancelled`、`paused` 必须保持可区分。
+- 任务审批必须有客户端可调用的明确接口（例如 `/approve`），并返回一次性结果；不能让客户端把等待审批或失败任务误显示为 active。
+- 主动 profile 更新必须支持 `expectedVersion`；规则运行重试必须复用稳定幂等键，避免超时后重复执行。
+- APNs sender 必须保留 Worker 写入的 `ownerId`、`route`、`taskId`、`proactiveRunId` 等路由字段；否则客户端收到锁屏通知后无法完成 owner 校验和 conversation deep link。设备 DELETE handler 也必须实际挂载并清理旧 owner 的 outbox。
 
 ### 7. AI 群聊（新增功能）
 

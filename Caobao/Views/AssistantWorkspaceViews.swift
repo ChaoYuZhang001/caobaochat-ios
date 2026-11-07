@@ -2588,7 +2588,14 @@ struct AssistantCharacterEditor: View {
         _systemPrompt = State(initialValue: character?.systemPrompt ?? "")
         _greeting = State(initialValue: character?.greeting ?? "")
         _language = State(initialValue: character?.language ?? "zh-Hans")
-        _memoryScope = State(initialValue: character?.memoryScope ?? "private")
+        // Keep the client values aligned with the v2 character contract:
+        // none, character, or group. Older UI labels used private/workspace,
+        // which the server rejects with 400 before a real character can be
+        // created.
+        let serverScope = character?.memoryScope.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let normalizedScope = ["none", "character", "group"].contains(serverScope ?? "")
+            ? serverScope! : "character"
+        _memoryScope = State(initialValue: normalizedScope)
         _allowGlobalMemory = State(initialValue: character?.allowGlobalMemory ?? false)
         _enabled = State(initialValue: character?.enabled ?? true)
     }
@@ -2622,8 +2629,9 @@ struct AssistantCharacterEditor: View {
                 }
                 Section("记忆范围") {
                     Picker("范围", selection: $memoryScope) {
-                        Text("仅角色记忆").tag("private")
-                        Text("当前工作区").tag("workspace")
+                        Text("不使用角色记忆").tag("none")
+                        Text("仅角色记忆").tag("character")
+                        Text("当前工作区").tag("group")
                     }
                     Toggle("允许使用全局记忆", isOn: $allowGlobalMemory)
                     Text("默认隔离角色记忆；只有明确开启后才允许注入全局记忆。")
