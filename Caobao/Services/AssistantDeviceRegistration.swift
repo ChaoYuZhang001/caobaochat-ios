@@ -205,6 +205,7 @@ final class AssistantRemoteNotificationCoordinator {
         registrationTask?.cancel(); registrationTask = nil
         guard let accessToken, let deviceId = existingDeviceId() else { return }
         let operation = UUID()
+        let previousUnregistration = deviceUnregistrationTask
         deviceUnregistrationOperation = operation
         deviceUnregistrationTask = Task { @MainActor [weak self] in
             guard let self else { return }
@@ -215,6 +216,11 @@ final class AssistantRemoteNotificationCoordinator {
                 }
             }
             do {
+                // Repeated logout/revocation callbacks must not run DELETEs
+                // concurrently. A later registration waits for this whole
+                // chain, including any earlier request.
+                await previousUnregistration?.value
+                try Task.checkCancellation()
                 try await self.client.unregister(deviceId: deviceId, accessToken: accessToken)
             } catch is CancellationError {
                 return
