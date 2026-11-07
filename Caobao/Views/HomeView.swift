@@ -406,9 +406,11 @@ struct HomeView: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel("主动更新")
         .accessibilityValue(summaryError.map { Text(LocalizedStringKey($0)) }
-            ?? Text(auth.isLoggedIn && !summaryReady
-                ? "正在读取主动更新…"
-                : (profile.enabled ? "\(profile.mode.title), 未读 \(unread)" : "未开启")))
+            ?? (auth.isLoggedIn && !summaryReady
+                ? Text("正在读取主动更新…")
+                : (profile.enabled
+                   ? Text(profile.mode.title) + Text(verbatim: "，未读 \(unread)")
+                   : Text("未开启"))))
     }
 
     private func loadProactiveSummary(ownerId: String) async {
