@@ -32,7 +32,9 @@ enum AssistantDeepLink: Equatable {
               let rawID = parts.last,
               let id = rawID.removingPercentEncoding,
               !id.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-              id.utf8.count <= 256 else { return nil }
+              id.utf8.count <= 256,
+              !id.contains("/"),
+              !id.unicodeScalars.contains(where: CharacterSet.controlCharacters.contains) else { return nil }
         switch parts[0].lowercased() {
         case "conversation": self = .conversation(id)
         case "task": self = .task(id)
