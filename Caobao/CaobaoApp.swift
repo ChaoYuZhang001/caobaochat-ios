@@ -46,6 +46,10 @@ struct CaobaoApp: App {
             }
             .environment(\.locale, assistantLocale)
             .safeAreaInset(edge: .top, spacing: 0) { deletionNoticeBanner }
+            .onOpenURL { handleAssistantDeepLink($0) }
+            .onReceive(NotificationCenter.default.publisher(for: .loginSuccess)) { _ in
+                consumePendingAssistantDeepLink()
+            }
             .onReceive(NotificationCenter.default.publisher(for: ASAuthorizationAppleIDProvider.credentialRevokedNotification)) { _ in
                 // Keep macOS in the same Apple credential-revocation path as
                 // iOS so a revoked identity cannot leave a trusted session
@@ -95,6 +99,7 @@ struct CaobaoApp: App {
             }
             .environment(\.locale, assistantLocale)
             .safeAreaInset(edge: .top, spacing: 0) { deletionNoticeBanner }
+            .onOpenURL { handleAssistantDeepLink($0) }
             .task(id: AssistantOwnerIdentity.ownerKey(appState.assistantOwnerId)) {
                 let owner = appState.assistantOwnerId
                 guard !Task.isCancelled else { return }
@@ -132,6 +137,7 @@ struct CaobaoApp: App {
                 authService.logout()
             }
             .onReceive(NotificationCenter.default.publisher(for: .loginSuccess)) { _ in
+                consumePendingAssistantDeepLink()
                 Task { @MainActor in
                     await AssistantNotificationRouter.shared.registerRemoteNotificationsIfAuthorized()
                     AssistantRemoteNotificationCoordinator.shared.appDidBecomeActive()
@@ -172,6 +178,78 @@ struct CaobaoApp: App {
         appState.assistantLanguage == "system" ? .autoupdatingCurrent : Locale(identifier: appState.assistantLanguage)
     }
 
+    @MainActor
+    private func handleAssistantDeepLink(_ url: URL) {
+        guard let link = AssistantDeepLink(url: url) else { return }
+        guard authService.isLoggedIn else {
+            appState.pendingAssistantDeepLinkURL = url.absoluteString
+            return
+        }
+        applyAssistantDeepLink(link)
+    }
+
+    @MainActor
+    private func consumePendingAssistantDeepLink() {
+        guard authService.isLoggedIn,
+              let raw = appState.pendingAssistantDeepLinkURL,
+              let url = URL(string: raw),
+              let link = AssistantDeepLink(url: url) else { return }
+        appState.pendingAssistantDeepLinkURL = nil
+        applyAssistantDeepLink(link)
+    }
+
+    @MainActor
+    private func applyAssistantDeepLink(_ link: AssistantDeepLink) {
+        let owner = appState.assistantOwnerId
+        switch link {
+        case .conversation(let id):
+            #if os(macOS)
+            appState.pendingAssistantConversationId = id
+            appState.selectedTab = .chat
+            NotificationCenter.default.post(name: .macOpenConversation, object: nil,
+                                            userInfo: ["conversationId": id])
+            #else
+            appState.assistantHomePath = [.historyConversation(id: id, ownerId: owner)]
+            appState.selectedTab = .home
+            #endif
+        case .task(let id):
+            appState.pendingAssistantTaskId = id
+            appState.selectedTab = .fortune
+        case .proactive(let id):
+            appState.pendingAssistantProactiveRunId = id
+            #if os(macOS)
+            appState.selectedTab = .home
+            NotificationCenter.default.post(name: .macOpenProactive, object: nil)
+            #else
+            appState.selectedTab = .home
+            appState.assistantHomePath = [.proactive]
+            #endif
+        }
+    }
+
+}
+
+private enum AssistantDeepLink: Equatable {
+    case conversation(String)
+    case task(String)
+    case proactive(String)
+
+    init?(url: URL) {
+        guard url.scheme?.lowercased() == "https",
+              ["caobao.chat", "www.caobao.chat"].contains(url.host?.lowercased() ?? "") else { return nil }
+        let parts = url.pathComponents.filter { $0 != "/" }
+        guard parts.count == 2,
+              let rawID = parts.last,
+              let id = rawID.removingPercentEncoding,
+              !id.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              id.utf8.count <= 256 else { return nil }
+        switch parts[0].lowercased() {
+        case "conversation": self = .conversation(id)
+        case "task": self = .task(id)
+        case "proactive": self = .proactive(id)
+        default: return nil
+        }
+    }
 }
 
 // MARK: - Notification Names
@@ -180,6 +258,7 @@ extension Notification.Name {
     static let clearChat = Notification.Name("clearChat")
     static let conversationHistoryChanged = Notification.Name("conversationHistoryChanged")
     static let macOpenConversation = Notification.Name("macOpenConversation")
+    static let macOpenProactive = Notification.Name("macOpenProactive")
     static let assistantPrompt = Notification.Name("assistantPrompt")
     static let assistantProactiveChanged = Notification.Name("assistantProactiveChanged")
 }
@@ -193,6 +272,8 @@ class AppState: ObservableObject {
     @Published var selectedTab: AppTab = .home
     @Published var userStats = UserStats()
     @Published var pendingAssistantPrompt: String?
+    @Published var pendingAssistantDeepLinkURL: String?
+    @Published var pendingAssistantConversationId: String?
     @Published var pendingAssistantTaskId: String?
     @Published var pendingAssistantProactiveRunId: String?
     @Published var assistantHomePath: [AssistantHomeRoute] = []
@@ -269,7 +350,8 @@ class AppState: ObservableObject {
     private func synchronizeAuthIdentity() {
         let auth = AuthService.shared
         let owner = auth.user?.id ?? "local-device"
-        let ownerChanged = !AssistantOwnerIdentity.matches(owner, boundOwnerId)
+        let previousOwner = boundOwnerId
+        let ownerChanged = !AssistantOwnerIdentity.matches(owner, previousOwner)
         let identityChanged = ownerChanged || auth.token != boundToken
         isLoggedIn = auth.isLoggedIn
         user = auth.user
@@ -310,6 +392,10 @@ class AppState: ObservableObject {
             assistantHomePath = []
             isShowingAssistantSettings = false
             pendingAssistantPrompt = nil
+            if previousOwner != "local-device" {
+                pendingAssistantDeepLinkURL = nil
+                pendingAssistantConversationId = nil
+            }
             pendingAssistantTaskId = nil
             pendingAssistantProactiveRunId = nil
             selectedTab = .home
