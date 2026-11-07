@@ -46,6 +46,7 @@ struct MacContentView: View {
                 } label: {
                     Image(systemName: "gear")
                 }
+                .accessibilityLabel("设置")
             }
         }
         .sheet(isPresented: $showSettings) {
