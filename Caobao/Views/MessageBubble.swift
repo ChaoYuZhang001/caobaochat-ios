@@ -195,6 +195,7 @@ struct MessageBubble: View {
                                     .font(.caption)
                                     .foregroundStyle(message.liked ? .blue : .secondary)
                             }
+                            .accessibilityLabel(message.liked ? Text("取消点赞") : Text("点赞"))
                         
                             // 踩
                             Button {
@@ -204,6 +205,7 @@ struct MessageBubble: View {
                                     .font(.caption)
                                     .foregroundStyle(message.disliked ? .red : .secondary)
                             }
+                            .accessibilityLabel(message.disliked ? Text("取消点踩") : Text("点踩"))
                         
                             if allowsRegeneration {
                                 Button {
@@ -224,6 +226,7 @@ struct MessageBubble: View {
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
+                            .accessibilityLabel("删除消息")
                         
                             if allowsReporting {
                                 Button {
@@ -565,6 +568,7 @@ struct VideoPlayerView: View {
                     .font(.system(size: 50))
                     .foregroundStyle(.white.opacity(0.9))
             }
+            .accessibilityLabel(isPlaying ? Text("暂停") : Text("播放"))
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.black.opacity(0.3))
         }
