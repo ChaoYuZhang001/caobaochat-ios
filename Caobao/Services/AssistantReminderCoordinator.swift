@@ -725,7 +725,7 @@ actor AssistantReminderCoordinator {
         return batchIsCurrent(value.batch)
     }
     private func makeRequest(_ plan: AssistantReminderPlan, operationId: UUID) -> UNNotificationRequest {
-        let content = UNMutableNotificationContent(); content.title = "CaoBao"
+        let content = UNMutableNotificationContent(); content.title = AssistantLocalization.string("草包")
         content.body = AssistantLocalization.string("你有一项待办需要查看。"); content.sound = .default
         content.userInfo = ["taskId": plan.taskId, "ownerId": plan.ownerId, "route": "task", "reminderSchemaVersion": 1,
                             "timeZone": plan.timeZoneIdentifier, "scheduleOperationId": operationId.uuidString]
