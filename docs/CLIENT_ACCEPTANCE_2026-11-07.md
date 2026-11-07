@@ -20,6 +20,8 @@
 
 2026-11-08 云任务真实联调补充：同一真实账号创建一个 7 天后到期的临时任务，完成版本更新、列表验证和删除墓碑；运行日志为 `CAOBAO_E2E_CLOUD_TASK success version=2 delete=deleted`。任务未执行，探针代码已撤销；本证据只覆盖云端任务基础 CRUD，不覆盖已有任务安全编辑、状态枚举、审批、冲突和双设备同步。
 
+2026-11-08 云任务审批协议补充：客户端将 `taskId` 与 Unix 秒级 `nextRunAt` 的规范化 SHA-256 提取为共享函数，并加入固定向量回归；`Scripts/test-assistant-task-tool-protocol.sh` 当前 51 套通过，iOS Simulator 和 macOS Debug 构建均通过。真实 `waiting_approval → approve → Worker 执行` 尚未完成，因此这项证据只证明客户端哈希不会因重构漂移，不证明生产审批已消费。
+
 2026-11-08 云记忆真实联调补充：同一真实账号创建一条临时偏好记忆，完成版本更新、列表验证和删除墓碑；运行日志为 `CAOBAO_E2E_CLOUD_MEMORY success version=2 delete=deleted`。探针代码已撤销；本证据只覆盖云记忆基础 CRUD，不覆盖两台设备的增量冲突和账号删除后的服务端清理。
 
 2026-11-08 客户端品牌文案修复：中文首页、登录页、关于页和本地任务通知统一显示“草包”，英文资源继续显示 CaoBao；提醒测试已改为校验当前本地化品牌和通用通知正文。完整回归与 iOS/macOS 构建均通过。
