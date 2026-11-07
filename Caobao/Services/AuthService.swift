@@ -345,6 +345,8 @@ final class AuthService: ObservableObject {
                 .replacingOccurrences(of: "/", with: "_")
                 .replacingOccurrences(of: "+", with: "-")
             defaults.removeObject(forKey: "caobao.quote_favorites.\(quoteOwner)")
+            AssistantProactiveStore.shared.clear(ownerId: owner)
+            AssistantProactiveInboxStore.shared.clear(ownerId: owner)
         }
     }
 
