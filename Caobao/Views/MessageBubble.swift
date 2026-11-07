@@ -499,9 +499,8 @@ struct MediaContentView: View {
                     .frame(maxWidth: 280, maxHeight: 200)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                 #else
-                Text("视频播放")
+                VideoPlayerView(url: mediaLink.url)
                     .frame(width: 280, height: 200)
-                    .background(Color.gray)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                 #endif
                 
@@ -511,10 +510,8 @@ struct MediaContentView: View {
                 AudioPlayerView(url: mediaLink.url, autoPlay: autoPlayAudio)
                     .frame(maxWidth: 280)
                 #else
-                Text("音频播放")
+                AudioPlayerView(url: mediaLink.url, autoPlay: autoPlayAudio)
                     .frame(width: 280)
-                    .background(Color.gray)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
                 #endif
             }
         }
