@@ -1053,3 +1053,10 @@
 "历史" = "History";
 "已开启 · %@" = "Enabled · %@";
 "默认关闭，可在主动规则中开启" = "Off by default. Enable it in Proactive rules.";
+"开始一段对话" = "Start a conversation";
+"把想做的事交给我，随时可以继续" = "Hand me what you want to get done and continue anytime";
+"规划、总结、记忆与任务，都可以从这里开始。" = "Start planning, summarizing, remembering, and managing tasks here.";
+"消息来源、安静时段和频率都由你控制" = "You control the sources, quiet hours, and frequency";
+"点击开始" = "Tap to start";
+"记录并提醒" = "Record and remind";
+"记忆同步暂未完成：%@" = "Memory sync is not complete: %@";
