@@ -137,6 +137,7 @@
         A1000053 /* AssistantMedia.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000053; };
         B1000053 /* AssistantMedia.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000053; };
         A1000054 /* AssistantSpeechController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000054; };
+        B1000054 /* AssistantSpeechController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000054; };
         A1000055 /* AssistantSubscriptionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000055; };
         A1000056 /* AssistantSubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000056; };
         A1000057 /* AssistantReminderCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000057; };
@@ -755,6 +756,7 @@
                 B1000078 /* AssistantQuietHoursSettingsView.swift in Sources */,
                 B1000057 /* AssistantReminderCoordinator.swift in Sources */,
                 B1000053 /* AssistantMedia.swift in Sources */,
+                B1000054 /* AssistantSpeechController.swift in Sources */,
 				B1000055 /* AssistantSubscriptionStore.swift in Sources */,
 				B1000051 /* AssistantChatArchive.swift in Sources */,
 				B1800001 /* AssistantChatDatabase.swift in Sources */,

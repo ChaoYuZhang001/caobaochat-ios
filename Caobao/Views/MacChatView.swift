@@ -9,6 +9,7 @@ struct MacChatView: View {
     let selectedConversationId: String?
     @FocusState private var inputFocused: Bool
     @State private var showSwitchConfirmation = false
+    @ObservedObject private var speech = AssistantSpeechController.shared
 
     private var ownerId: String { AuthService.shared.user?.id ?? "local-device" }
 
@@ -49,12 +50,44 @@ struct MacChatView: View {
                 }
                 .padding(.horizontal, 14).padding(.top, 8)
             }
+            if let speechError = speech.errorMessage {
+                HStack {
+                    Image(systemName: "waveform.badge.exclamationmark").foregroundStyle(.orange)
+                    Text(speechError).font(.caption).foregroundStyle(.secondary).textSelection(.enabled)
+                    Spacer()
+                    Button("关闭") { speech.clearError() }
+                }
+                .padding(.horizontal, 14).padding(.top, 8)
+            }
             HStack(alignment: .bottom, spacing: 10) {
                 TextField("输入消息…", text: $chatViewModel.inputText, axis: .vertical)
                     .textFieldStyle(.roundedBorder)
                     .focused($inputFocused)
                     .lineLimit(1...6)
                     .onSubmit { send() }
+                Button {
+                    if speech.isRecording || speech.isRequestingPermission {
+                        speech.stopDictation()
+                    } else {
+                        let prefix = chatViewModel.inputText.trimmingCharacters(in: .whitespacesAndNewlines)
+                        Task { @MainActor in
+                            await speech.startDictation(localeIdentifier: chatViewModel.preferredLocaleIdentifier, ownerId: ownerId) { text in
+                                guard AuthService.shared.user?.id ?? "local-device" == ownerId else { return }
+                                let value = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                                guard !value.isEmpty else { return }
+                                chatViewModel.inputText = prefix.isEmpty ? value : prefix + " " + value
+                            }
+                        }
+                    }
+                } label: {
+                    Image(systemName: speech.isRecording ? "mic.fill" : "mic")
+                        .foregroundStyle(speech.isRecording ? .red : Color.caobaoPrimary)
+                        .frame(width: 32, height: 32)
+                }
+                .buttonStyle(.borderless)
+                .help(speech.isRecording ? "停止语音输入" : "语音输入")
+                .accessibilityLabel(speech.isRecording ? "停止语音输入" : "语音输入")
+                .disabled(chatViewModel.isLoading || speech.isRequestingPermission)
                 if chatViewModel.isLoading {
                     Button("停止") { chatViewModel.cancel() }
                 } else {
@@ -91,12 +124,27 @@ struct MacChatView: View {
     }
 
     private func messageBubble(_ message: ChatMessage) -> some View {
-        Text(message.content.isEmpty ? "…" : message.content)
-            .textSelection(.enabled)
-            .padding(12)
-            .background(message.role == .user ? Color.accentColor.opacity(0.15) : Color.caobaoGroupedBackground)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .frame(maxWidth: 620, alignment: message.role == .user ? .trailing : .leading)
+        HStack(alignment: .bottom, spacing: 6) {
+            Text(message.content.isEmpty ? "…" : message.content)
+                .textSelection(.enabled)
+            if message.role == .assistant, !message.content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                Button {
+                    if speech.isSpeaking { speech.stopSpeaking() }
+                    else { speech.speak(text: message.content, localeIdentifier: chatViewModel.preferredLocaleIdentifier) }
+                } label: {
+                    Image(systemName: speech.isSpeaking ? "stop.fill" : "speaker.wave.2")
+                        .font(.caption)
+                }
+                .buttonStyle(.borderless)
+                .help(speech.isSpeaking ? "停止朗读" : "朗读")
+                .accessibilityLabel(speech.isSpeaking ? "停止朗读" : "朗读")
+                .disabled(speech.isRecording || speech.isRequestingPermission)
+            }
+        }
+        .padding(12)
+        .background(message.role == .user ? Color.accentColor.opacity(0.15) : Color.caobaoGroupedBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .frame(maxWidth: 620, alignment: message.role == .user ? .trailing : .leading)
     }
 
     private func send() {
