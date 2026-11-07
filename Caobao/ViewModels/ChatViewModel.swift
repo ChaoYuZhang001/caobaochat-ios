@@ -1221,6 +1221,23 @@ final class ChatViewModel: ObservableObject {
         return result
     }
 
+    /// Resolves a server conversation identifier to the local archive id used
+    /// by navigation. Proactive runs and notification payloads carry the
+    /// server id (`cnv_…`), while the local archive intentionally keeps a
+    /// separate client id so drafts and tombstones remain device-safe.
+    func localConversationId(forServerConversationId serverId: String, ownerId: String) async throws -> String? {
+        try requireHistoryOwner(ownerId)
+        let trimmed = serverId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        try await waitForArchiveReady(ownerId: ownerId)
+        let epoch = archiveOwnerEpoch
+        let result = try await archive.background { store in
+            try store.load(userId: ownerId).first(where: { $0.serverConversationId == trimmed })?.id
+        }
+        try validateArchiveOwner(ownerId, epoch: epoch)
+        return result
+    }
+
     func deleteConversations(ids: Set<String>, ownerId: String) async throws {
         try requireHistoryOwner(ownerId)
         guard !ids.isEmpty else { return }
