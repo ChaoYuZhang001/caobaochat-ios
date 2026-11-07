@@ -72,6 +72,8 @@
 
 2026-11-08 日志改动后完整回归复跑：`Scripts/test-assistant.sh` 使用隔离文件、mock 网络和 fake 通知明确退出 `0`；末尾为 `All 168 actual ChatViewModel integration suites passed`。该结果确认日志门控没有引入客户端行为回归，仍不覆盖真实 Apple、StoreKit、APNs、模型请求或双设备生产链路。
 
+2026-11-08 主动任务版本条件客户端补齐：暂停全部/恢复全部现在携带本地已知的 `expectedVersion`，只有服务器返回推进后的 profile 版本才更新本机状态；如果旧服务端忽略条件字段或返回未推进版本，客户端提示刷新重试并重新读取权威状态，避免静默覆盖多设备修改。`test-assistant-protocol.sh` 明确退出 `0`，iOS/macOS Debug 构建均明确退出 `0`。服务端仍必须真正执行条件更新并返回冲突状态，当前不能据此宣称多设备暂停已通过。
+
 2026-11-08 生产健康复核补充：`GET https://ciyuan2api.com/api/status` curl 退出 `0`、HTTP `200`，响应头 `X-New-Api-Version: v1.0.0-rc.48+ciyuan.reconstructed.20261106.1`，JSON 中 `setup=true` 且 `server_address=https://ciyuan2api.com`。本轮没有重复发送模型请求，避免无必要扣减真实额度；部署后真实 CN `started → delta → usage → completed` 证据沿用本文件既有记录。
 
 签名门禁记录：项目的 iOS Debug/Release `DEVELOPMENT_TEAM` 仍为空，`security find-identity -v -p codesigning` 返回 `0 valid identities found`；因此 Apple Sign In、APNs 和正式 archive/TestFlight 不能在当前环境完成。归类为发布签名环境阻塞，不写入猜测的 Team ID 或证书信息。
