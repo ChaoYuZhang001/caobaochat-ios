@@ -52,6 +52,7 @@ struct AudioPlayerView: View {
                             .offset(x: isPlaying ? 0 : 1)
                     }
                 }
+                .accessibilityLabel(isPlaying ? Text("暂停") : Text("播放"))
                 
                 // 时间显示
                 VStack(alignment: .leading, spacing: 2) {
