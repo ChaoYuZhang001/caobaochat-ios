@@ -173,6 +173,7 @@
 "云端已暂停" = "Cloud paused";
 "云端已取消" = "Cloud cancelled";
 "云端状态：%@" = "Cloud status: %@";
+"任务已保存在本机，但云端同步失败，将在下次刷新重试。" = "The task was saved locally, but cloud sync failed. It will retry on the next refresh.";
 "草包用户" = "CaoBao user";
 "草包风格" = "Assistant style";
 "表达风格" = "Tone";

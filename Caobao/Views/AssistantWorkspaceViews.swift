@@ -1625,13 +1625,18 @@ struct AssistantTasksView: View {
             }
             var local = repository.tasks(for: userId)
             var pendingDeletes = loadCloudTaskDeletionIDs()
+            var metadata = loadCloudTaskMetadata()
             for remote in changes.items {
                 if remote.deletedAt?.isEmpty == false {
+                    // A locally edited task must never be replaced by a remote
+                    // tombstone without an explicit conflict decision.
+                    if metadata.dirtyIDs.contains(remote.id) { continue }
                     if local.contains(where: { $0.id == remote.id }) {
                         try await AssistantReminderCoordinator.shared.deleteTask(id: remote.id, ownerId: userId)
                         local.removeAll { $0.id == remote.id }
                     }
                     pendingDeletes.remove(remote.id)
+                    metadata.versions.removeValue(forKey: remote.id)
                     cloudTaskStatuses.removeValue(forKey: remote.id)
                     continue
                 }
@@ -1639,9 +1644,13 @@ struct AssistantTasksView: View {
                 // accepted its tombstone, so an older active row cannot revive
                 // the task while the device is offline.
                 if pendingDeletes.contains(remote.id) { continue }
+                // A local edit is durable and wins until its conditional
+                // PATCH succeeds or the user resolves a version conflict.
+                if metadata.dirtyIDs.contains(remote.id) { continue }
                 guard let normalized = cloudTaskToLocal(remote, existing: local.first(where: { $0.id == remote.id })) else {
                     throw CloudTaskSyncError.invalidResponse
                 }
+                metadata.versions[remote.id] = remote.version
                 cloudTaskStatuses[remote.id] = remote.status.lowercased()
                 if let existing = local.first(where: { $0.id == remote.id }) {
                     guard repository.updateTask(normalized) else { throw CloudTaskSyncError.invalidResponse }
@@ -1663,6 +1672,8 @@ struct AssistantTasksView: View {
                 do {
                     try await APIService.shared.deleteCloudTask(token: token, id: id)
                     pendingDeletes.remove(id)
+                    metadata.dirtyIDs.remove(id)
+                    metadata.versions.removeValue(forKey: id)
                 } catch {
                     // Retry on the next foreground/task-page sync. The local
                     // deletion stays durable and cannot be resurrected above.
@@ -1674,14 +1685,65 @@ struct AssistantTasksView: View {
             // remote identity set from active rows so a tombstone cannot be
             // mistaken for a missing task and recreated.
             let active = try await APIService.shared.listCloudTasks(token: token, limit: 200)
-            let remoteIDs = Set(active.items.map(\.id))
+            let remoteByID = Dictionary(active.items.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+            var conflict = false
 
-            for task in local where !remoteIDs.contains(task.id) {
+            for task in local where !pendingDeletes.contains(task.id) {
+                guard let remote = remoteByID[task.id] else {
+                    // A known cloud task disappeared without a tombstone in
+                    // this page; keep it local and surface a conflict instead
+                    // of recreating a deleted task.
+                    if metadata.versions[task.id] != nil {
+                        conflict = true
+                        continue
+                    }
+                    let request = CloudTaskUpsertRequest(id: task.id, title: task.title,
+                        instructions: task.instructions, timeZone: task.timeZone,
+                        recurrenceRule: task.recurrenceRule, requiresApproval: task.requiresApproval,
+                        dueAt: cloudTimestamp(task.dueAt), expectedVersion: nil)
+                    do {
+                        let saved = try await APIService.shared.upsertCloudTask(token: token, request: request)
+                        metadata.versions[task.id] = saved.version
+                        metadata.dirtyIDs.remove(task.id)
+                        cloudTaskStatuses[task.id] = saved.status.lowercased()
+                    } catch {
+                        conflict = true
+                    }
+                    continue
+                }
+
+                let knownVersion = metadata.versions[task.id]
+                // The active list is the authoritative status snapshot even
+                // when the change cursor is already current. Keep the remote
+                // worker state visible after a cold start/owner reset and
+                // while a local content edit is waiting for its conditional
+                // PATCH.
+                cloudTaskStatuses[task.id] = remote.status.lowercased()
+                guard metadata.dirtyIDs.contains(task.id) else {
+                    metadata.versions[task.id] = remote.version
+                    continue
+                }
+                guard knownVersion == remote.version else {
+                    conflict = true
+                    continue
+                }
                 let request = CloudTaskUpsertRequest(id: task.id, title: task.title,
                     instructions: task.instructions, timeZone: task.timeZone,
                     recurrenceRule: task.recurrenceRule, requiresApproval: task.requiresApproval,
-                    dueAt: cloudTimestamp(task.dueAt), expectedVersion: nil)
-                _ = try? await APIService.shared.upsertCloudTask(token: token, request: request)
+                    dueAt: cloudTimestamp(task.dueAt), expectedVersion: remote.version)
+                do {
+                    let saved = try await APIService.shared.upsertCloudTask(token: token, request: request)
+                    metadata.versions[task.id] = saved.version
+                    metadata.dirtyIDs.remove(task.id)
+                    cloudTaskStatuses[task.id] = saved.status.lowercased()
+                } catch {
+                    conflict = true
+                }
+            }
+            saveCloudTaskMetadata(metadata)
+            if conflict {
+                operationError = AssistantLocalization.string("任务已保存在本机，但云端版本发生变化；请刷新后比较并重试。")
+                return false
             }
             return true
         } catch {
@@ -1692,6 +1754,11 @@ struct AssistantTasksView: View {
     }
 
     private enum CloudTaskSyncError: Error { case invalidResponse }
+
+    private struct CloudTaskSyncMetadata: Codable {
+        var versions: [String: Int64] = [:]
+        var dirtyIDs: Set<String> = []
+    }
 
     private func taskCursorKey() -> String {
         "caobao.assistant.cloudTaskSync." + Data(userId.utf8).base64EncodedString()
@@ -1709,6 +1776,30 @@ struct AssistantTasksView: View {
 
     private func taskDeletionKey() -> String {
         "caobao.assistant.cloudTaskDeletes." + Data(userId.utf8).base64EncodedString()
+    }
+
+    private func taskMetadataKey() -> String {
+        "caobao.assistant.cloudTaskMetadata." + Data(userId.utf8).base64EncodedString()
+    }
+
+    private func loadCloudTaskMetadata() -> CloudTaskSyncMetadata {
+        guard let data = UserDefaults.standard.data(forKey: taskMetadataKey()),
+              let value = try? JSONDecoder().decode(CloudTaskSyncMetadata.self, from: data) else {
+            return CloudTaskSyncMetadata()
+        }
+        return value
+    }
+
+    private func saveCloudTaskMetadata(_ value: CloudTaskSyncMetadata) {
+        guard let data = try? JSONEncoder().encode(value) else { return }
+        UserDefaults.standard.set(data, forKey: taskMetadataKey())
+    }
+
+    private func markCloudTaskDirty(_ id: String) {
+        guard !id.isEmpty else { return }
+        var metadata = loadCloudTaskMetadata()
+        metadata.dirtyIDs.insert(id)
+        saveCloudTaskMetadata(metadata)
     }
 
     private func loadCloudTaskDeletionIDs() -> Set<String> {
@@ -1784,6 +1875,16 @@ struct AssistantTasksView: View {
         return formatter.string(from: value)
     }
 
+    private func cloudTaskContentChanged(_ task: AssistantTask, expectedTask: AssistantTask?, isNew: Bool) -> Bool {
+        guard !isNew, let expectedTask else { return true }
+        return task.title != expectedTask.title ||
+            task.instructions != expectedTask.instructions ||
+            task.dueAt != expectedTask.dueAt ||
+            task.timeZone != expectedTask.timeZone ||
+            task.recurrenceRule != expectedTask.recurrenceRule ||
+            task.requiresApproval != expectedTask.requiresApproval
+    }
+
     private func saveTask(_ task: AssistantTask, isNew: Bool, expectedTask: AssistantTask?) async -> String? {
         guard !userId.isEmpty, AssistantOwnerIdentity.matches(task.userId, userId),
               AssistantOwnerIdentity.matches(userId, auth.user?.id ?? "local-device") else {
@@ -1791,6 +1892,7 @@ struct AssistantTasksView: View {
         }
         guard let operation = beginOperation() else { return AssistantReminderError.operationInProgress.localizedDescription }
         defer { finishOperation(operation) }
+        let cloudContentChanged = cloudTaskContentChanged(task, expectedTask: expectedTask, isNew: isNew)
         do {
             try await AssistantReminderCoordinator.shared.saveTask(
                 task, isNew: isNew, ownerId: userId, requestAuthorization: task.reminderEnabled == true,
@@ -1803,6 +1905,17 @@ struct AssistantTasksView: View {
             reload()
             await refreshReminderStates()
             guard isCurrent(operation) else { return AssistantReminderError.inactiveSession.localizedDescription }
+            if cloudContentChanged {
+                markCloudTaskDirty(task.id)
+                if auth.isLoggedIn {
+                    let synced = await syncTasksFromCloud()
+                    guard isCurrent(operation) else { return AssistantReminderError.inactiveSession.localizedDescription }
+                    reload()
+                    if !synced {
+                        return AssistantLocalization.string("任务已保存在本机，但云端同步失败，将在下次刷新重试。")
+                    }
+                }
+            }
             return nil
         } catch AssistantReminderError.reactivationRequired {
             guard isCurrent(operation) else { return AssistantReminderError.inactiveSession.localizedDescription }
