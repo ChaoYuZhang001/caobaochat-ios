@@ -1,0 +1,93 @@
+# 草包服务端待验收需求（2026-11-07）
+
+这份清单只记录客户端验收中确认需要服务端或生产环境处理的项目。当前生产探测使用无认证请求，不代表已完成真实账号业务验收。
+
+## 当前生产证据
+
+| 请求 | 当前结果 | 结论 |
+| --- | --- | --- |
+| `GET https://ciyuan2api.com/api/status` | `200` | 生产健康，版本 `v1.0.0-rc.48+ciyuan.reconstructed.20261106.1` |
+| `GET /api/favorites` | `404 Invalid URL` | 旧在线收藏契约不存在 |
+| `GET /api/sync/favorites` | `404 Invalid URL` | 旧同步收藏契约不存在 |
+| `GET /api/v2/characters` | `401 UNAUTHENTICATED` | 路由存在；需要真实账号验证 CRUD |
+| `GET /api/v2/proactive/profile` | `401 UNAUTHENTICATED` | 路由存在；需要真实账号验证 profile |
+| `GET /api/v2/proactive/rules` | `401 UNAUTHENTICATED` | 路由存在；需要真实账号验证规则和执行记录 |
+
+## 必须完成的服务端项目
+
+### 1. 收藏功能去处
+
+当前客户端已改为 owner-scoped 本机金句收藏，不再调用 404 接口。若产品需要跨设备收藏，新增 v2 契约，至少包括：
+
+- owner-scoped list/create/delete/sync；
+- cursor、版本号、幂等键和删除墓碑；
+- 账号删除、切换账号和旧 token 不能复活数据；
+- 收藏类型、来源、创建时间和更新时间的稳定字段；
+- 认证失败、版本冲突和重复请求的明确错误码。
+
+### 2. 主动更新
+
+现有 profile、rules、runs 和 pause-all 路由需要补齐生产闭环：
+
+- `ProactiveRun` 返回服务端权威的 `readAt`、`snoozedUntil`、`dismissedAt` 或等价状态；
+- owner-scoped 的 read、snooze、close-this-kind 操作，具备幂等键和版本冲突；
+- 规则的 `nextRunAt`、`triggerReason`、`sourceRefs`、`conversationId` 保持稳定；
+- scheduler/事件队列、租约、去重、重试、死信和每 owner 频率限制；
+- 安静时段、每日上限、全局暂停和账号删除必须在 Worker 侧强制执行；
+- APNs transactional outbox、旧 token 清理、锁屏通用标题和点击 conversation deep link；
+- 高风险动作只能产生提案，不能由 Worker 直接写外部系统。
+
+客户端目前只在本机保存未读/稍后状态，并明确标注不代表多设备同步。
+
+### 3. 自定义角色
+
+`/api/v2/characters` 需要用真实账号验证：
+
+- list/create/update/enable/disable/delete 全部校验 owner；
+- `expectedVersion` 或条件更新，旧版本返回可识别的冲突错误；
+- 删除墓碑、分页、重复请求幂等和账号切换隔离；
+- `systemPrompt`、`memoryScope`、`allowGlobalMemory`、`language` 等字段有长度和枚举校验；
+- 旧 token、旧设备和已删除角色不能复活。
+
+### 4. Apple 登录和账号生命周期
+
+用真实 Apple 账号和真实 Bearer 完成：授权、刷新、退出、撤销、账号删除、旧 token 失效，以及服务端 owner 数据清理。客户端当前只有协议/mock 证据。
+
+### 5. StoreKit 订阅和额度账本
+
+需要 App Store Connect、服务端和真机联合验收：
+
+- 真实 Product ID、订阅组、月付/年付周期和价格配置；
+- purchase、restore、退款、撤销、grace period、过期和重复通知；
+- Apple transaction/JWS 验证、原始交易绑定账号、幂等处理；
+- `expiresAt`、状态和 quota ledger 一致，不能把 StoreKit 本地状态直接当作服务端权益；
+- 购买成功、服务端拒绝和网络中断时客户端交易 finish 行为可复核。
+
+### 6. 会话、任务和记忆同步
+
+需要至少两台真实设备验证：增量同步、版本冲突、删除墓碑、冷启动恢复、账号切换、账号删除和旧设备离线后重新上线。服务端必须保持 owner 隔离，不能用全量覆盖恢复旧数据。
+
+### 7. AI 群聊（新增功能）
+
+当前客户端和服务端都没有群聊协议。开始实现前先确定：
+
+- participants/roles、speaker turn、编排策略和最大轮数；
+- SSE 事件格式、取消、重试、幂等和执行历史；
+- 每个角色使用的记忆范围、隐私授权和额度扣减；
+- 高风险工具仍需用户确认；
+- 多设备同步、删除墓碑和审计字段。
+
+自定义角色不能替代群聊协议。
+
+## 服务端完成门禁
+
+只有以下项目全部有真实证据，客户端和服务端才可标记完成：
+
+1. 真实 Apple 登录全生命周期和 Bearer 验证；
+2. StoreKit 沙盒购买、恢复、退款、撤销和额度账本；
+3. 真实 APNs token、锁屏送达和点击深链；
+4. 真实模型额度扣减和 CN/INTL 路由；
+5. 两台设备的会话、任务、记忆同步及墓碑；
+6. 账号删除后服务端任务、角色、通知和数据清理；
+7. TestFlight 签名、安装、冷启动和生产健康检查；
+8. 若启用 AI 群聊，完成独立协议、幂等和执行历史验收。
