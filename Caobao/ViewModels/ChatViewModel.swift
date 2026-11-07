@@ -221,6 +221,7 @@ final class ChatViewModel: ObservableObject {
     private var issuedTaskProposalSourceIds: Set<UUID> = []
     private var consumedTaskProposalSourceIds: Set<UUID> = []
     private let defaults: UserDefaults
+    private let usageStatsStore: AssistantUsageStatsStore
     private let imagePreparationBarrier: (@Sendable () async -> Void)?
     private let beforeArchiveCommit: (@Sendable () throws -> Void)?
     private let afterArchiveCommit: (@Sendable () async -> Void)?
@@ -715,6 +716,7 @@ final class ChatViewModel: ObservableObject {
          cloudMemorySync: AssistantCloudMemorySyncClient? = nil,
          cloudConversationSync: AssistantCloudConversationSync? = nil) {
         self.archive = archive; self.transport = transport; self.repository = repository; self.defaults = defaults
+        self.usageStatsStore = AssistantUsageStatsStore(defaults: defaults)
         self.taskToolExecutor = taskToolExecutor ?? AssistantTaskToolExecutionCoordinator(repository: repository)
         self.conversationClient = conversationClient
         self.cloudMemorySync = cloudMemorySync ?? AssistantCloudMemorySyncClient()
@@ -1889,7 +1891,23 @@ final class ChatViewModel: ObservableObject {
                 try await self.archiveGate.waitUntilIdle()
                 guard self.runId == id, Self.sameOwner(self.ownerUserId, owner) else { return }
                 if let index = self.messages.firstIndex(where: { $0.id == messageId }) {
-                    if !serverCancelled { self.messages[index].status = .completed }
+                    if !serverCancelled {
+                        self.messages[index].status = .completed
+                        // Count only a real completed response. The store is
+                        // owner-scoped and keyed by message IDs, so retries
+                        // do not count the original user turn twice.
+                        let responseText = self.messages[index].content
+                        if !responseText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                            let userDate = self.messages.first(where: { $0.id == prepared.sourceUserMessageId })?.timestamp ?? Date()
+                            _ = self.usageStatsStore.recordCompletedTurn(
+                                ownerId: owner,
+                                userMessageId: prepared.sourceUserMessageId,
+                                assistantMessageId: messageId,
+                                userTimestamp: userDate,
+                                assistantTimestamp: Date()
+                            )
+                        }
+                    }
                     if let replaced = replacesMessageId, self.actionMessageRevisions[replaced] == replacementRevision,
                        let userIndex = self.messages[..<index].lastIndex(where: { $0.role == .user }),
                        let oldIndex = self.messages[(userIndex + 1)..<index].firstIndex(where: { $0.id == replaced && $0.role == .assistant && $0.status == .completed }),

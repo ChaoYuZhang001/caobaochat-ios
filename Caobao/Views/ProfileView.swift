@@ -23,6 +23,7 @@ struct ProfileView: View {
     @State private var isUpgrading = false
     @State private var upgradeError: String?
     @State private var newNickname = ""
+    @State private var usageStats = AssistantUsageStats()
     @State private var profileOwnerEpoch = UUID()
     @State private var avatarOwnerSource: ProfileOwnerSource?
     @State private var nicknameOwnerSource: ProfileOwnerSource?
@@ -92,9 +93,9 @@ struct ProfileView: View {
                 
                 // Stats
                 Section {
-                    StatRow(icon: "message.fill", title: "对话次数", value: "\(appState.userStats.totalChats)")
-                    StatRow(icon: "calendar", title: "使用天数", value: "\(appState.userStats.usageDays)")
-                    StatRow(icon: "flame.fill", title: "连续打卡", value: "\(appState.userStats.streak)天")
+                    StatRow(icon: "message.fill", title: "对话次数", value: "\(usageStats.userMessages)")
+                    StatRow(icon: "calendar", title: "使用天数", value: "\(usageStats.usageDays)")
+                    StatRow(icon: "flame.fill", title: "连续打卡", value: "\(usageStats.currentStreak)天")
                 } header: {
                     Text("使用统计")
                 }
@@ -287,10 +288,20 @@ struct ProfileView: View {
             }
             .onAppear {
                 newNickname = appState.userSettings.nickname
+                loadUsageStats()
             }
-            .onChange(of: AssistantOwnerIdentity.ownerKey(liveOwnerId)) { _ in resetProfileOwnerScope() }
-            .onReceive(NotificationCenter.default.publisher(for: .loginSuccess)) { _ in resetProfileOwnerScope() }
-            .onReceive(NotificationCenter.default.publisher(for: .logoutSuccess)) { _ in resetProfileOwnerScope() }
+            .onChange(of: AssistantOwnerIdentity.ownerKey(liveOwnerId)) { _ in
+                resetProfileOwnerScope()
+                loadUsageStats()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .loginSuccess)) { _ in
+                resetProfileOwnerScope()
+                loadUsageStats()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .logoutSuccess)) { _ in
+                resetProfileOwnerScope()
+                loadUsageStats()
+            }
             #if os(iOS)
             .sheet(isPresented: $showUpgradeSheet) {
                 GuestUpgradeSheet(
@@ -336,6 +347,10 @@ struct ProfileView: View {
         showAvatarPicker = false; showNicknameEditor = false; showLogoutConfirm = false; showUpgradeSheet = false
         avatarOwnerSource = nil; nicknameOwnerSource = nil; logoutOwnerSource = nil
         newNickname = ""; upgradeError = nil
+    }
+
+    private func loadUsageStats() {
+        usageStats = AssistantUsageStatsStore.shared.snapshot(ownerId: liveOwnerId)
     }
 
     // MARK: - Avatar View

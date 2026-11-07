@@ -223,6 +223,29 @@ private final class ArchiveResults: @unchecked Sendable {
             let a = try ready(folder); try a.upsert(conversation("dead",text:"residual"),userId:"A"); try a.saveDraft("residual",conversationId:"dead",userId:"A"); let db = try sql(a); defer { try? db.close() }; try db.execute("INSERT INTO deleted(id) VALUES('dead')"); let before = try files(folder)
             try expect(try a.load(userId:"A").isEmpty && a.loadDraftRecords(userId:"A").isEmpty && a.loadDraftRecord(userId:"A").text.isEmpty && a.loadExportSnapshot(userId:"A").conversations.isEmpty && files(folder) == before, "All SQL read shapes exclude residual rows without silently rewriting the physical source")
         }
+        try run("usage-stats-are-owner-scoped-and-idempotent", root: root) { folder in
+            let suite = "caobao-usage-stats-\(UUID().uuidString)"
+            let defaults = UserDefaults(suiteName: suite)!
+            defer { defaults.removePersistentDomain(forName: suite) }
+            let store = AssistantUsageStatsStore(defaults: defaults)
+            let now = Date()
+            var stats = store.recordCompletedTurn(ownerId: "owner-A", userMessageId: "user-1", assistantMessageId: "assistant-1", userTimestamp: now, assistantTimestamp: now)
+            try expect(stats.userMessages == 1 && stats.assistantMessages == 1 && stats.totalMessages == 2, "First completed turn was not recorded")
+            stats = store.recordCompletedTurn(ownerId: "owner-A", userMessageId: "user-1", assistantMessageId: "assistant-1", userTimestamp: now, assistantTimestamp: now)
+            try expect(stats.totalMessages == 2, "Duplicate completion counted twice")
+            stats = store.recordCompletedTurn(ownerId: "owner-A", userMessageId: "user-1", assistantMessageId: "assistant-2", userTimestamp: now, assistantTimestamp: now)
+            try expect(stats.userMessages == 1 && stats.assistantMessages == 2, "Retry duplicated the user turn or lost the new response")
+            try expect(store.snapshot(ownerId: "owner-B").totalMessages == 0, "Usage stats crossed owner boundary")
+
+            let legacySuite = "caobao-usage-stats-legacy-\(UUID().uuidString)"
+            let legacyDefaults = UserDefaults(suiteName: legacySuite)!
+            defer { legacyDefaults.removePersistentDomain(forName: legacySuite) }
+            legacyDefaults.set(7, forKey: "caobao_total_messages")
+            legacyDefaults.set(3, forKey: "caobao_user_messages")
+            let migrated = AssistantUsageStatsStore(defaults: legacyDefaults).snapshot(ownerId: "local-device")
+            try expect(migrated.userMessages == 3 && migrated.assistantMessages == 4 && migrated.totalMessages == 7,
+                       "Legacy counters without a first-visit date were not migrated")
+        }
         print("All \(count) AssistantChatArchive suites passed; actual SQLite backend and explicit legacy migration fixtures only.")
     }
 }

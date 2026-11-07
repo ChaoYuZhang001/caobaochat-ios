@@ -373,6 +373,9 @@ private struct ChatFixtureTaskStore: Encodable {
             try await expect(answer.content == "Hello 世界" && answer.generationId == "fixture-generation", "Actual stream text and metadata must reach the view model")
             try await expect(answer.usage?.inputTokens == 17 && answer.usage?.outputTokens == 5 && answer.model == "fixture-model", "Actual usage/model must survive")
             try await expect(!(answer.requestId ?? "").isEmpty, "A generation must retain its request identity")
+            let usage = AssistantUsageStatsStore(defaults: h.defaults).snapshot(ownerId: h.owner)
+            try await expect(usage.userMessages == 1 && usage.assistantMessages == 1 && usage.totalMessages == 2,
+                             "A completed turn must update owner-scoped usage statistics")
             let saved = try h.archive.load(userId: h.owner)
             try await expect(saved.first?.messages == h.vm.messages, "Completed messages must be written to the injected archive")
             try await expect(!h.archive.isPrepared(userId: "ignored-untrusted-caller-id"), "Caller userId must never select a different archive owner")

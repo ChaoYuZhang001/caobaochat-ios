@@ -7,7 +7,7 @@
 | 功能 | 结果 | 证据 | 备注 |
 | --- | --- | --- | --- |
 | 本地核心回归 | 通过 | `Scripts/test-assistant.sh`，`.build/verification/summary.json` | 18 套、528 个独立组、`exitCode: 0`；使用隔离文件、mock 网络和 fake 通知，不代表生产联调 |
-| 代码卫生 | 通过 | `git diff --check` | 当前 `main` 工作树干净 |
+| 代码卫生 | 通过 | `git diff --check` | 本轮修复、测试和构建完成后检查通过；提交后再确认工作树和 commit |
 | CN 平台对话 | 通过 | iPhone 17 Pro Max Simulator，CN 模式 | 资金池修复后消息成功返回；额度从 `8/8` 变为 `7/8`；无 `INTERNAL_ERROR`/`UPSTREAM_UNAVAILABLE` |
 | 任务基础 CRUD | 通过 | iPhone Simulator | 创建 `QA task`、完成/重开入口和编辑/删除入口可用；测试任务暂保留，未确认不可逆删除 |
 | 四 Tab 导航 | 通过 | `ContentView.swift` + Simulator | 首页、对话、任务、我的可进入 |
@@ -16,8 +16,8 @@
 
 | 功能 | 当前状态 | 责任归类 | 原因/下一步 |
 | --- | --- | --- | --- |
-| 我的收藏 | 失败 | **服务端优先，客户端复核** | `FavoritesView` 请求 `/favorites` 返回 HTTP 404。服务端需确认路由和认证契约；若服务端实际路径不同，再改 `APIService.swift`。 |
-| 数据统计 | 失败 | **客户端** | 成功发送消息后统计页仍显示累计消息 0。`StatsView.loadStats()` 读取 `caobao_*_messages`，但代码没有写入这些键；需统一到 `AppState.userStats` 或补齐统计写入并加回归测试。 |
+| 我的收藏 | 失败 | **功能去处待定；服务端优先** | 生产 `GET /api/favorites` 和 `GET /api/sync/favorites` 均返回 HTTP 404；v2 契约也没有收藏接口，服务端代码中未找到对应路由。应二选一：补 owner-scoped v2 收藏 API，或隐藏在线“我的收藏”并保留 Quote 页本地收藏。 |
+| 数据统计 | 通过 | **客户端** | 新增 owner-scoped `AssistantUsageStatsStore`；仅成功完成的非空回答计数，取消/失败不计数，重试按 message ID 幂等，账号隔离。真实 Simulator 发送后详细页显示累计发送 1、我的消息 1、AI 回复 1、今日/周/月各 2；安装最新构建后“我的”概览同步显示对话 1、使用 1 天、连续 1 天。 |
 | 设置中的模型与首页模型 | 待确认 | **客户端/产品契约** | 设置选择 `DeepSeek Chat` 后首页仍显示区域默认 `DeepSeek-V4.1-flash`。需明确“设置模型”是否应覆盖平台区域默认；若应联动，修正状态源和展示。 |
 | Apple 登录全生命周期 | 未验收 | 服务端 + 系统环境 | 仅有模拟器已有登录状态和拦截式协议测试；未完成真实授权、刷新、退出、撤销及真实 Bearer 验证。 |
 | StoreKit 订阅 | 未验收 | 服务端 + App Store Connect + 客户端 | 当前代码有 StoreKit 流程，但未配置/验证真实商品、购买、恢复、退款、撤销和额度账本闭环；订阅页可能显示不可用。 |
@@ -39,8 +39,7 @@
 
 ## 下一轮验收顺序
 
-1. 服务端先修 `/favorites` 404，并提供实际请求/响应契约；客户端复测收藏加载和删除。
-2. 客户端修复统计数据源不一致，补一条“发送成功后统计非零”的回归测试。
-3. 明确模型偏好优先级并修复设置/首页展示一致性。
-4. 在真实账号和真实设备上验收 Apple、StoreKit、APNs、图片/语音、双设备同步、账号删除和 TestFlight。
-5. 再实现主动更新缺失交互、自定义角色页面和 AI 群聊协议/编排。
+1. 先决定收藏功能去处：服务端补 owner-scoped v2 API（含认证、删除墓碑和同步），或客户端移除在线收藏入口并明确本地收藏范围；完成后再复测。
+2. 明确模型偏好优先级并修复设置/首页展示一致性。
+3. 在真实账号和真实设备上验收 Apple、StoreKit、APNs、图片/语音、双设备同步、账号删除和 TestFlight。
+4. 再实现主动更新缺失交互、自定义角色页面和 AI 群聊协议/编排。

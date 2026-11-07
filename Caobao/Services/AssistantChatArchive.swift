@@ -1166,3 +1166,175 @@ final class AssistantChatArchive: @unchecked Sendable {
     func exportSnapshotAsync(userId: String) async throws -> AssistantArchiveExportSnapshot { try await background { try $0.exportSnapshot(userId: userId) } }
     func diagnostics(userId: String) throws -> AssistantArchiveDiagnostics { try perform { let db = try database(userId); return AssistantArchiveDiagnostics(bodyDecodes: db.bodyDecodes, headerQueries: db.headerQueries, generation: try db.rows("SELECT list_generation FROM state").first?.first?.int64 ?? 0) } }
 }
+
+// MARK: - Local usage statistics
+
+/// Owner-scoped local counters used by the in-app statistics page.
+///
+/// These counters intentionally record only a completed model turn. A pending,
+/// cancelled or failed request must not make the usage page claim that a
+/// message was sent. Message IDs make retries and regeneration idempotent.
+struct AssistantUsageStats: Codable, Equatable, Sendable {
+    var userMessages = 0
+    var assistantMessages = 0
+    var todayMessages = 0
+    var weekMessages = 0
+    var monthMessages = 0
+    var firstVisit: Date?
+    var activeDayKeys: [String] = []
+    var recordedUserMessageIds: [String] = []
+    var recordedAssistantMessageIds: [String] = []
+
+    var totalMessages: Int { userMessages + assistantMessages }
+    var usageDays: Int { max(1, activeDayKeys.count) }
+    var avgMessagesPerDay: Int { userMessages / usageDays }
+
+    var currentStreak: Int {
+        let calendar = Calendar.current
+        var cursor = calendar.startOfDay(for: Date())
+        var count = 0
+        let days = Set(activeDayKeys)
+        while days.contains(Self.dayKey(cursor, calendar: calendar)) {
+            count += 1
+            guard let previous = calendar.date(byAdding: .day, value: -1, to: cursor) else { break }
+            cursor = previous
+        }
+        return count
+    }
+
+    var longestStreak: Int {
+        let calendar = Calendar.current
+        let dates = activeDayKeys.compactMap { Self.date(from: $0, calendar: calendar) }.sorted()
+        guard !dates.isEmpty else { return 0 }
+        var longest = 1
+        var running = 1
+        for index in 1..<dates.count {
+            let gap = calendar.dateComponents([.day], from: dates[index - 1], to: dates[index]).day ?? 0
+            if gap == 1 {
+                running += 1
+                longest = max(longest, running)
+            } else if gap > 1 {
+                running = 1
+            }
+        }
+        return longest
+    }
+
+    fileprivate static func dayKey(_ date: Date, calendar: Calendar = .current) -> String {
+        let components = calendar.dateComponents([.year, .month, .day], from: date)
+        return String(format: "%04d-%02d-%02d", components.year ?? 0, components.month ?? 0, components.day ?? 0)
+    }
+
+    fileprivate static func date(from key: String, calendar: Calendar = .current) -> Date? {
+        let parts = key.split(separator: "-").compactMap { Int($0) }
+        guard parts.count == 3 else { return nil }
+        return calendar.date(from: DateComponents(year: parts[0], month: parts[1], day: parts[2]))
+    }
+}
+
+/// A small, owner-isolated store for local usage counters. It is deliberately
+/// independent from the server entitlement ledger: deleting or switching an
+/// account must never expose another owner's local counters.
+final class AssistantUsageStatsStore: @unchecked Sendable {
+    static let shared = AssistantUsageStatsStore()
+
+    private let defaults: UserDefaults
+    private static let storageLock = NSLock()
+    private let keyPrefix = "caobao.assistant."
+
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+    }
+
+    func snapshot(ownerId: String) -> AssistantUsageStats {
+        Self.storageLock.lock(); defer { Self.storageLock.unlock() }
+        return loadLocked(ownerId: normalizedOwner(ownerId))
+    }
+
+    @discardableResult
+    func recordCompletedTurn(ownerId: String, userMessageId: String, assistantMessageId: String,
+                             userTimestamp: Date, assistantTimestamp: Date = Date()) -> AssistantUsageStats {
+        Self.storageLock.lock(); defer { Self.storageLock.unlock() }
+        let owner = normalizedOwner(ownerId)
+        var stats = loadLocked(ownerId: owner)
+        let calendar = Calendar.current
+        let userID = userMessageId.trimmingCharacters(in: .whitespacesAndNewlines)
+        let assistantID = assistantMessageId.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if !userID.isEmpty, !stats.recordedUserMessageIds.contains(userID) {
+            stats.recordedUserMessageIds = boundedAppend(userID, to: stats.recordedUserMessageIds)
+            stats.userMessages += 1
+            stats.firstVisit = min(stats.firstVisit ?? userTimestamp, userTimestamp)
+            addDate(userTimestamp, to: &stats, calendar: calendar)
+        }
+        if !assistantID.isEmpty, !stats.recordedAssistantMessageIds.contains(assistantID) {
+            stats.recordedAssistantMessageIds = boundedAppend(assistantID, to: stats.recordedAssistantMessageIds)
+            stats.assistantMessages += 1
+            stats.firstVisit = min(stats.firstVisit ?? assistantTimestamp, assistantTimestamp)
+            addDate(assistantTimestamp, to: &stats, calendar: calendar)
+        }
+        saveLocked(stats, ownerId: owner)
+        return stats
+    }
+
+    private func normalizedOwner(_ ownerId: String) -> String {
+        ownerId.isEmpty ? "local-device" : ownerId
+    }
+
+    private func storageKey(ownerId: String) -> String {
+        keyPrefix + Data(ownerId.utf8).base64EncodedString() + ".usageStats.v1"
+    }
+
+    private func loadLocked(ownerId: String) -> AssistantUsageStats {
+        if let data = defaults.data(forKey: storageKey(ownerId: ownerId)),
+           let decoded = try? JSONDecoder().decode(AssistantUsageStats.self, from: data) {
+            return decoded
+        }
+        guard ownerId == "local-device" else { return AssistantUsageStats() }
+        // Preserve the old unscoped counters once for the local workspace.
+        let legacyTotal = defaults.integer(forKey: "caobao_total_messages")
+        let legacyUser = defaults.integer(forKey: "caobao_user_messages")
+        guard legacyTotal > 0 || legacyUser > 0 else {
+            return AssistantUsageStats()
+        }
+        var migrated = AssistantUsageStats()
+        migrated.userMessages = max(0, legacyUser)
+        migrated.assistantMessages = max(0, legacyTotal - migrated.userMessages)
+        migrated.firstVisit = defaults.object(forKey: "caobao_first_visit") as? Date
+        migrated.todayMessages = max(0, defaults.integer(forKey: "caobao_today_messages"))
+        migrated.weekMessages = max(0, defaults.integer(forKey: "caobao_week_messages"))
+        migrated.monthMessages = max(0, defaults.integer(forKey: "caobao_month_messages"))
+        if let firstVisit = migrated.firstVisit {
+            migrated.activeDayKeys = [AssistantUsageStats.dayKey(firstVisit)]
+        }
+        saveLocked(migrated, ownerId: ownerId)
+        return migrated
+    }
+
+    private func saveLocked(_ stats: AssistantUsageStats, ownerId: String) {
+        guard let data = try? JSONEncoder().encode(stats) else { return }
+        defaults.set(data, forKey: storageKey(ownerId: ownerId))
+    }
+
+    private func boundedAppend(_ value: String, to values: [String]) -> [String] {
+        let maxCount = 512
+        var result = values + [value]
+        if result.count > maxCount { result.removeFirst(result.count - maxCount) }
+        return result
+    }
+
+    private func addDate(_ date: Date, to stats: inout AssistantUsageStats, calendar: Calendar) {
+        let key = AssistantUsageStats.dayKey(date, calendar: calendar)
+        if !stats.activeDayKeys.contains(key) {
+            stats.activeDayKeys = boundedAppend(key, to: stats.activeDayKeys)
+        }
+        let now = Date()
+        if calendar.isDate(date, inSameDayAs: now) { stats.todayMessages += 1 }
+        if let weekStart = calendar.dateInterval(of: .weekOfYear, for: now), weekStart.contains(date) {
+            stats.weekMessages += 1
+        }
+        if let monthStart = calendar.dateInterval(of: .month, for: now), monthStart.contains(date) {
+            stats.monthMessages += 1
+        }
+    }
+}

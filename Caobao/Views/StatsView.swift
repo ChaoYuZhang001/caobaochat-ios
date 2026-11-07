@@ -327,34 +327,19 @@ struct StatsView: View {
     }
     
     private func loadStats() {
-        let defaults = UserDefaults.standard
-        
-        // 从 UserDefaults 加载统计数据
-        let totalMessages = defaults.integer(forKey: "caobao_total_messages")
-        let userMessages = defaults.integer(forKey: "caobao_user_messages")
-        
-        // 计算使用天数
-        var usageDays = 1
-        if let firstVisit = defaults.object(forKey: "caobao_first_visit") as? Date {
-            usageDays = Calendar.current.dateComponents([.day], from: firstVisit, to: Date()).day ?? 1 + 1
-        }
-        
-        // 获取今日消息数
-        let todayMessages = defaults.integer(forKey: "caobao_today_messages")
-        let weekMessages = defaults.integer(forKey: "caobao_week_messages")
-        let monthMessages = defaults.integer(forKey: "caobao_month_messages")
-        
+        let ownerId = AuthService.shared.user?.id ?? "local-device"
+        let usage = AssistantUsageStatsStore.shared.snapshot(ownerId: ownerId)
         stats = StatsData(
-            totalMessages: totalMessages,
-            userMessages: userMessages,
-            aiMessages: totalMessages - userMessages,
-            usageDays: usageDays,
-            todayMessages: todayMessages,
-            weekMessages: weekMessages,
-            monthMessages: monthMessages,
-            avgMessagesPerDay: usageDays > 0 ? userMessages / usageDays : 0,
-            longestStreak: usageDays,
-            currentStreak: usageDays
+            totalMessages: usage.totalMessages,
+            userMessages: usage.userMessages,
+            aiMessages: usage.assistantMessages,
+            usageDays: usage.usageDays,
+            todayMessages: usage.todayMessages,
+            weekMessages: usage.weekMessages,
+            monthMessages: usage.monthMessages,
+            avgMessagesPerDay: usage.avgMessagesPerDay,
+            longestStreak: usage.longestStreak,
+            currentStreak: usage.currentStreak
         )
         
         isLoading = false
