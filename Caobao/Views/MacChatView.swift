@@ -1,10 +1,12 @@
 #if os(macOS)
 import SwiftUI
+import AppKit
 
 /// Lightweight macOS chat surface backed by the shared archive/view model.
 /// ContentView.swift contains the richer iOS-only ChatView and is not part of
 /// the macOS target, so this view keeps the desktop target self-contained.
 struct MacChatView: View {
+    @EnvironmentObject private var appState: AppState
     @ObservedObject var chatViewModel: ChatViewModel
     let selectedConversationId: String?
     @FocusState private var inputFocused: Bool
@@ -124,27 +126,43 @@ struct MacChatView: View {
     }
 
     private func messageBubble(_ message: ChatMessage) -> some View {
-        HStack(alignment: .bottom, spacing: 6) {
-            Text(message.content.isEmpty ? "…" : message.content)
-                .textSelection(.enabled)
-            if message.role == .assistant, !message.content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        VStack(alignment: message.role == .user ? .trailing : .leading, spacing: 6) {
+            if let images = message.images, !images.isEmpty {
+                MacAssistantImagesView(images: images)
+            }
+            MessageBubble(
+                message: message,
+                userSettings: appState.userSettings,
+                autoPlayAudio: false,
+                allowsMutatingActions: false,
+                allowsReporting: false,
+                allowsRegeneration: false,
+                allowsRemoteMedia: false,
+                onCopy: { copy(message.content) }
+            )
+            if message.role == .assistant,
+               !message.content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 Button {
                     if speech.isSpeaking { speech.stopSpeaking() }
                     else { speech.speak(text: message.content, localeIdentifier: chatViewModel.preferredLocaleIdentifier) }
                 } label: {
-                    Image(systemName: speech.isSpeaking ? "stop.fill" : "speaker.wave.2")
+                    Label(speech.isSpeaking ? "停止朗读" : "朗读", systemImage: speech.isSpeaking ? "stop.fill" : "speaker.wave.2")
                         .font(.caption)
                 }
                 .buttonStyle(.borderless)
-                .help(speech.isSpeaking ? "停止朗读" : "朗读")
-                .accessibilityLabel(speech.isSpeaking ? "停止朗读" : "朗读")
                 .disabled(speech.isRecording || speech.isRequestingPermission)
             }
+            if let proposal = message.taskProposal {
+                MacTaskProposalSummary(proposal: proposal)
+            }
         }
-        .padding(12)
-        .background(message.role == .user ? Color.accentColor.opacity(0.15) : Color.caobaoGroupedBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
         .frame(maxWidth: 620, alignment: message.role == .user ? .trailing : .leading)
+    }
+
+    private func copy(_ value: String) {
+        guard !value.isEmpty else { return }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(value, forType: .string)
     }
 
     private func send() {
@@ -159,6 +177,59 @@ struct MacChatView: View {
               id != chatViewModel.conversationId,
               chatViewModel.archiveIsReady else { return }
         _ = await chatViewModel.requestOpenConversation(id: id, ownerId: ownerId)
+    }
+}
+
+private struct MacTaskProposalSummary: View {
+    let proposal: AssistantTaskProposal
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Label("待办提案", systemImage: "checklist")
+                .font(.headline)
+            Text(proposal.arguments.title)
+                .font(.subheadline.weight(.semibold))
+            if !proposal.arguments.notes.isEmpty {
+                Text(proposal.arguments.notes)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
+            }
+            if let dueAt = proposal.arguments.dueAt {
+                Text("截止：\(dueAt)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Text("请在任务页确认、编辑或拒绝此提案。")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.orange.opacity(0.10))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("待办提案：\(proposal.arguments.title)")
+    }
+}
+
+private struct MacAssistantImagesView: View {
+    let images: [AssistantImage]
+
+    var body: some View {
+        HStack(spacing: 8) {
+            ForEach(images) { image in
+                if let data = image.data, let value = NSImage(data: data) {
+                    Image(nsImage: value)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 96, height: 96)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+            }
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("已附加 \(images.count) 张图片")
     }
 }
 #endif
