@@ -46,6 +46,10 @@
 
 2026-11-08 二级图片分析复核：`AnalyzeView` 仍调用旧 `APIService.analyzeImage`，请求 `/api/analyze`，未携带 Bearer、owner 或额度协议；现代聊天图片附件走 Assistant v2，两者不能混为一谈。归类为客户端 + 服务端协议未验收的二级功能，后续迁移到 Assistant v2 或补齐旧接口契约。
 
+2026-11-08 二级旧工具契约复核：运势、金句、昵称、吐槽、决策、评分、早晚报和旧图片分析仍调用 `/api/caobao/*`、`/api/report/*` 或 `/api/analyze`；当前 `feat/caobao-server-v2` 路由源码只挂载 `/api/v2` 助理契约，未找到这些旧路径。它们继续作为二级/兼容入口，不计入核心完成；若保留，服务端需明确兼容路由，否则客户端应迁移或下线入口。
+
+2026-11-08 冷启动 UI smoke：将最新 iOS Simulator 包安装到已启动的 iPhone 17 Pro Max，启动后截图显示首页主动更新、任务、主 CTA、额度卡和四个一级 Tab，2 分钟日志无 Caobao 崩溃记录。该证据只覆盖 Simulator 冷启动和首屏可见性，不替代真实设备权限、签名和网络验收。
+
 签名门禁记录：项目的 iOS Debug/Release `DEVELOPMENT_TEAM` 仍为空，`security find-identity -v -p codesigning` 返回 `0 valid identities found`；因此 Apple Sign In、APNs 和正式 archive/TestFlight 不能在当前环境完成。归类为发布签名环境阻塞，不写入猜测的 Team ID 或证书信息。
 
 服务端需要处理的接口、幂等、owner 隔离和生产门禁见 [SERVER_ACCEPTANCE_REQUIREMENTS_2026-11-07.md](SERVER_ACCEPTANCE_REQUIREMENTS_2026-11-07.md)。
