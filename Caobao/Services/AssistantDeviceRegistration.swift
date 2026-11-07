@@ -103,6 +103,46 @@ final class AssistantDeviceRegistrationClient {
         }
     }
 
+    /// Disables one owner-scoped push target. This is intentionally best-effort
+    /// at the call site so account logout never waits for a network response.
+    func unregister(deviceId: String, accessToken: String) async throws {
+        try Task.checkCancellation()
+        guard maximumResponseBytes > 0,
+              baseURL.scheme?.lowercased() == "https",
+              let host = baseURL.host, !host.isEmpty,
+              baseURL.user == nil, baseURL.password == nil,
+              baseURL.query == nil, baseURL.fragment == nil else {
+            throw AssistantDeviceRegistrationError.invalidConfiguration
+        }
+        guard validField(deviceId, maximum: 256), validToken(accessToken) else {
+            throw AssistantDeviceRegistrationError.invalidInput
+        }
+        let url = baseURL.appendingPathComponent("devices").appendingPathComponent(deviceId)
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+
+        do {
+            let (data, response) = try await session.data(for: request)
+            try Task.checkCancellation()
+            guard let http = response as? HTTPURLResponse else { throw AssistantDeviceRegistrationError.invalidResponse }
+            guard (200..<300).contains(http.statusCode) else { throw AssistantDeviceRegistrationError.httpStatus(http.statusCode) }
+            guard data.count <= maximumResponseBytes else { throw AssistantDeviceRegistrationError.responseTooLarge }
+            guard let value = try? JSONDecoder().decode(AssistantDeviceRegistrationResponse.self, from: data),
+                  value.status == "unregistered" else { throw AssistantDeviceRegistrationError.invalidResponse }
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch let error as URLError where error.code == .cancelled {
+            throw CancellationError()
+        } catch let error as AssistantDeviceRegistrationError {
+            throw error
+        } catch {
+            if Task.isCancelled { throw CancellationError() }
+            throw AssistantDeviceRegistrationError.networkUnavailable
+        }
+    }
+
     private func validField(_ value: String, maximum: Int) -> Bool {
         !value.isEmpty && value.utf8.count <= maximum
             && !value.unicodeScalars.contains(where: { CharacterSet.controlCharacters.contains($0) })
@@ -147,6 +187,8 @@ final class AssistantRemoteNotificationCoordinator {
     private let client = AssistantDeviceRegistrationClient(baseURL: APIConfig.assistantBaseURL)
     private var tokenHex: String?
     private var registrationTask: Task<Void, Never>?
+    private var deviceUnregistrationTask: Task<Void, Never>?
+    private var deviceUnregistrationOperation: UUID?
     private var generation = UUID()
     private let deviceKeychainAccount = "assistant-apns-device-id"
 
@@ -158,9 +200,29 @@ final class AssistantRemoteNotificationCoordinator {
 
     func appDidBecomeActive() { scheduleRegistration() }
 
-    func invalidate() {
+    func invalidate(accessToken: String? = nil) {
         generation = UUID()
         registrationTask?.cancel(); registrationTask = nil
+        guard let accessToken, let deviceId = stableDeviceId() else { return }
+        let operation = UUID()
+        deviceUnregistrationOperation = operation
+        deviceUnregistrationTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            defer {
+                if self.deviceUnregistrationOperation == operation {
+                    self.deviceUnregistrationTask = nil
+                    self.deviceUnregistrationOperation = nil
+                }
+            }
+            do {
+                try await self.client.unregister(deviceId: deviceId, accessToken: accessToken)
+            } catch is CancellationError {
+                return
+            } catch {
+                // Logout must complete even when the old owner's device cannot
+                // be revoked. The server retries/cleanup path remains authoritative.
+            }
+        }
     }
 
     private func scheduleRegistration() {

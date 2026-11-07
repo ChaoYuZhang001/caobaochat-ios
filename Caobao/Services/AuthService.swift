@@ -174,6 +174,9 @@ final class AuthService: ObservableObject {
         let previous = token
         let owner = user?.id ?? "local-device"
         identityEpoch = UUID(); cancelAppleRequest()
+#if os(iOS)
+        AssistantRemoteNotificationCoordinator.shared.invalidate(accessToken: previous)
+#endif
         refreshTask?.cancel(); refreshTask = nil; refreshId = nil; isRefreshingSession = false
         UserDefaults.standard.set(true, forKey: "assistant.local-signout-pending")
         KeychainStore.delete(account: secureAccount)
