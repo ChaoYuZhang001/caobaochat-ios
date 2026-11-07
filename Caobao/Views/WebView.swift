@@ -18,6 +18,13 @@ import AppKit
 struct WebView: NSUIViewRepresentable {
     let url: URL
     let onLoadComplete: (() -> Void)?
+    let onLoadFailure: (() -> Void)?
+
+    init(url: URL, onLoadComplete: (() -> Void)? = nil, onLoadFailure: (() -> Void)? = nil) {
+        self.url = url
+        self.onLoadComplete = onLoadComplete
+        self.onLoadFailure = onLoadFailure
+    }
     
     #if os(iOS)
     func makeUIView(context: Context) -> WKWebView {
@@ -53,18 +60,28 @@ struct WebView: NSUIViewRepresentable {
     #endif
     
     func makeCoordinator() -> Coordinator {
-        Coordinator(onLoadComplete: onLoadComplete)
+        Coordinator(onLoadComplete: onLoadComplete, onLoadFailure: onLoadFailure)
     }
     
     class Coordinator: NSObject, WKNavigationDelegate {
         let onLoadComplete: (() -> Void)?
+        let onLoadFailure: (() -> Void)?
         
-        init(onLoadComplete: (() -> Void)?) {
+        init(onLoadComplete: (() -> Void)?, onLoadFailure: (() -> Void)?) {
             self.onLoadComplete = onLoadComplete
+            self.onLoadFailure = onLoadFailure
         }
         
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             onLoadComplete?()
+        }
+
+        func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+            onLoadFailure?()
+        }
+
+        func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+            onLoadFailure?()
         }
     }
 }

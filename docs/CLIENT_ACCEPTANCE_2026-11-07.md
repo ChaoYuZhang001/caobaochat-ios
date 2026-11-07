@@ -31,6 +31,7 @@
 | 冷启动通知路由 | 客户端修复通过；真实锁屏点击未验收 | `Caobao/Services/AssistantNotificationRouter.swift`、`AssistantWorkspaceViews.swift`；签名 iOS Simulator build | 通知回调先保留 owner-bound route，等待认证恢复后再校验；任务页在登录账号云同步失败时保留待处理任务 ID，只有同步成功后才把缺失任务判为删除，避免临时网络故障丢失深链。真实 APNs 锁屏点击和生产深链仍需验收。 |
 | 客户端协议与隔离回归 | 通过 | 多个 `Scripts/test-assistant-*.sh` | Apple 身份 17 套、权益 14 套、设备注册、媒体 12 套、记忆同步 3 套、会话同步均通过；使用 mock HTTP/隔离数据，不替代真实设备验收 |
 | macOS 图片/音视频表面 | 客户端构建通过；真实媒体未验收 | `AnalyzeView.swift`、`MessageBubble.swift`、`AudioPlayerView.swift`；iOS/macOS Debug build | macOS 图片分析现在接入文件选择器，视频和音频使用真实播放器；真实 URL、权限、网络失败和大文件仍需设备验收。远程媒体默认仍关闭，避免把不可信回复中的 URL 自动拉取。 |
+| 法律文档离线降级 | 客户端修复通过；真实断网 UI 未验收 | `LegalView.swift`、`WebView.swift`；iOS/macOS Debug build | WebView 现在回调加载失败，法律页在协议、隐私、未成年人保护和 AI 声明页面显示本地内容，并提供重新加载入口；此前 `webURL` 永远非空且失败回调缺失，离线文案不可达。真实断网、服务器 5xx 和文案版本仍需设备验收。 |
 
 ## 失败或未完成项
 
@@ -52,6 +53,8 @@
 | macOS/iPad 信息架构 | macOS 核心导航、历史和“我的”已补齐；iPad 模拟器布局通过，真机和辅助功能仍未验收 | **客户端 UI** | macOS 侧栏现在保留首页、对话、任务、历史、我的和工作区，旧工具统一进入“工具模板”，最近对话常驻侧栏；历史页支持本地搜索并回到对话，个人页显示账号/统计并提供记忆、订阅和设置入口。最新 iPad Pro 11-inch (M5) Simulator 签名包已启动并显示侧栏、首页、主动更新、任务、工作区、订阅、设置、主 CTA 和四个快速模板；截图 `.build/verification/ipad-acceptance-20261107.png`。真实 iPad 触控、VoiceOver、Dynamic Type、订阅和账号闭环仍需验收。 |
 | iPhone Duo、真机/TestFlight | 未验收 | 发布环境 | 当前普通 Simulator 不能证明 Duo 专用设备、正式签名归档、TestFlight 安装和系统级行为。 |
 | macOS 详细统计/关于/官方页 | 部分缺失 | **客户端 UI** | macOS 当前个人页只有摘要统计，详细统计、关于和官方页没有等同 iOS 的完整入口；属于 macOS parity 待补，不影响 iPhone 首发核心闭环。 |
+| macOS 对话图片/任务提案 | 未完成 | **客户端 macOS parity** | `MacChatView` 只有文本输入、麦克风、发送和停止；没有 iOS 的 PhotosPicker、多图预处理、任务提案接受/拒绝/继续操作。macOS 需要补齐后再做真实交互验收。 |
+| 旧设置状态 | 未完成 | **客户端状态整合** | 旧 `SettingsView` 的 `voiceEnabled` 没有消费者，`toxicLevel` 与 owner-scoped `userSettings` 并存，可能导致账号切换后显示和行为分裂；应迁移到统一助理设置或删除旧开关。 |
 | 游客升级 | 死链 | **客户端产品/认证** | `AuthService` 的 `canUpgrade` 永远为 false，游客升级区和升级弹窗无法到达；需要重新接通游客转 Apple 账号，或删除误导入口。 |
 | 反馈提交 | 未验收 | **客户端 + 服务端协议** | `FeedbackView` 仍调用旧 `/feedback` 且未带 Bearer；当前只能证明表单可达，不能证明生产提交成功。应迁移到 owner-scoped 认证接口或明确支持匿名反馈后再验收。 |
 | 远程媒体与举报 | 默认关闭/未验收 | **客户端接线 + 服务端协议** | `MessageBubble` 的举报和远程音视频路径由 `allowsReporting/allowsRemoteMedia` 控制，现有聊天/历史调用未显式开启；媒体默认关闭是安全策略，举报若保留需补认证接口和真实提交验收。 |
