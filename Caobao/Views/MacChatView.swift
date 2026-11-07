@@ -373,7 +373,7 @@ struct MacChatView: View {
         _ = await chatViewModel.requestOpenConversation(id: id, ownerId: ownerId)
     }
 
-    private static func readSecurityScopedData(from url: URL) throws -> Data {
+    nonisolated private static func readSecurityScopedData(from url: URL) throws -> Data {
         let didStartAccessing = url.startAccessingSecurityScopedResource()
         defer {
             if didStartAccessing {
