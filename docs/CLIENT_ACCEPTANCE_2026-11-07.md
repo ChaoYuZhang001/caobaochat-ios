@@ -65,6 +65,7 @@
 - **watchOS**：当前工程有独立 watchOS target，但仍使用旧的 `/api` 运势/早报/吐槽/决策接口，没有 Bearer、owner 隔离或云同步；按产品计划暂不纳入首发。若恢复该范围，责任归类为客户端 watchOS 重做 + 服务端认证兼容，不能把现有 target 当作已完成。
 - **WidgetKit**：`CaobaoWidgets/CaobaoWidget.swift` 有实现文件，但工程没有 Widget target 引用，当前不可构建；若需要桌面/锁屏小组件，责任归类为客户端工程接入、签名和深链验收。
 - **Optimized/**：其中的 Dynamic Island、Siri、推送管理、分享和图片上传等 Swift 文件没有加入 Xcode target；它们是未挂载代码，不能计入已完成功能。产品需要时应逐项接入并补真实系统验收，否则作为待清理的死代码。
+- **HapticManager**：虽然已加入 iOS target，但全仓没有调用点；当前不能把触觉反馈计入已完成能力。需要时接入消息发送、任务完成等明确交互，否则清理死代码。
 - **旧 APIService 方法**：旧收藏、旧聊天流、旧设置和旧云同步方法目前只有定义，没有核心页面调用；当前产品以 `Assistant*` v2 客户端为准。旧接口应标记兼容范围或删除，不能用静态方法存在证明功能完成。
 - **macOS 设置差异**：当前 `AssistantMacPreferencesView` 只覆盖语言、风格和服务区域；语音、通知/安静时段、主动模式、BYOK 和数据管理仍通过工作区入口分散提供。若要求与 iOS 完全同构，归类为客户端补齐；否则保留平台化设置并在产品说明中明确范围。
 - **官方页标签**：已修复“开发中”标签条件错误，改为显式 `isComingSoon`，并通过 iOS/macOS 构建验证。
