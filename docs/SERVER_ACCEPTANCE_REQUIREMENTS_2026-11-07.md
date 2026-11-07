@@ -66,6 +66,8 @@
 
 需要 App Store Connect、服务端和真机联合验收：
 
+- 生产 `GET /api/v2/subscriptions/apple/config` 必须在真实 Bearer 下返回当前账号的 `userId`、稳定 `appAccountToken` 和非空 `productIds`；客户端不硬编码 Product ID，而是使用该响应调用 StoreKit；
+- 每个 Product ID 必须同时存在于 App Store Connect 和服务端 `products` 配置，字段至少包括 `productId`、`planId`、`includedQuota`、`periodDays`；当前仓库示例为 `com.caobao.monthly`（30 天）和 `com.caobao.yearly`（365 天），正式值以生产配置为准；
 - 真实 Product ID、订阅组、月付/年付周期和价格配置；
 - purchase、restore、退款、撤销、grace period、过期和重复通知；
 - Apple transaction/JWS 验证、原始交易绑定账号、幂等处理；
