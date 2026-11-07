@@ -124,6 +124,8 @@
 
 2026-11-08 旧工具入口收口：`FeaturesView` 不再把运势、图片分析、金句等旧接口页面标为“核心功能”，改为“工具模板/对话工具”二级区域，并明确提示旧服务端接口正在迁移；首页、对话、任务和我的四个核心入口不受影响。旧 API 仍未计入核心完成，服务端若不提供兼容协议，后续应继续迁移或下线对应页面。收口后 iOS/macOS Debug 构建分别明确返回 `BUILD SUCCEEDED`（`/tmp/caobao-legacy-tools-ios-20261108.log`、`/tmp/caobao-legacy-tools-macos-20261108.log`）；同一轮 `Scripts/test-assistant.sh` 命令退出 `0`，末尾为 168 个 ChatViewModel 套件通过（输出记录于 `/tmp/caobao-legacy-tools-regression-20261108.log`）。
 
+2026-11-08 旧工具请求阻断：iPhone `FeaturesView` 和 macOS `MacToolsView` 现在将已知旧接口卡片改为“暂未启用”按钮，点击只显示迁移说明，不再发起已知 404 请求；本机金句收藏仍可打开。改动后 iOS/macOS Debug 构建均明确返回 `BUILD SUCCEEDED`（`/tmp/caobao-legacy-tools-disabled-ios-20261108.log`、`/tmp/caobao-legacy-tools-disabled-macos-20261108.log`）。
+
 2026-11-08 自定义角色绑定专项审计：`AssistantMessageRequest`（`APIService.swift:1627-1670`）只有 `persona.level`，`ChatViewModel.prepare()`（`ChatViewModel.swift:1716-1725`）的平台请求和 BYOK 请求都没有 `characterId/version`；对话页也没有当前角色选择或会话绑定状态。角色 CRUD 通过不等于角色对话完成；此项归类为客户端 + 服务端新增功能，需先确定 `characterId`、版本/冲突和 memory scope 协议，再补客户端选择、持久化、请求字段和同步。
 
 2026-11-08 主动/任务状态写入专项审计：客户端主动运行只有 owner-scoped 本机 read/snooze，明确不宣称跨设备；没有服务端 read/snooze/dismiss/close-kind API。客户端暂停全部会发送 `expectedVersion` 并拒绝不递增响应，但 checkout 服务端 `PauseAllProactive` 只读取 `paused`，`SetTaskStatus` 也没有版本条件；云任务页面因此禁用已有云任务的本地 pause/cancel。归类为服务端契约/Worker 缺口，客户端暂不补无效或不安全的写入。

@@ -5,6 +5,8 @@ import SwiftUI
 
 struct FeaturesView: View {
     @EnvironmentObject var appState: AppState
+    @State private var unavailableToolTitle = ""
+    @State private var showingUnavailableTool = false
     
     // 旧工具只在“更多功能”二级入口保留；核心工作流在首页、对话和任务中完成。
     private let mainFeatures: [(icon: String, title: String, subtitle: String)] = [
@@ -89,9 +91,7 @@ struct FeaturesView: View {
                                 GridItem(.flexible()),
                             ], spacing: 12) {
                                 ForEach(moreFeatures, id: \.title) { feature in
-                                    NavigationLink {
-                                        destinationView(for: feature.title).assistantSidebarChild()
-                                    } label: {
+                                    Button { showUnavailableTool(feature.title) } label: {
                                         CaobaoFeatureCard(
                                             icon: feature.icon,
                                             title: feature.title,
@@ -101,6 +101,7 @@ struct FeaturesView: View {
                                         )
                                     }
                                     .buttonStyle(.plain)
+                                    .accessibilityHint("服务端接口待迁移")
                                 }
                             }
                         }
@@ -114,9 +115,7 @@ struct FeaturesView: View {
                             
                             VStack(spacing: 10) {
                                 ForEach(quickActions, id: \.title) { action in
-                                    NavigationLink {
-                                        destinationView(for: action.title).assistantSidebarChild()
-                                    } label: {
+                                    Button { showUnavailableTool(action.title) } label: {
                                         CaobaoQuickActionRow(
                                             icon: action.icon,
                                             title: action.title,
@@ -125,6 +124,7 @@ struct FeaturesView: View {
                                         )
                                     }
                                     .buttonStyle(.plain)
+                                    .accessibilityHint("服务端接口待迁移")
                                 }
                             }
                         }
@@ -134,6 +134,11 @@ struct FeaturesView: View {
             }
             .navigationTitle("更多功能")
             .assistantSidebarRoot()
+            .alert("功能暂未启用", isPresented: $showingUnavailableTool) {
+                Button("知道了", role: .cancel) { }
+            } message: {
+                Text(verbatim: "\(unavailableToolTitle) 当前调用的旧接口尚未在生产服务端提供，请使用对话工作区。")
+            }
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
@@ -141,6 +146,11 @@ struct FeaturesView: View {
     }
     
     // MARK: - Helper
+    private func showUnavailableTool(_ title: String) {
+        unavailableToolTitle = title
+        showingUnavailableTool = true
+    }
+
     @ViewBuilder
     private func destinationView(for title: String) -> some View {
         switch title {

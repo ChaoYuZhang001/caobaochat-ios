@@ -601,6 +601,15 @@ enum MacFeature: String, CaseIterable, Identifiable, Hashable {
     
     var id: String { rawValue }
     var localizedTitle: LocalizedStringKey { LocalizedStringKey(rawValue) }
+
+    var isLegacyUnavailable: Bool {
+        switch self {
+        case .analyze, .quote, .roast, .nickname, .rate, .decision, .morningReport, .eveningReport:
+            return true
+        default:
+            return false
+        }
+    }
     
     var icon: String {
         switch self {
@@ -775,6 +784,9 @@ struct MacFeatureRow: View {
 /// Secondary tool catalog for the desktop workspace. The tools remain
 /// available without occupying first-level sidebar space.
 struct MacToolsView: View {
+    @State private var unavailableToolTitle = ""
+    @State private var showingUnavailableTool = false
+
     private let tools: [MacFeature] = [
         .analyze, .quote, .roast, .nickname, .rate, .decision,
         .morningReport, .eveningReport, .favorites
@@ -784,7 +796,7 @@ struct MacToolsView: View {
         NavigationStack {
             List {
                 Section {
-                    Text("这些功能作为工具模板提供，不会打断首页、对话和任务工作流。")
+                    Text("这些功能作为工具模板提供，不会打断首页、对话和任务工作流。标记为待迁移的旧工具不会发起已知 404 请求；本机收藏仍可正常打开。")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                         .listRowBackground(Color.clear)
@@ -792,13 +804,29 @@ struct MacToolsView: View {
 
                 Section("工具模板") {
                     ForEach(tools, id: \.self) { feature in
-                        NavigationLink(value: feature) {
-                            MacFeatureRow(feature: feature, isSelected: false)
+                        if feature.isLegacyUnavailable {
+                            Button {
+                                unavailableToolTitle = feature.rawValue
+                                showingUnavailableTool = true
+                            } label: {
+                                MacFeatureRow(feature: feature, isSelected: false)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityHint("服务端接口待迁移")
+                        } else {
+                            NavigationLink(value: feature) {
+                                MacFeatureRow(feature: feature, isSelected: false)
+                            }
                         }
                     }
                 }
             }
             .navigationTitle("工具模板")
+            .alert("功能暂未启用", isPresented: $showingUnavailableTool) {
+                Button("知道了", role: .cancel) { }
+            } message: {
+                Text(verbatim: "\(unavailableToolTitle) 当前调用的旧接口尚未在生产服务端提供，请使用对话工作区。")
+            }
             .navigationDestination(for: MacFeature.self) { feature in
                 MacToolDestination(feature: feature)
             }
