@@ -300,7 +300,12 @@ struct AnalyzeView: View {
             #else
             .fileImporter(isPresented: $showingImagePicker, allowedContentTypes: [.image], allowsMultipleSelection: false) { result in
                 guard case .success(let urls) = result, let url = urls.first else { return }
-                selectedImage = NSImage(contentsOf: url)
+                let scoped = url.startAccessingSecurityScopedResource()
+                defer {
+                    if scoped { url.stopAccessingSecurityScopedResource() }
+                }
+                guard let data = try? Data(contentsOf: url), let image = NSImage(data: data) else { return }
+                selectedImage = image
             }
             #endif
         }
