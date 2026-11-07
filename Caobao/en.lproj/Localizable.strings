@@ -104,6 +104,12 @@
 "显示时区：%@" = "Time zone: %@";
 "显示边栏" = "Show sidebar";
 "暂停" = "Pause";
+"点赞" = "Like";
+"取消点赞" = "Unlike";
+"点踩" = "Dislike";
+"取消点踩" = "Remove dislike";
+"删除消息" = "Delete message";
+"播放" = "Play";
 "暂无任务" = "No tasks yet";
 "暂无已保存记忆" = "No saved memories";
 "暂时无法验证额度，请稍后重试" = "Unable to verify your balance. Please try again later.";
