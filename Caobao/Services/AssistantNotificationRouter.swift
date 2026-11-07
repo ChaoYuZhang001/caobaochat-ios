@@ -13,15 +13,28 @@ final class AssistantNotificationRouter: NSObject, UNUserNotificationCenterDeleg
     @MainActor private var pendingProactiveRun: (owner: String, id: String)?
 
     @MainActor func takePendingTask() -> String? {
-        defer { pendingTask = nil }
-        guard let pendingTask, pendingTask.owner == (AuthService.shared.user?.id ?? "local-device") else { return nil }
+        guard let pendingTask else { return nil }
+        let currentOwner = AuthService.shared.user?.id ?? "local-device"
+        guard pendingTask.owner == currentOwner else {
+            // During cold launch AuthService may still be restoring the
+            // session. Keep the payload until the authenticated owner is
+            // available; discard it only after a different signed-in owner
+            // is known, so one account cannot consume another's route.
+            if currentOwner != "local-device" { self.pendingTask = nil }
+            return nil
+        }
+        self.pendingTask = nil
         return pendingTask.id
     }
 
     @MainActor func takePendingProactiveRun() -> String? {
-        defer { pendingProactiveRun = nil }
-        guard let pendingProactiveRun,
-              pendingProactiveRun.owner == (AuthService.shared.user?.id ?? "local-device") else { return nil }
+        guard let pendingProactiveRun else { return nil }
+        let currentOwner = AuthService.shared.user?.id ?? "local-device"
+        guard pendingProactiveRun.owner == currentOwner else {
+            if currentOwner != "local-device" { self.pendingProactiveRun = nil }
+            return nil
+        }
+        self.pendingProactiveRun = nil
         return pendingProactiveRun.id
     }
 
@@ -45,7 +58,11 @@ final class AssistantNotificationRouter: NSObject, UNUserNotificationCenterDeleg
         let proactiveRun = values["proactiveRunId"] as? String
         Task { @MainActor in
             defer { completionHandler() }
-            guard let owner, !owner.isEmpty, owner == (AuthService.shared.user?.id ?? "local-device") else { return }
+            // Store the owner-bound route before checking the live session.
+            // On a cold launch authentication restoration can finish after
+            // this callback; takePendingTask/takePendingProactiveRun performs
+            // the owner check when the workspace is ready.
+            guard let owner, !owner.isEmpty else { return }
             if route == "task", let task, !task.isEmpty {
                 self.pendingTask = (owner, task)
                 NotificationCenter.default.post(name: Self.openTaskNotification, object: task)
