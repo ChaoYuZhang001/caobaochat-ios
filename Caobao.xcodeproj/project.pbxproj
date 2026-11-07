@@ -88,6 +88,8 @@
 		B1000097 /* AssistantMacPreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000097; };
 		B1000098 /* MacChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000098; };
 		B1000100 /* AssistantWorkspaceViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000052; };
+		B1000101 /* AccountSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000011; };
+		B1000102 /* AudioPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000014; };
 		
 		// watchOS Target (新增)
 		C1000001 /* CaobaoWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000001; };
@@ -778,6 +780,8 @@
 				B1000097 /* AssistantMacPreferencesView.swift in Sources */,
 				B1000098 /* MacChatView.swift in Sources */,
 				B1000100 /* AssistantWorkspaceViews.swift in Sources */,
+				B1000101 /* AccountSettingsView.swift in Sources */,
+				B1000102 /* AudioPlayerView.swift in Sources */,
 				B1000003 /* ChatViewModel.swift in Sources */,
 				B1000004 /* APIService.swift in Sources */,
 				B1000005 /* AuthService.swift in Sources */,
