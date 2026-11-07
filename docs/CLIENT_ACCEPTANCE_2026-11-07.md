@@ -62,6 +62,8 @@
 
 2026-11-08 二级工具无障碍补充：运势、早报、晚报的刷新按钮，金句收藏/取消收藏以及决策工具的添加/删除选项补齐 VoiceOver 标签和中英文资源；localization 19/19、iOS/macOS Debug 构建通过。旧工具的服务端 404/兼容协议问题仍按二级功能记录，不因无障碍修复而变成核心完成。
 
+2026-11-08 watchOS 目标复测：`xcodebuild -scheme Caobao-watchOS -sdk watchsimulator -configuration Debug CODE_SIGNING_ALLOWED=NO` 退出 `65`，错误仍为 `Multiple commands produce .../Caobao-watchOS.app/Caobao-watchOS`。watchOS 按首发范围排除；若重新纳入，归因于客户端 target 构建和旧接口迁移，不计入当前首发完成度。
+
 2026-11-08 生产健康复核补充：`GET https://ciyuan2api.com/api/status` curl 退出 `0`、HTTP `200`，响应头 `X-New-Api-Version: v1.0.0-rc.48+ciyuan.reconstructed.20261106.1`，JSON 中 `setup=true` 且 `server_address=https://ciyuan2api.com`。本轮没有重复发送模型请求，避免无必要扣减真实额度；部署后真实 CN `started → delta → usage → completed` 证据沿用本文件既有记录。
 
 签名门禁记录：项目的 iOS Debug/Release `DEVELOPMENT_TEAM` 仍为空，`security find-identity -v -p codesigning` 返回 `0 valid identities found`；因此 Apple Sign In、APNs 和正式 archive/TestFlight 不能在当前环境完成。归类为发布签名环境阻塞，不写入猜测的 Team ID 或证书信息。
