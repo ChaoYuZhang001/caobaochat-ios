@@ -24,6 +24,8 @@
 
 2026-11-08 客户端品牌文案修复：中文首页、登录页、关于页和本地任务通知统一显示“草包”，英文资源继续显示 CaoBao；提醒测试已改为校验当前本地化品牌和通用通知正文。完整回归与 iOS/macOS 构建均通过。
 
+2026-11-08 游客升级入口收口：客户端当前只支持 Apple 正式账号和 BYOK；`AuthService.canUpgrade` 固定为 `false`，但个人页仍保留一套永远不可达的升级 Sheet。已删除个人页升级入口、Sheet 及其 Apple 二次登录 UI，避免向用户展示无法完成的账号升级流程；旧升级 API 类型和方法暂留为兼容死代码，待服务端明确迁移方案后再清理。
+
 签名门禁记录：项目的 iOS Debug/Release `DEVELOPMENT_TEAM` 仍为空，`security find-identity -v -p codesigning` 返回 `0 valid identities found`；因此 Apple Sign In、APNs 和正式 archive/TestFlight 不能在当前环境完成。归类为发布签名环境阻塞，不写入猜测的 Team ID 或证书信息。
 
 服务端需要处理的接口、幂等、owner 隔离和生产门禁见 [SERVER_ACCEPTANCE_REQUIREMENTS_2026-11-07.md](SERVER_ACCEPTANCE_REQUIREMENTS_2026-11-07.md)。
@@ -76,7 +78,7 @@
 | 图片保存权限 | 客户端修复；真实设备未验收 | **客户端配置** | `UIImageWriteToSavedPhotosAlbum` 需要写入权限说明；已在 `Info.plist` 增加 `NSPhotoLibraryAddUsageDescription`。真实相册授权、保存失败和取消流程仍需设备验收。 |
 | Universal Links | 客户端路由已补；AASA 配置不合格、真机未验收 | **客户端 + 服务端发布配置** | `CaobaoApp` 现在解析 `https://caobao.chat/conversation/{id}`、`/task/{id}`、`/proactive/{runId}`，支持登录延迟消费、owner 绑定和 iOS/macOS 路由。2026-11-08 实测 AASA 返回 200，但 `appIDs` 为空且只声明旧的 `/chat/*`、`/morning` 等路径，未覆盖三类新路由；服务端需先修 AASA，再做正式 Associated Domains 签名和真机点击验收。 |
 | 旧设置状态 | 客户端已修复；真实账号切换未验收 | **客户端状态整合** | 旧 `SettingsView` 已移除无消费者的 `voiceEnabled` 开关，毒舌程度只读写 owner-scoped `appState.userSettings`，避免与旧 `UserDefaults` 键分裂。真实账号切换和服务端 persona 偏好仍需验收。 |
-| 游客升级 | 死链 | **客户端产品/认证** | `AuthService` 的 `canUpgrade` 永远为 false，游客升级区和升级弹窗无法到达；需要重新接通游客转 Apple 账号，或删除误导入口。 |
+| 游客升级 | 客户端入口已移除；旧协议未启用 | **客户端已收口；服务端协议待定** | 当前产品只创建 Apple 正式账号或 BYOK 本地账号；个人页不再展示永远不可达的游客升级区和升级 Sheet。`AuthService`/`APIService` 的旧升级方法仅保留为兼容死代码，不计入可用功能。若未来支持游客转 Apple，服务端需定义数据归属迁移、幂等和失败恢复协议后再重新接入。 |
 | 反馈提交 | 未验收 | **客户端 + 服务端协议** | `FeedbackView` 仍调用旧 `/feedback` 且未带 Bearer；当前只能证明表单可达，不能证明生产提交成功。应迁移到 owner-scoped 认证接口或明确支持匿名反馈后再验收。 |
 | 远程媒体与举报 | 默认关闭/未验收 | **客户端接线 + 服务端协议** | `MessageBubble` 的举报和远程音视频路径由 `allowsReporting/allowsRemoteMedia` 控制，现有聊天/历史调用未显式开启；媒体默认关闭是安全策略，举报若保留需补认证接口和真实提交验收。 |
 | 旧收藏/旧工具协议 | 二级兼容面未验收 | **客户端清理 + 服务端兼容** | `FavoritesView` 和 `FeaturesView` 仍有旧 `/api` 方法定义，但核心入口已转本机收藏和 Assistant v2；旧页面应删除或标明兼容范围，不能把静态方法当作可用功能。 |

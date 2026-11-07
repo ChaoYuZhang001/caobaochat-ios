@@ -1,5 +1,4 @@
 import SwiftUI
-import AuthenticationServices
 #if os(macOS)
 import AppKit
 #endif
@@ -19,9 +18,6 @@ struct ProfileView: View {
     @State private var showAvatarPicker = false
     @State private var showNicknameEditor = false
     @State private var showLogoutConfirm = false
-    @State private var showUpgradeSheet = false
-    @State private var isUpgrading = false
-    @State private var upgradeError: String?
     @State private var newNickname = ""
     @State private var usageStats = AssistantUsageStats()
     @State private var profileOwnerEpoch = UUID()
@@ -121,48 +117,6 @@ struct ProfileView: View {
                     }
                 } header: {
                     Text("功能")
-                }
-                
-                // 游客升级提示 - 仅对游客显示
-                if authService.canUpgrade {
-                    Section {
-                        Button {
-                            showUpgradeSheet = true
-                        } label: {
-                            HStack(spacing: 12) {
-                                Image(systemName: "crown.fill")
-                                    .foregroundStyle(.white)
-                                    .frame(width: 32, height: 32)
-                                    .background(
-                                        LinearGradient(
-                                            colors: [.purple, .pink],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
-                                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                                
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("升级账号")
-                                        .font(.headline)
-                                        .foregroundStyle(.primary)
-                                    Text("升级为正式账号，数据永不丢失")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                                
-                                Spacer()
-                                
-                                Image(systemName: "chevron.right")
-                                    .foregroundStyle(.tertiary)
-                            }
-                        }
-                        .buttonStyle(.plain)
-                    } header: {
-                        Text("账号升级")
-                    } footer: {
-                        Text("游客数据会在30天后自动清除，升级后永久保存")
-                    }
                 }
                 
                 // Settings
@@ -302,32 +256,6 @@ struct ProfileView: View {
                 resetProfileOwnerScope()
                 loadUsageStats()
             }
-            #if os(iOS)
-            .sheet(isPresented: $showUpgradeSheet) {
-                GuestUpgradeSheet(
-                    isPresented: $showUpgradeSheet,
-                    isUpgrading: $isUpgrading,
-                    error: $upgradeError,
-                    onSuccess: {
-                        // 升级成功后刷新用户状态
-                        authService.loadSession()
-                    }
-                )
-                .presentationDetents([.medium])
-            }
-            #else
-            .sheet(isPresented: $showUpgradeSheet) {
-                GuestUpgradeSheet(
-                    isPresented: $showUpgradeSheet,
-                    isUpgrading: $isUpgrading,
-                    error: $upgradeError,
-                    onSuccess: {
-                        authService.loadSession()
-                    }
-                )
-                .frame(width: 400, height: 400)
-            }
-            #endif
             }
         }
     }
@@ -344,9 +272,9 @@ struct ProfileView: View {
     }
     private func resetProfileOwnerScope() {
         profileOwnerEpoch = UUID()
-        showAvatarPicker = false; showNicknameEditor = false; showLogoutConfirm = false; showUpgradeSheet = false
+        showAvatarPicker = false; showNicknameEditor = false; showLogoutConfirm = false
         avatarOwnerSource = nil; nicknameOwnerSource = nil; logoutOwnerSource = nil
-        newNickname = ""; upgradeError = nil
+        newNickname = ""
     }
 
     private func loadUsageStats() {
@@ -554,242 +482,3 @@ struct AvatarPickerView: View {
         .buttonStyle(.plain)
     }
 }
-// MARK: - Guest Upgrade Sheet
-#if os(iOS) || os(macOS)
-struct GuestUpgradeSheet: View {
-    @Binding var isPresented: Bool
-    @Binding var isUpgrading: Bool
-    @Binding var error: String?
-    let onSuccess: () -> Void
-    
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 24) {
-                // Header
-                VStack(spacing: 12) {
-                    Image(systemName: "crown.fill")
-                        .font(.system(size: 50))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [.purple, .pink],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                    
-                    Text("升级账号")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                    
-                    Text("升级为正式账号，您的聊天记录将永久保存")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                .padding(.top, 20)
-                
-                // Apple Sign In Button
-                SignInWithAppleButton(
-                    .signIn,
-                    onRequest: { request in
-                        do { try AuthService.shared.configureAppleRequest(request) }
-                        catch { self.error = error.localizedDescription }
-                    },
-                    onCompletion: { result in
-                        handleAppleSignIn(result: result)
-                    }
-                )
-                .signInWithAppleButtonStyle(.black)
-                .frame(height: 50)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .padding(.horizontal, 20)
-                .disabled(isUpgrading)
-                
-                // Loading indicator
-                if isUpgrading {
-                    ProgressView("升级中...")
-                        .padding()
-                }
-                
-                // Error message
-                if let error = error {
-                    Text(error)
-                        .font(.caption)
-                        .foregroundStyle(.red)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                }
-                
-                Spacer()
-                
-                // Cancel button
-                Button("取消") {
-                    isPresented = false
-                }
-                .padding(.bottom, 20)
-            }
-            .assistantNavigationTitle("账号升级")
-            #if os(iOS)
-            .navigationBarTitleDisplayMode(.inline)
-            #endif
-            .toolbar {
-                #if os(iOS)
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("关闭") {
-                        isPresented = false
-                    }
-                }
-                #else
-                ToolbarItem(placement: .primaryAction) {
-                    Button("关闭") {
-                        isPresented = false
-                    }
-                }
-                #endif
-            }
-        }
-    }
-    
-    private func handleAppleSignIn(result: Result<ASAuthorization, Error>) {
-        switch result {
-        case .success(let authorization):
-            guard authorization.credential is ASAuthorizationAppleIDCredential else {
-                error = AssistantLocalization.string("无效的凭证")
-                return
-            }
-            
-            isUpgrading = true
-            error = nil
-            
-            Task {
-                do {
-                    try await AuthService.shared.handleAppleSignIn(result: authorization)
-
-                    await MainActor.run {
-                        isUpgrading = false
-                        isPresented = false
-                        onSuccess()
-                    }
-                } catch {
-                    await MainActor.run {
-                        isUpgrading = false
-                        self.error = error.localizedDescription
-                    }
-                }
-            }
-            
-        case .failure(let error):
-            self.error = error.localizedDescription
-        }
-    }
-
-
-// MARK: - AvatarImageView
-struct AvatarImageView: View {
-    let avatarId: String
-    @State private var isLoading = true
-    @State private var image: Image?
-    @State private var loadError = false
-    
-    var body: some View {
-        Group {
-            if let image = image {
-                // 成功加载的图片
-                image
-                    .resizable()
-                    .scaledToFill()
-                    .clipShape(Circle())
-                    .transition(.opacity.animation(.easeInOut(duration: 0.3)))
-            } else if loadError {
-                // 加载失败，显示默认图标
-                Image(systemName: "person.circle.fill")
-                    .font(.system(size: 40))
-                    .foregroundStyle(.gray)
-            } else if isLoading {
-                // 加载中显示占位符
-                ProgressView()
-                    .controlSize(.small)
-                    .frame(width: 40, height: 40)
-            }
-        }
-        .task {
-            await loadImage()
-        }
-    }
-    
-    // MARK: - Load Image
-    private func loadImage() async {
-        // 优先尝试 WebP 格式
-        await loadAvatar(format: "webp")
-    }
-    
-    // MARK: - Load Avatar with Format
-    private func loadAvatar(format: String) async {
-        isLoading = true
-        loadError = false
-        
-        // 构建 URL
-        let urlString = "https://caobao.coze.site/avatars/\(avatarId).\(format)"
-        guard let url = URL(string: urlString) else {
-            await handleError()
-            return
-        }
-        
-        do {
-            // 下载图片
-            let (data, _) = try await URLSession.shared.data(from: url)
-            
-            // 验证图片数据
-            #if os(iOS)
-            if let uiImage = UIImage(data: data) {
-                await MainActor.run {
-                    self.image = Image(uiImage: uiImage)
-                    self.isLoading = false
-                    self.loadError = false
-                }
-            } else {
-                // 图片数据无效
-                if format == "webp" {
-                    // WebP 失败，尝试 PNG
-                    await loadAvatar(format: "png")
-                } else {
-                    await handleError()
-                }
-            }
-            #else
-            if let nsImage = NSImage(data: data) {
-                await MainActor.run {
-                    self.image = Image(nsImage: nsImage)
-                    self.isLoading = false
-                    self.loadError = false
-                }
-            } else {
-                if format == "webp" {
-                    await loadAvatar(format: "png")
-                } else {
-                    await handleError()
-                }
-            }
-            #endif
-        } catch {
-            // 下载失败
-            if format == "webp" {
-                // WebP 失败，尝试 PNG
-                await loadAvatar(format: "png")
-            } else {
-                await handleError()
-            }
-        }
-    }
-    
-    // MARK: - Handle Error
-    private func handleError() async {
-        await MainActor.run {
-            self.isLoading = false
-            self.loadError = true
-            self.image = nil
-        }
-    }
-}
-}
-#endif
