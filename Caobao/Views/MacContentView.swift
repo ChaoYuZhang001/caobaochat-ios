@@ -75,7 +75,18 @@ struct MacContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .macOpenConversation)) { notification in
             guard let id = notification.userInfo?["conversationId"] as? String, !id.isEmpty else { return }
             selectedConversationId = id
+            appState.pendingAssistantConversationId = nil
             selectedFeature = .chat
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .macOpenProactive)) { _ in
+            selectedFeature = .proactive
+            selectedConversationId = nil
+        }
+        .onChange(of: appState.pendingAssistantConversationId) { id in
+            guard let id, !id.isEmpty else { return }
+            selectedConversationId = id
+            selectedFeature = .chat
+            appState.pendingAssistantConversationId = nil
         }
         .onChange(of: appState.selectedTab) { tab in
             switch tab {
@@ -91,6 +102,11 @@ struct MacContentView: View {
             newChatTask = nil
         }
         .task {
+            if let id = appState.pendingAssistantConversationId, !id.isEmpty {
+                selectedConversationId = id
+                selectedFeature = .chat
+                appState.pendingAssistantConversationId = nil
+            }
             // Login/foreground on macOS has no iOS scene task. Refresh the
             // server-authoritative preferences before bootstrapping local
             // cloud data so the settings sheet starts from the account state.
