@@ -2,6 +2,8 @@
 
 本记录只记录当前 checkout 和当前 Simulator 的证据。历史文档、单元测试或代码存在不能替代真实账号、系统权限、生产推送和多设备验收。
 
+本轮结论：客户端核心代码、iOS/macOS Debug/Release 编译、本地回归，以及一条真实 CN 对话流已通过；客户端和服务端整体仍不能标记“全部完成”，因为 Apple 真登录、StoreKit 真实商品、APNs/锁屏投递、双设备同步、账号删除服务端清理、主动 Worker 和 TestFlight 仍未通过真实发布门禁。
+
 本轮失败记录：第一次 iPad 构建中 Xcode 输出 `BUILD SUCCEEDED`，但脚本验签发现复用 DerivedData 后的 `Assets.car` 为无效密封资源（`sealed resource is missing or invalid`）。隔离旧 DerivedData 后重新构建，签名校验通过；归类为构建缓存/验签环境问题，不是客户端 Swift 功能失败。
 
 本轮 UI 重试记录：同一台 iPad Pro 11-inch 在更新本地化资源后 `simctl io screenshot` 出现纯白画面，但系统日志显示 Caobao 进程和 SwiftUI 场景仍为 running-active、没有崩溃；换用干净的 iPad Pro 13-inch Simulator 后，中英文登录页均正常渲染。当前归类为单台 Simulator 前台/渲染状态问题，iPad 真机仍未验收。
