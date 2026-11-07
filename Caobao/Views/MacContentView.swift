@@ -165,8 +165,8 @@ struct MacHomeView: View {
                             .font(.headline)
                         let currentProfile = proactiveStore.profile(for: ownerId)
                         if currentProfile.enabled {
-                            Text("已开启 · \(currentProfile.mode.rawValue)")
-                                .foregroundStyle(.secondary)
+                            (Text("已开启 · ") + Text(currentProfile.mode.title))
+                                .foregroundColor(.secondary)
                         } else {
                             Text("默认关闭，可在主动规则中开启")
                                 .foregroundStyle(.secondary)
