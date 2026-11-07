@@ -7,6 +7,21 @@
 
 import SwiftUI
 
+enum AssistantFeedbackMail {
+    static let address = "2900814034@qq.com"
+
+    static func url(subject: String, body: String) -> URL? {
+        var components = URLComponents()
+        components.scheme = "mailto"
+        components.path = address
+        components.queryItems = [
+            URLQueryItem(name: "subject", value: subject),
+            URLQueryItem(name: "body", value: body)
+        ]
+        return components.url
+    }
+}
+
 enum FeedbackType: String, CaseIterable {
     case bug = "bug"
     case feature = "feature"
@@ -317,15 +332,11 @@ struct FeedbackView: View {
         let trimmedContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedContent.isEmpty else { return }
 
-        var components = URLComponents()
-        components.scheme = "mailto"
-        components.path = "2900814034@qq.com"
-        components.queryItems = [
-            URLQueryItem(name: "subject", value: "草包反馈 · \(type.label)"),
-            URLQueryItem(name: "body", value: "类型：\(type.label)\n评分：\(rating > 0 ? rating : 5)/5\n\n\(trimmedContent)\n\n联系方式：\(contact.isEmpty ? "未提供" : contact)")
-        ]
-        guard let url = components.url else {
-            errorMessage = "无法生成反馈邮件，请直接发送邮件至 2900814034@qq.com。"
+        guard let url = AssistantFeedbackMail.url(
+            subject: "草包反馈 · \(type.label)",
+            body: "类型：\(type.label)\n评分：\(rating > 0 ? rating : 5)/5\n\n\(trimmedContent)\n\n联系方式：\(contact.isEmpty ? "未提供" : contact)"
+        ) else {
+            errorMessage = "无法生成反馈邮件，请直接发送邮件至 \(AssistantFeedbackMail.address)。"
             return
         }
 
@@ -336,7 +347,7 @@ struct FeedbackView: View {
             if accepted {
                 submitted = true
             } else {
-                errorMessage = "未找到可用的邮件应用，请直接发送邮件至 2900814034@qq.com。"
+                errorMessage = "未找到可用的邮件应用，请直接发送邮件至 \(AssistantFeedbackMail.address)。"
             }
         }
     }
