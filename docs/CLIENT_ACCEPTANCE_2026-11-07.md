@@ -18,7 +18,7 @@
 | Apple 撤销通知处理与敏感日志清理 | 客户端修复通过 | `Caobao/CaobaoApp.swift`、`Caobao/Services/APIService.swift`；macOS Debug build | macOS 已补齐 `credentialRevokedNotification` 的退出处理；旧 legacy Apple/删除接口和兼容流式接口不再打印原始认证响应、对话内容或 token 前缀。真实 Apple 授权、刷新和撤销仍需真账号验收 |
 | 音频播放器生命周期 | 客户端修复通过 | `Caobao/Views/AudioPlayerView.swift`；签名 iOS/macOS Debug build | 播放结束通知和 periodic time observer 都保存 token，并在离开页面时移除，避免重复进入消息页累积 observer。 |
 | macOS 首页导航与侧栏无障碍 | 客户端修复通过；真实 UI 未验收 | `Caobao/Views/MacContentView.swift`；macOS Debug build | 首页开始对话/查看任务现在真正切换工作区；侧栏入口改为 Button，支持键盘和 VoiceOver 语义并扩大点击区域。真实 macOS VoiceOver、Dynamic Type 和订阅/账号占位页仍未验收。 |
-| 账号删除后的本地同步清理 | 客户端修复通过 | `Caobao/Services/AuthService.swift`；删除/同步测试 | 账号删除会清理记忆同步游标和本机收藏，避免旧账号同步状态或本地收藏残留。 |
+| 账号删除后的本地同步清理 | 客户端修复通过 | `Caobao/Services/AuthService.swift`、`Caobao/Views/AssistantWorkspaceViews.swift`；删除/同步测试 | 账号删除会清理记忆同步游标、本机收藏、主动模式配置和主动更新的已读/稍后状态，避免旧账号同步状态或本地状态残留。 |
 | 冷启动通知路由 | 客户端修复通过；真实锁屏点击未验收 | `Caobao/Services/AssistantNotificationRouter.swift`；签名 iOS Simulator build | 通知回调先保留 owner-bound route，等待认证恢复后再校验，避免冷启动时过早丢弃任务或主动更新跳转。真实 APNs 锁屏点击和生产深链仍需验收。 |
 | 客户端协议与隔离回归 | 通过 | 多个 `Scripts/test-assistant-*.sh` | Apple 身份 17 套、权益 14 套、设备注册、媒体 12 套、记忆同步 3 套、会话同步均通过；使用 mock HTTP/隔离数据，不替代真实设备验收 |
 
