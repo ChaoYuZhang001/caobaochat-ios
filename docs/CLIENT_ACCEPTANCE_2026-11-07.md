@@ -68,6 +68,8 @@
 
 2026-11-08 Release 构建复核：日志门控改动后，iOS Simulator Release 和 macOS Release 均明确返回 `** BUILD SUCCEEDED **`（`CODE_SIGNING_ALLOWED=NO`）。构建环境仍没有有效 Apple 签名身份，因此这只是 Release 编译/打包门禁通过，不替代正式 archive、Apple 登录、APNs 或 TestFlight 验收；macOS 仍有未设置 App Category 的 Xcode warning。
 
+2026-11-08 日志改动后完整回归复跑：`Scripts/test-assistant.sh` 使用隔离文件、mock 网络和 fake 通知明确退出 `0`；末尾为 `All 168 actual ChatViewModel integration suites passed`。该结果确认日志门控没有引入客户端行为回归，仍不覆盖真实 Apple、StoreKit、APNs、模型请求或双设备生产链路。
+
 2026-11-08 生产健康复核补充：`GET https://ciyuan2api.com/api/status` curl 退出 `0`、HTTP `200`，响应头 `X-New-Api-Version: v1.0.0-rc.48+ciyuan.reconstructed.20261106.1`，JSON 中 `setup=true` 且 `server_address=https://ciyuan2api.com`。本轮没有重复发送模型请求，避免无必要扣减真实额度；部署后真实 CN `started → delta → usage → completed` 证据沿用本文件既有记录。
 
 签名门禁记录：项目的 iOS Debug/Release `DEVELOPMENT_TEAM` 仍为空，`security find-identity -v -p codesigning` 返回 `0 valid identities found`；因此 Apple Sign In、APNs 和正式 archive/TestFlight 不能在当前环境完成。归类为发布签名环境阻塞，不写入猜测的 Team ID 或证书信息。
