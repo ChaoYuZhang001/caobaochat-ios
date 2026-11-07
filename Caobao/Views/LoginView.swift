@@ -8,6 +8,7 @@ struct LoginView: View {
     @State private var showPrivacyPolicy = false
     @State private var showTerms = false
     @State private var showConnectionSettings = false
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         ScrollView {
@@ -33,20 +34,32 @@ struct LoginView: View {
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 Toggle("我已阅读并同意", isOn: $agreed)
-                HStack {
+                HStack(spacing: 16) {
                     Button("用户协议") { showTerms = true }
                     Button("隐私政策") { showPrivacyPolicy = true }
                 }.font(.caption).tint(.caobaoPrimary)
                 if let error { Text(error).font(.caption).foregroundStyle(.red) }
                 if let error = auth.sessionPersistenceError { Text(LocalizedStringKey(error)).font(.caption).foregroundStyle(.secondary) }
                 if auth.isRefreshingSession { ProgressView("正在恢复登录状态…") }
-                HStack(spacing: 24) {
-                    FeatureItem(icon: "checklist", title: "个人任务", color: .green)
-                    FeatureItem(icon: "brain.head.profile", title: "可控记忆", color: .orange)
-                    FeatureItem(icon: "globe", title: "多语言", color: .blue)
-                }.padding(.top, 24)
+                Group {
+                    if dynamicTypeSize >= .accessibility1 {
+                        VStack(alignment: .leading, spacing: 16) {
+                            FeatureItem(icon: "checklist", title: "个人任务", color: .green)
+                            FeatureItem(icon: "brain.head.profile", title: "可控记忆", color: .orange)
+                            FeatureItem(icon: "globe", title: "多语言", color: .blue)
+                        }
+                    } else {
+                        HStack(spacing: 24) {
+                            FeatureItem(icon: "checklist", title: "个人任务", color: .green)
+                            FeatureItem(icon: "brain.head.profile", title: "可控记忆", color: .orange)
+                            FeatureItem(icon: "globe", title: "多语言", color: .blue)
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: dynamicTypeSize >= .accessibility1 ? .leading : .center)
+                .padding(.top, 24)
             }
-            .frame(maxWidth: 440).frame(maxWidth: .infinity)
+            .frame(maxWidth: 560).frame(maxWidth: .infinity)
             .padding(24)
         }
         .sheet(isPresented: $showConnectionSettings) { AssistantSettingsSheet().environmentObject(appState) }
@@ -62,7 +75,13 @@ struct FeatureItem: View {
     var body: some View {
         VStack(spacing: 8) {
             Image(systemName: icon).font(.title2).foregroundStyle(color)
-            Text(LocalizedStringKey(title)).font(.caption).foregroundStyle(.secondary)
+            Text(LocalizedStringKey(title))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .lineLimit(3)
+                .fixedSize(horizontal: false, vertical: true)
         }
+        .frame(maxWidth: .infinity)
     }
 }
