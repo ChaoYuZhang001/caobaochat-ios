@@ -1179,6 +1179,11 @@ struct AssistantTasksView: View {
     /// completed successfully; otherwise a temporary network failure would
     /// be misreported as a deleted task and lose the deep link.
     @State private var taskCloudSyncAvailable = false
+    /// The server worker has states that do not fit the local reminder
+    /// state machine. Keep the authoritative remote state beside the local
+    /// task so waiting/running/failed tasks are never silently shown as
+    /// ordinary active tasks.
+    @State private var cloudTaskStatuses: [String: String] = [:]
     @State private var activeOperation: OperationIdentity?
     @State private var refreshRunId: UUID?
     private let repository = AssistantLocalRepository.shared
@@ -1338,6 +1343,7 @@ struct AssistantTasksView: View {
         activeOperation = nil; refreshRunId = nil; loadedOwner = nil
         taskCloudSyncAvailable = false
         tasks = []; reminderStates = [:]; reminderCoverage = [:]; reminderSnapshots = [:]; operationError = nil
+        cloudTaskStatuses = [:]
         editor = nil; pendingDeletion = nil; reactivationTarget = nil; endingPlan = nil; searchText = ""
         reload()
     }
@@ -1390,6 +1396,21 @@ struct AssistantTasksView: View {
         return !raw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
+    private func cloudTaskStatusDescription(_ task: AssistantTask) -> String? {
+        guard let raw = cloudTaskStatuses[task.id] else { return nil }
+        switch raw {
+        case "draft": return AssistantLocalization.string("云端草稿")
+        case "scheduled": return AssistantLocalization.string("云端已排程")
+        case "waiting_approval": return AssistantLocalization.string("云端等待确认")
+        case "running": return AssistantLocalization.string("云端执行中")
+        case "completed": return AssistantLocalization.string("云端已完成")
+        case "failed": return AssistantLocalization.string("云端执行失败")
+        case "paused": return AssistantLocalization.string("云端已暂停")
+        case "cancelled": return AssistantLocalization.string("云端已取消")
+        default: return AssistantLocalization.string("云端状态：%@").replacingOccurrences(of: "%@", with: raw)
+        }
+    }
+
     private func taskRow(_ task: AssistantTask) -> some View {
         HStack(alignment: .top, spacing: 8) {
             Button {
@@ -1400,6 +1421,7 @@ struct AssistantTasksView: View {
                     .foregroundStyle(task.status == .completed ? Color.caobaoPrimary : Color.secondary)
             }
             .buttonStyle(.borderless)
+            .disabled(cloudTaskStatuses[task.id] != nil)
             .accessibilityLabel(task.status == .completed ? Text("重新打开任务：\(task.title)") :
                 (isRepeatingPlan(task) ? Text("结束重复计划：\(task.title)") : Text("完成任务：\(task.title)")))
 
@@ -1409,6 +1431,11 @@ struct AssistantTasksView: View {
                         .strikethrough(task.status == .completed)
                     if let notes = task.instructions, !notes.isEmpty {
                         Text(notes).font(.subheadline).foregroundStyle(.secondary).lineLimit(3)
+                    }
+                    if let remoteStatus = cloudTaskStatusDescription(task) {
+                        Label(remoteStatus, systemImage: "cloud.fill")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
                     }
                     taskTiming(task)
                     TimelineView(.periodic(from: Date(), by: 60)) { context in
@@ -1432,13 +1459,17 @@ struct AssistantTasksView: View {
                     Label(task.status == .completed ? LocalizedStringKey("重新打开") :
                         (isRepeatingPlan(task) ? LocalizedStringKey("结束整个重复计划") : LocalizedStringKey("标记完成")), systemImage: "checkmark.circle")
                 }
+                .disabled(cloudTaskStatuses[task.id] != nil)
                 if task.status == .active {
                     Button { setStatus(task, to: .paused) } label: { Label("暂停", systemImage: "pause.circle") }
+                        .disabled(cloudTaskStatuses[task.id] != nil)
                 } else if task.status == .paused || task.status == .cancelled {
                     Button { setStatus(task, to: .active) } label: { Label("恢复处理", systemImage: "play.circle") }
+                        .disabled(cloudTaskStatuses[task.id] != nil)
                 }
                 if task.status != .cancelled {
                     Button { setStatus(task, to: .cancelled) } label: { Label("取消任务", systemImage: "xmark.circle") }
+                        .disabled(cloudTaskStatuses[task.id] != nil)
                 }
                 Divider()
                 Button(role: .destructive) { pendingDeletion = task } label: { Label("删除", systemImage: "trash") }
@@ -1518,6 +1549,7 @@ struct AssistantTasksView: View {
             values.append(formatter.string(from: due))
         }
         values.append(String(format: AssistantLocalization.string("任务时区：%@"), task.timeZone))
+        if let remoteStatus = cloudTaskStatusDescription(task) { values.append(remoteStatus) }
         values.append(effectiveReminderState(task).localizedDescription)
         return values.joined(separator: "; ")
     }
@@ -1600,6 +1632,7 @@ struct AssistantTasksView: View {
                         local.removeAll { $0.id == remote.id }
                     }
                     pendingDeletes.remove(remote.id)
+                    cloudTaskStatuses.removeValue(forKey: remote.id)
                     continue
                 }
                 // A local deletion remains authoritative until the server has
@@ -1609,6 +1642,7 @@ struct AssistantTasksView: View {
                 guard let normalized = cloudTaskToLocal(remote, existing: local.first(where: { $0.id == remote.id })) else {
                     throw CloudTaskSyncError.invalidResponse
                 }
+                cloudTaskStatuses[remote.id] = remote.status.lowercased()
                 if let existing = local.first(where: { $0.id == remote.id }) {
                     guard repository.updateTask(normalized) else { throw CloudTaskSyncError.invalidResponse }
                     if let index = local.firstIndex(of: existing) { local[index] = normalized }
