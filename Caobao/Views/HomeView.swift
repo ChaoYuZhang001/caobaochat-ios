@@ -13,7 +13,10 @@ struct HomeView: View {
     @ObservedObject private var auth = AuthService.shared
     @ObservedObject private var chat = ChatViewModel.shared
     @ObservedObject private var proactiveStore = AssistantProactiveStore.shared
+    @ObservedObject private var proactiveInboxStore = AssistantProactiveInboxStore.shared
     @State private var tasks: [AssistantTask] = []
+    @State private var proactiveRules: [CloudProactiveRule] = []
+    @State private var proactiveRuns: [CloudProactiveRun] = []
     @State private var recentReloadId = UUID()
     @State private var navigationEpoch = UUID()
     @State private var navigationRun: UUID?
@@ -161,6 +164,7 @@ struct HomeView: View {
                     await chat.syncFromCloud()
                     guard !Task.isCancelled, AssistantOwnerIdentity.matches(owner, sourceOwner), navigationEpoch == epoch, loadIdentity.reloadId == recentReloadId else { return }
                     await appState.refreshAssistantState()
+                    await loadProactiveSummary(ownerId: sourceOwner)
                 } catch {
                     guard !Task.isCancelled, AssistantOwnerIdentity.matches(owner, sourceOwner), navigationEpoch == epoch, loadIdentity.reloadId == recentReloadId else { return }
                     preparationError = error.localizedDescription
@@ -170,7 +174,10 @@ struct HomeView: View {
             .onChange(of: AssistantOwnerIdentity.ownerKey(owner)) { _ in resetNavigation() }
             .onChange(of: scenePhase) { phase in
                 guard phase == .active, !chat.isSyncing else { return }
-                Task { @MainActor in await chat.syncFromCloud() }
+                Task { @MainActor in
+                    await chat.syncFromCloud()
+                    await loadProactiveSummary(ownerId: owner)
+                }
             }
             .onReceive(NotificationCenter.default.publisher(for: .loginSuccess)) { _ in resetNavigation() }
             .onReceive(NotificationCenter.default.publisher(for: .logoutSuccess)) { _ in resetNavigation() }
@@ -309,6 +316,8 @@ struct HomeView: View {
 
     private var proactiveCard: some View {
         let profile = proactiveStore.profile(for: owner)
+        let unread = proactiveInboxStore.unreadCount(ownerId: owner, runs: proactiveRuns)
+        let nextRun = proactiveRules.compactMap { AssistantProactiveDate.parse($0.nextRunAt) }.min()
         return NavigationLink(value: AssistantHomeRoute.proactive) {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: profile.enabled ? "bell.badge.fill" : "bell.slash")
@@ -327,6 +336,20 @@ struct HomeView: View {
                     Text(profile.enabled ? "按你的规则提醒、跟进和生成更新" : "开启后，曹宝会按你的规则主动提醒")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                    HStack(spacing: 10) {
+                        if unread > 0 {
+                            Label("未读 \(unread)", systemImage: "bell.badge")
+                                .foregroundStyle(Color.caobaoPrimary)
+                        } else {
+                            Label("暂无未读", systemImage: "checkmark.circle")
+                                .foregroundStyle(.secondary)
+                        }
+                        if let nextRun {
+                            Text("下次：\(nextRun.formatted(date: .abbreviated, time: .shortened))")
+                        }
+                    }
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
                     Text("消息来源、安静时段和频率都由你控制")
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
@@ -341,7 +364,31 @@ struct HomeView: View {
         .caobaoCard(padding: 14, cornerRadius: 18, hasShadow: false)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("主动更新")
-        .accessibilityValue(profile.enabled ? Text(profile.mode.title) : Text("未开启"))
+        .accessibilityValue(Text(profile.enabled ? "\(profile.mode.title), 未读 \(unread)" : "未开启"))
+    }
+
+    private func loadProactiveSummary(ownerId: String) async {
+        guard AuthService.shared.isLoggedIn,
+              AssistantOwnerIdentity.matches(ownerId, auth.user?.id ?? "local-device"),
+              !Task.isCancelled else { return }
+        do {
+            let token = try await AuthService.shared.validAccessToken()
+            async let ruleResponse = APIService.shared.listProactiveRules(token: token, limit: 100)
+            async let runResponse = APIService.shared.listProactiveRuns(token: token, limit: 20)
+            let (rules, runs) = try await (ruleResponse.items, runResponse.items)
+            guard !Task.isCancelled,
+                  AssistantOwnerIdentity.matches(ownerId, owner),
+                  AssistantOwnerIdentity.matches(ownerId, auth.user?.id ?? "local-device") else { return }
+            proactiveRules = rules
+            proactiveRuns = runs
+        } catch is CancellationError {
+            return
+        } catch {
+            // The home card remains usable from local profile state when the
+            // optional summary endpoints are unavailable or unauthenticated.
+            proactiveRules = []
+            proactiveRuns = []
+        }
     }
 
     private func quickAction(_ title: LocalizedStringKey, icon: String, prompt: String) -> some View {
