@@ -10,6 +10,8 @@
 
 本轮生产联调补充：为避免 Simulator 无点击自动化能力，使用仅 Debug 的临时启动注入调用现有 `ChatViewModel` 发送路径；第一次注入过早触发客户端配置变更保护，显示“回复、原问题、账号或接入配置已变化”，未扣额度。等待登录权益、归档和区域状态稳定后重试，生产请求成功并完成完整 SSE；注入和 trace 均已撤销，工作树保持干净。
 
+2026-11-08 生产契约探针补充：未携带认证访问 `/api/v2/characters`、`/api/v2/proactive/profile` 和 `/api/v2/proactive/rules` 均返回 `401 UNAUTHENTICATED`，证明路由和认证中间件可达，但不替代真实账号 CRUD/读写验收；`GET /api/v2/feedback` 返回 `404 Invalid URL`，当前没有可供客户端提交的 v2 反馈接口；`GET /api/v2/devices` 返回 `404`，服务端路由审计只确认 `POST /api/v2/devices`，客户端登出所需的 `DELETE /api/v2/devices/{deviceId}` 仍未证实。以上是服务端契约缺口，不计为客户端通过。
+
 签名门禁记录：项目的 iOS Debug/Release `DEVELOPMENT_TEAM` 仍为空，`security find-identity -v -p codesigning` 返回 `0 valid identities found`；因此 Apple Sign In、APNs 和正式 archive/TestFlight 不能在当前环境完成。归类为发布签名环境阻塞，不写入猜测的 Team ID 或证书信息。
 
 服务端需要处理的接口、幂等、owner 隔离和生产门禁见 [SERVER_ACCEPTANCE_REQUIREMENTS_2026-11-07.md](SERVER_ACCEPTANCE_REQUIREMENTS_2026-11-07.md)。
