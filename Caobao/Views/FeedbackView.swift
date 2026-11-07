@@ -43,6 +43,7 @@ enum FeedbackType: String, CaseIterable {
 
 struct FeedbackView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     @State private var selectedType: FeedbackType?
     @State private var rating: Int = 0
     @State private var content: String = ""
@@ -313,28 +314,29 @@ struct FeedbackView: View {
     
     private func submitFeedback() {
         guard let type = selectedType else { return }
-        
+        let trimmedContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedContent.isEmpty else { return }
+
+        var components = URLComponents()
+        components.scheme = "mailto"
+        components.path = "2900814034@qq.com"
+        components.queryItems = [
+            URLQueryItem(name: "subject", value: "草包反馈 · \(type.label)"),
+            URLQueryItem(name: "body", value: "类型：\(type.label)\n评分：\(rating > 0 ? rating : 5)/5\n\n\(trimmedContent)\n\n联系方式：\(contact.isEmpty ? "未提供" : contact)")
+        ]
+        guard let url = components.url else {
+            errorMessage = "无法生成反馈邮件，请直接发送邮件至 2900814034@qq.com。"
+            return
+        }
+
         isSubmitting = true
         errorMessage = nil
-        
-        Task {
-            do {
-                try await APIService.shared.submitFeedback(
-                    type: type.rawValue,
-                    content: content.trimmingCharacters(in: .whitespacesAndNewlines),
-                    contact: contact.isEmpty ? nil : contact,
-                    rating: rating > 0 ? rating : 5
-                )
-                
-                await MainActor.run {
-                    submitted = true
-                    isSubmitting = false
-                }
-            } catch {
-                await MainActor.run {
-                    errorMessage = error.localizedDescription
-                    isSubmitting = false
-                }
+        openURL(url) { accepted in
+            isSubmitting = false
+            if accepted {
+                submitted = true
+            } else {
+                errorMessage = "未找到可用的邮件应用，请直接发送邮件至 2900814034@qq.com。"
             }
         }
     }
