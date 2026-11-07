@@ -53,7 +53,7 @@
 | macOS/iPad 信息架构 | macOS 核心导航、历史和“我的”已补齐；iPad 模拟器布局通过，真机和辅助功能仍未验收 | **客户端 UI** | macOS 侧栏现在保留首页、对话、任务、历史、我的和工作区，旧工具统一进入“工具模板”，最近对话常驻侧栏；历史页支持本地搜索并回到对话，个人页显示账号/统计并提供记忆、订阅和设置入口。最新 iPad Pro 11-inch (M5) Simulator 签名包已启动并显示侧栏、首页、主动更新、任务、工作区、订阅、设置、主 CTA 和四个快速模板；截图 `.build/verification/ipad-acceptance-20261107.png`。真实 iPad 触控、VoiceOver、Dynamic Type、订阅和账号闭环仍需验收。 |
 | iPhone Duo、真机/TestFlight | 未验收 | 发布环境 | 当前普通 Simulator 不能证明 Duo 专用设备、正式签名归档、TestFlight 安装和系统级行为。 |
 | macOS 详细统计/关于/官方页 | 部分缺失 | **客户端 UI** | macOS 当前个人页只有摘要统计，详细统计、关于和官方页没有等同 iOS 的完整入口；属于 macOS parity 待补，不影响 iPhone 首发核心闭环。 |
-| macOS 对话图片/任务提案 | 未完成 | **客户端 macOS parity** | `MacChatView` 只有文本输入、麦克风、发送和停止；没有 iOS 的 PhotosPicker、多图预处理、任务提案接受/拒绝/继续操作。macOS 需要补齐后再做真实交互验收。 |
+| macOS 对话图片/任务提案 | 部分补齐；真实交互未验收 | **客户端 macOS parity** | `MacChatView` 现在复用统一消息气泡，显示本地图片附件并保留朗读入口；任务提案显示标题、备注和截止时间摘要。仍没有 macOS 的图片选择/上传、多图预处理以及任务提案接受/拒绝/继续编辑流程，需要继续补齐后做真实交互验收。 |
 | 旧设置状态 | 客户端已修复；真实账号切换未验收 | **客户端状态整合** | 旧 `SettingsView` 已移除无消费者的 `voiceEnabled` 开关，毒舌程度只读写 owner-scoped `appState.userSettings`，避免与旧 `UserDefaults` 键分裂。真实账号切换和服务端 persona 偏好仍需验收。 |
 | 游客升级 | 死链 | **客户端产品/认证** | `AuthService` 的 `canUpgrade` 永远为 false，游客升级区和升级弹窗无法到达；需要重新接通游客转 Apple 账号，或删除误导入口。 |
 | 反馈提交 | 未验收 | **客户端 + 服务端协议** | `FeedbackView` 仍调用旧 `/feedback` 且未带 Bearer；当前只能证明表单可达，不能证明生产提交成功。应迁移到 owner-scoped 认证接口或明确支持匿名反馈后再验收。 |
