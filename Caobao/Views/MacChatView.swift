@@ -405,6 +405,7 @@ private struct MacAssistantImagesView: View {
                                 }
                                 .buttonStyle(.borderless)
                                 .padding(4)
+                                .accessibilityLabel("移除图片")
                             }
                         }
                 }

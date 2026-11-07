@@ -54,6 +54,12 @@
 
 2026-11-08 回归复跑补充：当前 checkout 的 `Scripts/test-assistant-chat-viewmodel.sh` 明确退出 `0`，168 个 ChatViewModel 集成套件全部通过；`Scripts/test-assistant-task-tool-protocol.sh` 明确退出 `0`（51/51）；`Scripts/test-assistant-repository.sh` 明确退出 `0`（102/102）。这些测试使用隔离文件、fake 通知和 mock 网络，不代表 Apple、StoreKit、APNs 或双设备生产闭环。
 
+2026-11-08 完整回归补充：统一入口 `Scripts/test-assistant.sh` 明确退出 `0`，覆盖 quiet hours、仓库、云同步、设备注册、媒体、提醒、身份、协议、任务工具、备份/导入导出、删除、深链和 ChatViewModel；末尾仍为 168 个 ChatViewModel 集成套件通过。该脚本不执行真实 Apple、StoreKit、APNs 或模型请求。
+
+2026-11-08 客户端独立修复补充：注销与重新登录之间的 APNs 设备 DELETE/POST 现在串行化，重复 logout/revoke 也按链排队，避免旧 owner 的慢 DELETE 在新 owner POST 之后到达并误禁用新 owner 的设备目标；本地设备注册套件退出 `0`，Simulator 构建成功。服务端仍需提供 owner-scoped DELETE、旧 owner 失效和 outbox 清理的真实证据。
+
+2026-11-08 无障碍补充：消息点赞/取消点赞、点踩/取消点踩、删除、视频播放/暂停和 macOS 设置按钮补齐 VoiceOver 标签，并补齐中英文资源；本地化 19/19、deep-link 8/8、entitlements 14/14、iOS/macOS Debug 构建通过。真实 VoiceOver、真机和 Dynamic Type 全页面仍未完成。
+
 2026-11-08 生产健康复核补充：`GET https://ciyuan2api.com/api/status` curl 退出 `0`、HTTP `200`，响应头 `X-New-Api-Version: v1.0.0-rc.48+ciyuan.reconstructed.20261106.1`，JSON 中 `setup=true` 且 `server_address=https://ciyuan2api.com`。本轮没有重复发送模型请求，避免无必要扣减真实额度；部署后真实 CN `started → delta → usage → completed` 证据沿用本文件既有记录。
 
 签名门禁记录：项目的 iOS Debug/Release `DEVELOPMENT_TEAM` 仍为空，`security find-identity -v -p codesigning` 返回 `0 valid identities found`；因此 Apple Sign In、APNs 和正式 archive/TestFlight 不能在当前环境完成。归类为发布签名环境阻塞，不写入猜测的 Team ID 或证书信息。
@@ -92,7 +98,7 @@
 | 数据统计 | 通过 | **客户端** | 新增 owner-scoped `AssistantUsageStatsStore`；仅成功完成的非空回答计数，取消/失败不计数，重试按 message ID 幂等，账号隔离。真实 Simulator 发送后详细页显示累计发送 1、我的消息 1、AI 回复 1、今日/周/月各 2；安装最新构建后“我的”概览同步显示对话 1、使用 1 天、连续 1 天。 |
 | Apple 登录全生命周期 | 未验收；客户端入口已运行时通过 | 服务端 + 系统环境 + 正式签名 | 当前签名 QA19 Simulator 勾选协议后点击“通过 Apple 登录”，成功弹出系统“登录 Apple 账户 / 需要在‘设置’中登录 Apple 账户”提示，证明客户端入口和 `ASAuthorization` 调用链可达；因 Simulator 未登录 Apple 账户，未继续输入凭据。iOS/macOS 已有撤销通知处理、nonce/state/JWT/授权码和 Keychain 会话逻辑；源码 entitlement 含 Apple Sign In、APNs 和 Associated Domains，但当前 `DEVELOPMENT_TEAM` 为空的 Simulator 签名实际嵌入空 entitlement；构建脚本现已明确提示“real-device archive signing still required”（`build-simulator.sh`）。仍未完成真实授权、刷新、退出、撤销及真实 Bearer 验证。 |
 | StoreKit 订阅 | 未验收；服务端配置可读但 StoreKit 无可用商品 | 服务端 + App Store Connect + 客户端 | 真实 Bearer 请求 `subscriptions/apple/config` 返回 HTTP 200 且含 2 个 Product ID；当前签名 Simulator 的 StoreKit 返回 0 个可用自动续订商品，页面显示“订阅暂不可用”。客户端不硬编码 Product ID，筛选和账号绑定逻辑已通过本地测试；仍需 App Store Connect/StoreKit 商品、真机购买、恢复、退款、撤销和额度账本闭环。 |
-| APNs/系统提醒 | 未验收；设备注销契约存在分支/生产不一致 | 服务端 Worker/APNs + 客户端协议 | 客户端登出会使用旧 access token best-effort 调用 `DELETE /api/v2/devices/{deviceId}`，但当前 `feat/caobao-server-v2` 路由源码只看到 `POST /api/v2/devices`；此前随机 DELETE 生产探针成功，不能代替 production-versus-branch 比较。真实已注册 token、旧 owner 失效、outbox 清理、锁屏送达、点击深链和安静时段生产行为仍未验证。 |
+| APNs/系统提醒 | 客户端注销竞态已修复；整体仍未验收 | 服务端 Worker/APNs + 客户端协议 | 客户端登出会使用旧 access token best-effort 调用 `DELETE /api/v2/devices/{deviceId}`，现在 DELETE 与后续 POST 注册串行化，重复注销也不会并发。当前 `feat/caobao-server-v2` 路由源码仍只看到 `POST /api/v2/devices`；此前随机 DELETE 生产探针成功，不能代替 production-versus-branch 比较。真实已注册 token、旧 owner 失效、outbox 清理、锁屏送达、点击深链和安静时段生产行为仍未验证。归因：客户端竞态已修复，服务端/正式签名真机门禁未完成。 |
 | 图片 | Assistant v2 聊天图片部分通过；旧图片分析未验收 | 客户端 + 服务端协议/功能去处 | 聊天图片入口和本地预处理测试通过；`AnalyzeView` 仍 POST 旧 `/api/analyze`，没有 Bearer、owner 隔离或额度协议，服务端 checkout 也未找到明确路由。旧图片分析保留在二级工具中但不计入核心完成；后续迁移到 Assistant v2，或由服务端补齐旧协议。 |
 | 语音输入/朗读 | iPhone/macOS 客户端入口已实现，真实设备未验收 | 客户端/系统权限 | `AssistantSpeechController` 已覆盖 iOS/macOS 权限、locale、设备端识别回退、60 秒上限、账号切换、中断和 TTS 8,000 字上限；`MacChatView` 已加入麦克风、停止和朗读入口，macOS Debug build 通过。尚未在真实 iPhone/macOS 麦克风环境完成授权、录音、识别和朗读验收，正式包仍需检查 Speech/Microphone 权限和签名。 |
 | 会话/任务/记忆云同步 | 文本和基础记录同步有本地回归；多模态/工具历史与双设备生产闭环未验收 | **客户端 + 服务端联调；功能范围需明确** | 真实账号已创建 7 天后到期的临时云任务，完成版本更新、列表验证和删除墓碑；客户端已有 owner-scoped 会话 change feed pull、全量回填、消息合并、删除队列和 tombstone 提交，记忆同步支持版本/墓碑。任务编辑现在持久化 owner-scoped 云端版本和脏任务 ID，拉取时不覆盖本地脏编辑，内容变更使用条件 PATCH，冲突保留本机并提示。当前会话同步按安全策略只恢复文本，远端图片、tool_call/tool_result 和 taskProposal 不写入本机归档；若“跨设备继续”要求完整多模态/工具历史，需新增安全附件引用、大小校验、提案降权和服务端契约。状态审批和两台真实设备仍未验收。 |
