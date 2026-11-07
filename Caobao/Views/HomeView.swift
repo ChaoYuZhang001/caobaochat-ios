@@ -580,6 +580,13 @@ struct AssistantSettingsSheet: View {
             NavigationLink("安静时段") { AssistantQuietHoursSettingsView(ownerId: owner) }
                 .disabled(isSaving || probeTask != nil)
         }
+        Section("角色") {
+            NavigationLink("自定义角色") {
+                AssistantCharactersView(ownerId: owner)
+            }
+            Text("角色提示词和记忆范围按账号隔离；删除会保留服务端墓碑，避免其他设备复活。")
+                .font(.caption).foregroundStyle(.secondary)
+        }
         Section("接入方式") {
             Picker("当前模式", selection: $mode) {
                 Text("CaoBao 平台").tag("platform")

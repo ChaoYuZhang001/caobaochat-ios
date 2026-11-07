@@ -105,6 +105,7 @@ struct AssistantProactiveView: View {
     @EnvironmentObject private var appState: AppState
     @Environment(\.dismiss) private var dismiss
     @State private var profile = AssistantProactiveProfile.default
+    @State private var pausedAll = false
     @State private var loadedOwner: String?
     @State private var savedMessage: String?
     @State private var isSyncing = false
@@ -194,6 +195,20 @@ struct AssistantProactiveView: View {
             }
             .disabled(!profile.enabled || !isCurrentOwner)
             Text(profile.enabled ? profile.mode.detail : AssistantProactiveMode.off.detail)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Button {
+                Task { await togglePauseAll() }
+            } label: {
+                HStack {
+                    Label(pausedAll ? "恢复全部主动任务" : "暂停全部主动任务",
+                          systemImage: pausedAll ? "play.circle" : "pause.circle")
+                    Spacer()
+                    if isSyncing { ProgressView().controlSize(.small) }
+                }
+            }
+            .disabled(!isCurrentOwner || loadedOwner == nil || isSyncing)
+            Text(pausedAll ? "全部主动任务已暂停；规则和执行记录会保留。" : "可临时暂停全部主动任务，不会删除已创建的规则。")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -355,6 +370,26 @@ struct AssistantProactiveView: View {
         syncServer(level: level)
     }
 
+    private func togglePauseAll() async {
+        guard isCurrentOwner, loadedOwner != nil, AuthService.shared.isLoggedIn, !isSyncing else { return }
+        let owner = userId
+        let target = !pausedAll
+        isSyncing = true
+        defer { isSyncing = false }
+        do {
+            let token = try await AuthService.shared.validAccessToken()
+            guard AssistantOwnerIdentity.matches(owner, AuthService.shared.user?.id ?? "local-device") else { return }
+            let response = try await APIService.shared.pauseAllProactive(token: token, paused: target)
+            guard AssistantOwnerIdentity.matches(owner, AuthService.shared.user?.id ?? "local-device") else { return }
+            pausedAll = response.profile.pausedAll
+            savedMessage = pausedAll ? "已暂停全部主动任务，规则仍保留。" : "已恢复全部主动任务。"
+        } catch is CancellationError {
+            return
+        } catch {
+            savedMessage = "暂停状态同步失败，请稍后重试。"
+        }
+    }
+
     private func syncServer(level: String) {
         guard AuthService.shared.isLoggedIn else { return }
         isSyncing = true
@@ -399,8 +434,10 @@ struct AssistantProactiveView: View {
         defer { isLoadingRuns = false }
         do {
             let token = try await AuthService.shared.validAccessToken()
+            let remote = try await APIService.shared.fetchProactiveProfile(token: token).profile
+            guard isCurrentOwner else { return }
+            pausedAll = remote.pausedAll
             if !store.hasProfile(for: userId) {
-                let remote = try await APIService.shared.fetchProactiveProfile(token: token).profile
                 if let mode = AssistantProactiveMode(rawValue: remote.mode) {
                     let zone = AssistantQuietHours.supportedTimeZoneIdentifiers.contains(remote.timeZone)
                         ? remote.timeZone : AssistantQuietHours.disabled.timeZoneIdentifier
@@ -2107,5 +2144,308 @@ private extension View {
         )) {
             Button("知道了", role: .cancel) { error.wrappedValue = nil }
         } message: { Text(error.wrappedValue ?? "") }
+    }
+}
+
+// MARK: - Custom characters
+
+/// Owner-scoped custom role management. The server remains authoritative for
+/// versions and tombstones; the view never sends an owner id in the request.
+@MainActor
+struct AssistantCharactersView: View {
+    let ownerId: String
+    @ObservedObject private var auth = AuthService.shared
+    @State private var characters: [CloudCharacter] = []
+    @State private var isLoading = false
+    @State private var errorMessage: String?
+    @State private var editor: CharacterEditorDestination?
+    @State private var pendingDelete: CloudCharacter?
+
+    private struct CharacterEditorDestination: Identifiable {
+        let id = UUID()
+        let character: CloudCharacter?
+    }
+
+    private var isCurrentOwner: Bool {
+        AssistantOwnerIdentity.matches(ownerId, auth.user?.id ?? "local-device")
+    }
+
+    var body: some View {
+        List {
+            if !auth.isLoggedIn {
+                WorkspaceEmptyState(icon: "person.crop.circle.badge.xmark", title: "请先登录", detail: "登录后才能管理云端自定义角色。")
+            } else if isLoading && characters.isEmpty {
+                ProgressView("正在读取角色…")
+                    .frame(maxWidth: .infinity, alignment: .center)
+            } else if characters.isEmpty {
+                WorkspaceEmptyState(icon: "person.2.wave.2", title: "还没有自定义角色", detail: "创建角色后，可以在后续角色对话功能中使用。")
+            } else {
+                ForEach(characters) { character in
+                    characterRow(character)
+                }
+            }
+
+            if let errorMessage {
+                Text(verbatim: errorMessage)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            if auth.isLoggedIn {
+                Button {
+                    editor = CharacterEditorDestination(character: nil)
+                } label: {
+                    Label("新建角色", systemImage: "plus")
+                }
+                .disabled(!isCurrentOwner || isLoading)
+            }
+        }
+        .assistantNavigationTitle("自定义角色")
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                Button("刷新") { Task { await loadCharacters() } }
+                    .disabled(!isCurrentOwner || isLoading)
+            }
+        }
+        .sheet(item: $editor) { destination in
+            AssistantCharacterEditor(character: destination.character) { request in
+                try await saveCharacter(request)
+            }
+        }
+        .confirmationDialog("删除这个自定义角色？", isPresented: pendingDeletePresented,
+                            titleVisibility: .visible, presenting: pendingDelete) { character in
+            Button("删除角色", role: .destructive) {
+                pendingDelete = nil
+                Task { await deleteCharacter(character) }
+            }
+            Button("取消", role: .cancel) { pendingDelete = nil }
+        } message: { _ in
+            Text("删除会写入服务端墓碑，并阻止旧设备重新激活这个角色。")
+        }
+        .onAppear { Task { await loadCharacters() } }
+        .onChange(of: AssistantOwnerIdentity.ownerKey(auth.user?.id ?? "local-device")) { _ in
+            characters = []
+            Task { await loadCharacters() }
+        }
+    }
+
+    private var pendingDeletePresented: Binding<Bool> {
+        Binding(
+            get: { pendingDelete != nil },
+            set: { if !$0 { pendingDelete = nil } }
+        )
+    }
+
+    @ViewBuilder
+    private func characterRow(_ character: CloudCharacter) -> some View {
+        HStack(spacing: 12) {
+            Text(character.avatar?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false ? character.avatar! : "✨")
+                .font(.title2)
+                .frame(width: 34, height: 34)
+                .background(Color.caobaoPrimary.opacity(0.12), in: Circle())
+
+            Button {
+                editor = CharacterEditorDestination(character: character)
+            } label: {
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        Text(character.name).font(.headline)
+                        if !character.enabled {
+                            Text("已停用").font(.caption2).foregroundStyle(.secondary)
+                        }
+                    }
+                    if let description = character.description, !description.isEmpty {
+                        Text(description).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+                    } else {
+                        Text("角色提示词已保存").font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .buttonStyle(.plain)
+
+            Button(role: .destructive) {
+                pendingDelete = character
+            } label: {
+                Image(systemName: "trash")
+            }
+            .buttonStyle(.borderless)
+            .disabled(!isCurrentOwner || isLoading)
+        }
+        .contentShape(Rectangle())
+    }
+
+    private func loadCharacters() async {
+        guard isCurrentOwner, auth.isLoggedIn else {
+            characters = []
+            return
+        }
+        isLoading = true
+        defer { isLoading = false }
+        do {
+            let token = try await auth.validAccessToken()
+            guard isCurrentOwner else { return }
+            let response = try await APIService.shared.listCloudCharacters(token: token, limit: 100)
+            guard isCurrentOwner else { return }
+            characters = response.items.filter { $0.deletedAt == nil }
+            errorMessage = nil
+        } catch is CancellationError {
+            return
+        } catch {
+            errorMessage = "暂时无法读取角色，请登录后重试。"
+        }
+    }
+
+    private func saveCharacter(_ request: CloudCharacterUpsertRequest) async throws {
+        guard isCurrentOwner else { throw CancellationError() }
+        let token = try await auth.validAccessToken()
+        guard isCurrentOwner else { throw CancellationError() }
+        let saved = try await APIService.shared.upsertCloudCharacter(token: token, request: request)
+        guard isCurrentOwner else { return }
+        if let index = characters.firstIndex(where: { $0.id == saved.id }) {
+            characters[index] = saved
+        } else {
+            characters.append(saved)
+        }
+        errorMessage = nil
+    }
+
+    private func deleteCharacter(_ character: CloudCharacter) async {
+        do {
+            guard isCurrentOwner else { return }
+            let token = try await auth.validAccessToken()
+            guard isCurrentOwner else { return }
+            _ = try await APIService.shared.deleteCloudCharacter(token: token, id: character.id, expectedVersion: character.version)
+            guard isCurrentOwner else { return }
+            characters.removeAll { $0.id == character.id }
+            errorMessage = nil
+        } catch is CancellationError {
+            return
+        } catch {
+            errorMessage = "删除失败，角色版本可能已变化；请刷新后重试。"
+            await loadCharacters()
+        }
+    }
+}
+
+@MainActor
+struct AssistantCharacterEditor: View {
+    let character: CloudCharacter?
+    let onSave: (CloudCharacterUpsertRequest) async throws -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var name: String
+    @State private var avatar: String
+    @State private var description: String
+    @State private var systemPrompt: String
+    @State private var greeting: String
+    @State private var language: String
+    @State private var memoryScope: String
+    @State private var allowGlobalMemory: Bool
+    @State private var enabled: Bool
+    @State private var errorMessage: String?
+    @State private var isSaving = false
+
+    init(character: CloudCharacter?, onSave: @escaping (CloudCharacterUpsertRequest) async throws -> Void) {
+        self.character = character
+        self.onSave = onSave
+        _name = State(initialValue: character?.name ?? "")
+        _avatar = State(initialValue: character?.avatar ?? "✨")
+        _description = State(initialValue: character?.description ?? "")
+        _systemPrompt = State(initialValue: character?.systemPrompt ?? "")
+        _greeting = State(initialValue: character?.greeting ?? "")
+        _language = State(initialValue: character?.language ?? "zh-Hans")
+        _memoryScope = State(initialValue: character?.memoryScope ?? "private")
+        _allowGlobalMemory = State(initialValue: character?.allowGlobalMemory ?? false)
+        _enabled = State(initialValue: character?.enabled ?? true)
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("基本信息") {
+                    TextField("名称", text: $name)
+                    TextField("头像（emoji）", text: $avatar)
+                    TextField("简介", text: $description, axis: .vertical)
+                    Picker("语言", selection: $language) {
+                        Text("简体中文").tag("zh-Hans")
+                        Text("English").tag("en")
+                        Text("跟随系统").tag("system")
+                    }
+                    Toggle("启用角色", isOn: $enabled)
+                }
+                Section("角色行为") {
+                    TextEditor(text: $systemPrompt)
+                        .frame(minHeight: 140)
+                        .overlay(alignment: .topLeading) {
+                            if systemPrompt.isEmpty {
+                                Text("写下角色的身份、语气和边界…")
+                                    .foregroundStyle(.secondary)
+                                    .padding(.top, 8)
+                                    .allowsHitTesting(false)
+                            }
+                        }
+                    TextField("首次问候（可选）", text: $greeting, axis: .vertical)
+                }
+                Section("记忆范围") {
+                    Picker("范围", selection: $memoryScope) {
+                        Text("仅角色记忆").tag("private")
+                        Text("当前工作区").tag("workspace")
+                    }
+                    Toggle("允许使用全局记忆", isOn: $allowGlobalMemory)
+                    Text("默认隔离角色记忆；只有明确开启后才允许注入全局记忆。")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                if let errorMessage {
+                    Section { Text(verbatim: errorMessage).foregroundStyle(.red).font(.caption) }
+                }
+            }
+            .assistantNavigationTitle(character == nil ? "新建角色" : "编辑角色")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("取消") { dismiss() }.disabled(isSaving)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("保存") { Task { await save() } }
+                        .disabled(isSaving)
+                }
+            }
+        }
+        .interactiveDismissDisabled(isSaving)
+    }
+
+    private func save() async {
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedPrompt = systemPrompt.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty, trimmedName.count <= 80 else {
+            errorMessage = "角色名称不能为空，且不能超过 80 个字符。"
+            return
+        }
+        guard !trimmedPrompt.isEmpty, trimmedPrompt.count <= 12_000 else {
+            errorMessage = "角色提示词不能为空，且不能超过 12,000 个字符。"
+            return
+        }
+        isSaving = true
+        defer { isSaving = false }
+        let request = CloudCharacterUpsertRequest(
+            id: character?.id ?? UUID().uuidString,
+            name: trimmedName,
+            avatar: avatar.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : avatar.trimmingCharacters(in: .whitespacesAndNewlines),
+            description: description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : description.trimmingCharacters(in: .whitespacesAndNewlines),
+            systemPrompt: trimmedPrompt,
+            greeting: greeting.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : greeting.trimmingCharacters(in: .whitespacesAndNewlines),
+            language: language.isEmpty ? nil : language,
+            memoryScope: memoryScope,
+            allowGlobalMemory: allowGlobalMemory,
+            enabled: enabled,
+            expectedVersion: character?.version
+        )
+        do {
+            try await onSave(request)
+            dismiss()
+        } catch is CancellationError {
+            return
+        } catch {
+            errorMessage = "保存失败，请检查登录状态或稍后重试。"
+        }
     }
 }
