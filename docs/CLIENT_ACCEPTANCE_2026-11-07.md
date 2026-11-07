@@ -8,6 +8,8 @@
 
 本轮回归失败与修复：2026-11-08 首次完整回归在 `quiet-edit-origin-never-replays-matured` 触发 fatal error，原因是 macOS `UNCalendarNotificationTrigger.nextTriggerDate()` 对已过期的一次性日历组件滚动到未来日期，导致安静时段编辑错误继承已成熟提醒。客户端已在 `ec7e55b` 按任务时区从完整日期组件重建实际 fire date；`AssistantReminderCoordinator` 独立套件随后 88/88 通过，完整回归修复后也已 exit 0。归类为客户端提醒协调器缺陷，已修复。
 
+本轮生产联调补充：为避免 Simulator 无点击自动化能力，使用仅 Debug 的临时启动注入调用现有 `ChatViewModel` 发送路径；第一次注入过早触发客户端配置变更保护，显示“回复、原问题、账号或接入配置已变化”，未扣额度。等待登录权益、归档和区域状态稳定后重试，生产请求成功并完成完整 SSE；注入和 trace 均已撤销，工作树保持干净。
+
 签名门禁记录：项目的 iOS Debug/Release `DEVELOPMENT_TEAM` 仍为空，`security find-identity -v -p codesigning` 返回 `0 valid identities found`；因此 Apple Sign In、APNs 和正式 archive/TestFlight 不能在当前环境完成。归类为发布签名环境阻塞，不写入猜测的 Team ID 或证书信息。
 
 服务端需要处理的接口、幂等、owner 隔离和生产门禁见 [SERVER_ACCEPTANCE_REQUIREMENTS_2026-11-07.md](SERVER_ACCEPTANCE_REQUIREMENTS_2026-11-07.md)。
@@ -19,7 +21,7 @@
 | 本地核心回归 | 通过（修复后重跑） | `Scripts/test-assistant.sh`，`/tmp/caobao-full-regression-20261108-deeplink.log`；`ec7e55b`、`1bde23f` | 修复安静时段成熟提醒继承后，原有 18 套、528 个独立组保持 `exitCode: 0`，并新增 8 条 `AssistantDeepLink` 路由边界检查；覆盖协议、同步、媒体、提醒、删除、备份和 ChatViewModel；使用隔离文件、mock 网络和 fake 通知，不代表生产联调 |
 | iOS/macOS Debug 构建 | 通过 | `Scripts/build-simulator.sh`、`xcodebuild -scheme Caobao-macOS -sdk macosx`；2026-11-07 | iOS Simulator 脚本和 macOS target 均返回 `** BUILD SUCCEEDED **`；构建未使用正式签名，因此不替代真机 archive/TestFlight 门禁 |
 | 代码卫生 | 通过 | `git diff --check` | 本轮修复、测试和构建完成后检查通过；提交后再确认工作树和 commit |
-| CN 平台对话 | 通过（服务端资金池修复后复测） | iPhone 17 Pro Max Simulator，当前签名包；HTTP 200 网络日志；UI 完成态 | 发送 `: ping` 后返回 `pong 🏓`，界面从“正在连接…”进入完成态；额度从 `6/8` 变为 `5/8`；未出现 `INTERNAL_ERROR`/`UPSTREAM_UNAVAILABLE`。原始 SSE 的逐事件日志未持久化，因此 `started/delta/completed` 的 UI/扣额结果已验证，事件序列仍不作为独立日志证据。 |
+| CN 平台对话 | 通过（服务端资金池修复后再次复测） | iPhone 17 Pro Max Simulator，签名包；生产 `https://ciyuan2api.com`；`xcrun simctl launch --console-pty` 逐事件日志 | 2026-11-08 发送 `: e2e raw sse acceptance` 后收到 `generation(gen_RjPZPiVVMeACCO53KmrfMg)`、多条 `delta(...)`、`usage`、`completed`；UI 将 assistant 消息标记 `completed`，本地归档保存 `generationId`/`requestId`/token usage；未出现 `INTERNAL_ERROR`、`UPSTREAM_UNAVAILABLE` 或 `PLATFORM_FUNDING_UNAVAILABLE`。此前 `: ping` 验收曾记录额度 `6/8 → 5/8`；本轮重点确认生产资金池修复后的真实 SSE 完整链路。逐事件日志来自仅 Debug 的临时 trace，验证后已撤销，不进入产品代码。 |
 | 任务基础 CRUD | 通过 | iPhone Simulator | 创建 `QA task`、完成/重开入口和编辑/删除入口可用；测试任务暂保留，未确认不可逆删除 |
 | 四 Tab 导航 | 通过 | `ContentView.swift` + Simulator | 首页、对话、任务、我的可进入 |
 | 模型设置统一入口 | 通过 | iPhone 17 Pro Max Simulator，最新签名构建 | 设置页不再展示只写入无效 `selectedModel` 的旧静态列表；仅保留助理设置入口，区域、平台模型、BYOK 和首页使用同一状态源 |
