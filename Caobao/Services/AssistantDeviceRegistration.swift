@@ -233,6 +233,13 @@ final class AssistantRemoteNotificationCoordinator {
             guard let self else { return }
             defer { if self.generation == operation { self.registrationTask = nil } }
             do {
+                // A logout unregisters the previous owner's device
+                // asynchronously. Serialize the next registration behind that
+                // request so a slow DELETE cannot arrive after a new owner's
+                // POST and disable the newly registered target.
+                let previousUnregistration = self.deviceUnregistrationTask
+                await previousUnregistration?.value
+                try Task.checkCancellation()
                 let access = try await AuthService.shared.validAccessToken()
                 guard self.generation == operation, let token = self.tokenHex,
                       let deviceId = self.stableDeviceId() else { return }
