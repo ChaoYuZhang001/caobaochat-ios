@@ -203,7 +203,7 @@ final class AssistantRemoteNotificationCoordinator {
     func invalidate(accessToken: String? = nil) {
         generation = UUID()
         registrationTask?.cancel(); registrationTask = nil
-        guard let accessToken, let deviceId = stableDeviceId() else { return }
+        guard let accessToken, let deviceId = existingDeviceId() else { return }
         let operation = UUID()
         deviceUnregistrationOperation = operation
         deviceUnregistrationTask = Task { @MainActor [weak self] in
@@ -251,6 +251,11 @@ final class AssistantRemoteNotificationCoordinator {
         let value = UUID().uuidString.lowercased()
         do { try KeychainStore.save(value, account: deviceKeychainAccount); return value }
         catch { return nil }
+    }
+
+    private func existingDeviceId() -> String? {
+        guard let value = KeychainStore.read(account: deviceKeychainAccount), validDeviceId(value) else { return nil }
+        return value
     }
 
     private func validDeviceId(_ value: String) -> Bool {
