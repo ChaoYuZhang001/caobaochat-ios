@@ -200,7 +200,7 @@ private struct MacTaskProposalSummary: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            Text("请在任务页确认、编辑或拒绝此提案。")
+            Text("macOS 当前只展示摘要；接受、编辑、拒绝和继续操作尚未接入。")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
