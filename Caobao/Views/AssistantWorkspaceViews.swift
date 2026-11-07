@@ -130,8 +130,22 @@ final class AssistantProactiveInboxStore: ObservableObject {
 
     func unreadCount(ownerId: String, runs: [CloudProactiveRun], now: Date = Date()) -> Int {
         runs.filter { run in
-            !isRead(ownerId: ownerId, runId: run.id) && !isSnoozed(ownerId: ownerId, runId: run.id, now: now)
+            !isRead(ownerId: ownerId, run: run) && !isSnoozed(ownerId: ownerId, run: run, now: now)
         }.count
+    }
+
+    /// Prefer server-authoritative run state when the API provides it, while
+    /// retaining the owner-scoped local fallback for older deployments. This
+    /// keeps a newer client from showing a run as unread after another device
+    /// has already read, snoozed, or dismissed it.
+    func isRead(ownerId: String, run: CloudProactiveRun) -> Bool {
+        if run.readAt != nil || run.dismissedAt != nil { return true }
+        return isRead(ownerId: ownerId, runId: run.id)
+    }
+
+    func isSnoozed(ownerId: String, run: CloudProactiveRun, now: Date = Date()) -> Bool {
+        if let until = AssistantProactiveDate.parse(run.snoozedUntil), until > now { return true }
+        return isSnoozed(ownerId: ownerId, runId: run.id, now: now)
     }
 
     func isRead(ownerId: String, runId: String) -> Bool {
