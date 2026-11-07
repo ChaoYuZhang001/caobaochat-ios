@@ -178,7 +178,8 @@ struct OfficialView: View {
                     name: "草根社区",
                     desc: "AI原生内容社区（开发中）",
                     features: ["AI创作分享", "提示词市场", "Agent工坊"],
-                    color: .purple
+                    color: .purple,
+                    isComingSoon: true
                 )
             }
         }
@@ -187,7 +188,7 @@ struct OfficialView: View {
         .cornerRadius(16)
     }
     
-    private func productCard(name: String, desc: String, features: [String], color: Color) -> some View {
+    private func productCard(name: String, desc: String, features: [String], color: Color, isComingSoon: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(name)
@@ -196,7 +197,7 @@ struct OfficialView: View {
                 
                 Spacer()
                 
-                if name.contains("开发中") {
+                if isComingSoon {
                     Text("Coming Soon")
                         .font(.caption2)
                         .padding(.horizontal, 8)
