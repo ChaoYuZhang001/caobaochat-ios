@@ -126,6 +126,19 @@ private struct AssistantLocalRepositoryTests {
             do { try FileManager.default.removeItem(at: root) }
             catch { fputs("Test temporary-directory cleanup failed: \(error)\n", stderr) }
         }
+        try run("cloud-task-status-fails-closed-for-non-runnable-states", root: root) { _ in
+            try expect(AssistantCloudTaskStatusPolicy.localStatus(for: "scheduled") == .active,
+                       "Scheduled cloud tasks remain locally actionable")
+            try expect(AssistantCloudTaskStatusPolicy.localStatus(for: "running") == .active,
+                       "Running cloud tasks remain visible as active")
+            for raw in ["draft", "waiting_approval", "failed", "paused", "future_status", " "] {
+                try expect(AssistantCloudTaskStatusPolicy.localStatus(for: raw) == .paused,
+                           "Cloud state \(raw) must not be shown as an active local task")
+            }
+            try expect(AssistantCloudTaskStatusPolicy.localStatus(for: "completed") == .completed
+                && AssistantCloudTaskStatusPolicy.localStatus(for: "cancelled") == .cancelled,
+                       "Terminal cloud states preserve their local terminal status")
+        }
         try run("roundtrip-and-updates", root: root) { url in
             let repository = AssistantLocalRepository(fileURL: url)
             try expect(repository.lastError == nil, "A new file must not be an error")
