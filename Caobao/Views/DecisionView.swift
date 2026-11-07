@@ -94,6 +94,7 @@ struct DecisionView: View {
                                     Image(systemName: "plus.circle")
                                         .foregroundStyle(Color(hex: "667eea"))
                                 }
+                                .accessibilityLabel("添加选项")
                             }
                             
                             ForEach(Array(options.enumerated()), id: \.offset) { index, _ in
@@ -116,6 +117,7 @@ struct DecisionView: View {
                                             Image(systemName: "xmark.circle.fill")
                                                 .foregroundStyle(.secondary)
                                         }
+                                        .accessibilityLabel("删除选项")
                                     }
                                 }
                             }
