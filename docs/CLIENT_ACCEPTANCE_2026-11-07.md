@@ -50,6 +50,8 @@
 
 2026-11-08 macOS 图片导入修复：`fileImporter` 返回的安全作用域 URL 现在显式开启访问，读取受控 Data 后构造 `NSImage` 并释放作用域，避免直接 `NSImage(contentsOf:)` 在沙盒下失败。`b029f29`；媒体测试明确退出 `0`，macOS Debug 构建明确退出 `0`。真实大文件、权限拒绝和网络上传仍未验收。
 
+2026-11-08 Apple/订阅/账号专项客户端审计：`Scripts/test-assistant-identity.sh` 明确退出 `0`（17 个身份套件），`Scripts/test-assistant-entitlements.sh` 明确退出 `0`（14 个权益套件）。代码已复核 nonce/state、JWT/授权码原文、刷新 owner 校验、Keychain 会话、撤销、删除状态能力、StoreKit `appAccountToken`、服务器验证后交易 finish 和账号切换取消任务；未发现可独立修复的客户端缺陷。有效签名身份仍为 0，真实 Apple/APNs/TestFlight 未验收；StoreKit 商品为 0，归 App Store Connect/StoreKit 配置和真实账号环境；账号删除服务端清理仍未验收。
+
 2026-11-08 二级旧工具契约复核：运势、金句、昵称、吐槽、决策、评分、早晚报和旧图片分析仍调用 `/api/caobao/*`、`/api/report/*` 或 `/api/analyze`；当前 `feat/caobao-server-v2` 路由源码只挂载 `/api/v2` 助理契约，未找到这些旧路径。它们继续作为二级/兼容入口，不计入核心完成；若保留，服务端需明确兼容路由，否则客户端应迁移或下线入口。
 
 2026-11-08 冷启动 UI smoke：将最新 iOS Simulator 包安装到已启动的 iPhone 17 Pro Max，启动后截图显示首页主动更新、任务、主 CTA、额度卡和四个一级 Tab，2 分钟日志无 Caobao 崩溃记录。该证据只覆盖 Simulator 冷启动和首屏可见性，不替代真实设备权限、签名和网络验收。
