@@ -1145,6 +1145,11 @@ struct AssistantTasksView: View {
     @State private var reminderCoverage: [String: AssistantReminderCoverage] = [:]
     @State private var reminderSnapshots: [String: AssistantTask] = [:]
     @State private var loadedOwner: String?
+    /// A notification task route may arrive before the remote task feed has
+    /// finished. Keep the route pending until an authenticated cloud sync has
+    /// completed successfully; otherwise a temporary network failure would
+    /// be misreported as a deleted task and lose the deep link.
+    @State private var taskCloudSyncAvailable = false
     @State private var activeOperation: OperationIdentity?
     @State private var refreshRunId: UUID?
     private let repository = AssistantLocalRepository.shared
@@ -1219,19 +1224,36 @@ struct AssistantTasksView: View {
         .onReceive(NotificationCenter.default.publisher(for: .loginSuccess)) { _ in resetForOwnerChange() }
         .onReceive(NotificationCenter.default.publisher(for: .logoutSuccess)) { _ in resetForOwnerChange() }
         .task(id: AssistantOwnerIdentity.ownerKey(userId)) {
-            await syncTasksFromCloud()
+            if auth.isLoggedIn { taskCloudSyncAvailable = await syncTasksFromCloud() }
+            else { taskCloudSyncAvailable = true }
             reload()
             await refreshReminderStates()
             consumeTaskDeepLink()
         }
-        .onChange(of: appState.pendingAssistantTaskId) { _ in consumeTaskDeepLink() }
+        .onChange(of: appState.pendingAssistantTaskId) { pendingID in
+            guard pendingID != nil else { return }
+            Task { @MainActor in
+                if auth.isLoggedIn { taskCloudSyncAvailable = await syncTasksFromCloud() }
+                else { taskCloudSyncAvailable = true }
+                guard isCurrentPage else { return }
+                reload()
+                await refreshReminderStates()
+                consumeTaskDeepLink()
+            }
+        }
         .onChange(of: isPresentingTaskDetails) { presented in
             if !presented { consumeTaskDeepLink() }
         }
         .onReceive(NotificationCenter.default.publisher(for: Notification.Name("assistant.reminders.changed"))) { _ in
             Task { await refreshReminderStates() }
         }
-        .refreshable { reload(); await refreshReminderStates() }
+        .refreshable {
+            if auth.isLoggedIn { taskCloudSyncAvailable = await syncTasksFromCloud() }
+            else { taskCloudSyncAvailable = true }
+            reload()
+            await refreshReminderStates()
+            consumeTaskDeepLink()
+        }
     }
 
     private var taskList: some View {
@@ -1285,6 +1307,7 @@ struct AssistantTasksView: View {
 
     private func resetForOwnerChange() {
         activeOperation = nil; refreshRunId = nil; loadedOwner = nil
+        taskCloudSyncAvailable = false
         tasks = []; reminderStates = [:]; reminderCoverage = [:]; reminderSnapshots = [:]; operationError = nil
         editor = nil; pendingDeletion = nil; reactivationTarget = nil; endingPlan = nil; searchText = ""
         reload()
@@ -1516,15 +1539,15 @@ struct AssistantTasksView: View {
         tasks = repository.tasks(for: userId)
         loadedOwner = userId
         if let error = repository.lastError?.localizedDescription { operationError = error }
-        else { consumeTaskDeepLink() }
     }
 
     /// Pulls owner-scoped task mutations into the local task store while leaving
     /// reminder consent and scheduling entirely local. The cursor advances only
     /// after every change has been applied successfully.
-    private func syncTasksFromCloud() async {
+    @discardableResult
+    private func syncTasksFromCloud() async -> Bool {
         guard isCurrentPage, let token = try? await AuthService.shared.validAccessToken(),
-              !token.isEmpty else { return }
+              !token.isEmpty else { return false }
         do {
             let cursor = loadCloudTaskCursor()
             let changes = try await APIService.shared.syncCloudTaskChanges(token: token, cursor: cursor, limit: 200)
@@ -1597,9 +1620,11 @@ struct AssistantTasksView: View {
                     dueAt: cloudTimestamp(task.dueAt), expectedVersion: nil)
                 _ = try? await APIService.shared.upsertCloudTask(token: token, request: request)
             }
+            return true
         } catch {
             // Network errors are intentionally silent here. The local reminder
             // database is the source of truth for this screen's behavior.
+            return false
         }
     }
 
@@ -1778,6 +1803,10 @@ struct AssistantTasksView: View {
 
     private func consumeTaskDeepLink() {
         guard isCurrentPage, !isOperating, !isPresentingTaskDetails, repository.lastError == nil else { return }
+        // A signed-in owner must have a successful cloud sync before a missing
+        // task can be classified as deleted. Leave the route pending while a
+        // temporary network failure prevents the remote task from arriving.
+        guard !auth.isLoggedIn || taskCloudSyncAvailable else { return }
         guard let id = appState.pendingAssistantTaskId else { return }
         appState.pendingAssistantTaskId = nil
         guard AssistantOwnerIdentity.matches(userId, auth.user?.id ?? "local-device"),
