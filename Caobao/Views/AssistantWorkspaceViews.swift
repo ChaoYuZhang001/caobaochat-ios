@@ -498,7 +498,15 @@ struct AssistantProactiveView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            Text("创建于 \(run.createdAt)").font(.caption).foregroundStyle(.secondary)
+            if let createdAt = formattedProactiveDate(run.createdAt) {
+                Text("生成于 \(createdAt)").font(.caption).foregroundStyle(.secondary)
+            } else {
+                Text("生成于 \(run.createdAt)").font(.caption).foregroundStyle(.secondary)
+            }
+            if let deliveredAt = run.deliveredAt,
+               let delivered = formattedProactiveDate(deliveredAt) {
+                Text("送达于 \(delivered)").font(.caption2).foregroundStyle(.tertiary)
+            }
             if let refs = run.sourceRefs, !refs.isEmpty {
                 Text("来源：\(refs.joined(separator: "、"))")
                     .font(.caption2).foregroundStyle(.tertiary)
@@ -513,6 +521,10 @@ struct AssistantProactiveView: View {
                 Button("稍后") {
                     inboxStore.snooze(ownerId: userId, runId: run.id)
                     savedMessage = "已将这条主动更新延后 1 小时（仅本设备）。"
+                }
+                .buttonStyle(.bordered)
+                Button("关闭此类") {
+                    savedMessage = "服务端暂未提供关闭此类接口，请在主动规则中暂停或删除对应规则。"
                 }
                 .buttonStyle(.bordered)
             }
@@ -530,6 +542,11 @@ struct AssistantProactiveView: View {
         case "manual", "": return "手动运行"
         default: return "主动事件：\(reason)"
         }
+    }
+
+    private func formattedProactiveDate(_ value: String) -> String? {
+        guard let date = AssistantProactiveDate.parse(value) else { return nil }
+        return date.formatted(date: .abbreviated, time: .shortened)
     }
 
     private func proactiveRunStatusLabel(_ status: String) -> Text {
