@@ -14,6 +14,8 @@
 | `GET /api/v2/proactive/rules` | `401 UNAUTHENTICATED` | 路由存在；需要真实账号验证规则和执行记录 |
 | `GET /api/v2/subscriptions/apple/config` | `401 UNAUTHENTICATED` | 路由存在；需要真实账号和 App Store 商品配置验证 |
 | `GET /api/v2/entitlements` | `401 UNAUTHENTICATED` | 路由存在；需要真实账号验证订阅权益和额度账本 |
+| `GET /api/v2/sync/conversations?cursor=0&limit=1` | `401 UNAUTHENTICATED` | 会话 change feed 路由存在；需要真实账号和双设备验证 |
+| `GET /api/v2/conversations/changes?cursor=0&limit=1` | `401 UNAUTHENTICATED` | 会话 change feed 兼容路由存在；需要真实账号和双设备验证 |
 
 ## 必须完成的服务端项目
 
@@ -67,7 +69,7 @@
 
 ### 6. 会话、任务和记忆同步
 
-当前客户端的会话同步主要是 pull，记忆同步才有 push 路径；服务端需要提供会话变更推送或可游标消费的 change feed。需要至少两台真实设备验证：增量同步、版本冲突、删除墓碑、冷启动恢复、账号切换、账号删除和旧设备离线后重新上线。服务端必须保持 owner 隔离，不能用全量覆盖恢复旧数据。
+客户端已经实现会话 change feed pull、全量回填、消息合并、删除队列和 tombstone 提交；记忆和任务也有各自的游标同步路径。生产未认证探针只证明会话路由已挂载，不能证明业务闭环。需要至少两台真实设备验证：增量同步、版本冲突、删除墓碑、冷启动恢复、账号切换、账号删除和旧设备离线后重新上线。服务端必须保持 owner 隔离，不能用全量覆盖恢复旧数据，并应记录 change feed 的保留窗口、resync 语义和删除墓碑生命周期。
 
 ### 7. AI 群聊（新增功能）
 
