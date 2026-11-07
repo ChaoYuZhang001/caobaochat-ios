@@ -175,13 +175,14 @@ struct MacHistoryPlaceholder: View {
 }
 
 // MARK: - Mac Feature Enum
-enum MacFeature: String, CaseIterable, Identifiable {
+enum MacFeature: String, CaseIterable, Identifiable, Hashable {
     case home = "首页"
     case chat = "自由对话"
     case memories = "记忆"
     case proactive = "主动规则"
     case subscription = "订阅"
     case settings = "设置与隐私"
+    case tools = "工具模板"
     case fortune = "任务"
     case analyze = "文件秒懂"
     case quote = "扎心金句"
@@ -205,6 +206,7 @@ enum MacFeature: String, CaseIterable, Identifiable {
         case .proactive: return "bell.badge.fill"
         case .subscription: return "creditcard.fill"
         case .settings: return "gearshape.fill"
+        case .tools: return "square.grid.2x2.fill"
         case .fortune: return "checklist"
         case .analyze: return "photo.fill"
         case .quote: return "quote.bubble.fill"
@@ -228,6 +230,7 @@ enum MacFeature: String, CaseIterable, Identifiable {
         case .proactive: return .orange
         case .subscription: return .blue
         case .settings: return .gray
+        case .tools: return .purple
         case .fortune: return .green
         case .analyze: return .blue
         case .quote: return .purple
@@ -286,9 +289,10 @@ struct MacSidebarView: View {
                 }
             }
             
-            // 毒舌特色
-            Section("毒舌特色") {
-                ForEach([MacFeature.quote, .roast, .nickname, .rate]) { feature in
+            // Legacy tools stay behind one secondary entry instead of
+            // competing with Home, Chat, Tasks and the account workspace.
+            Section("发现") {
+                ForEach([MacFeature.tools]) { feature in
                     MacFeatureRow(feature: feature, isSelected: selectedFeature == feature)
                         .onTapGesture {
                             selectedFeature = feature
@@ -296,26 +300,35 @@ struct MacSidebarView: View {
                         }
                 }
             }
-            
-            // 智能助手
-            Section("智能助手") {
-                ForEach([MacFeature.decision, .morningReport, .eveningReport]) { feature in
-                    MacFeatureRow(feature: feature, isSelected: selectedFeature == feature)
-                        .onTapGesture {
-                            selectedFeature = feature
-                            selectedConversationId = nil
+
+            // Recent conversations remain visible on desktop so users can
+            // continue work without returning to Home first.
+            Section("最近对话") {
+                if conversations.isEmpty {
+                    Text("暂无最近对话")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(Array(conversations.prefix(8))) { conversation in
+                        Button {
+                            selectedFeature = .chat
+                            selectedConversationId = conversation.id
+                        } label: {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(conversation.title.isEmpty ? "未命名对话" : conversation.title)
+                                    .lineLimit(1)
+                                if !conversation.preview.isEmpty {
+                                    Text(conversation.preview)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                }
-            }
-            
-            // 其他
-            Section("其他") {
-                ForEach([MacFeature.favorites, .history, .profile]) { feature in
-                    MacFeatureRow(feature: feature, isSelected: selectedFeature == feature)
-                        .onTapGesture {
-                            selectedFeature = feature
-                            selectedConversationId = nil
-                        }
+                        .buttonStyle(.plain)
+                        .padding(.vertical, 2)
+                    }
                 }
             }
         }
@@ -347,6 +360,62 @@ struct MacFeatureRow: View {
     }
 }
 
+/// Secondary tool catalog for the desktop workspace. The tools remain
+/// available without occupying first-level sidebar space.
+struct MacToolsView: View {
+    private let tools: [MacFeature] = [
+        .analyze, .quote, .roast, .nickname, .rate, .decision,
+        .morningReport, .eveningReport, .favorites
+    ]
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    Text("这些功能作为工具模板提供，不会打断首页、对话和任务工作流。")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .listRowBackground(Color.clear)
+                }
+
+                Section("工具模板") {
+                    ForEach(tools, id: \.self) { feature in
+                        NavigationLink(value: feature) {
+                            MacFeatureRow(feature: feature, isSelected: false)
+                        }
+                    }
+                }
+            }
+            .navigationTitle("工具模板")
+            .navigationDestination(for: MacFeature.self) { feature in
+                MacToolDestination(feature: feature)
+            }
+        }
+    }
+}
+
+private struct MacToolDestination: View {
+    let feature: MacFeature
+
+    var body: some View {
+        Group {
+            switch feature {
+            case .analyze: AnalyzeView()
+            case .quote: QuoteView()
+            case .roast: RoastView()
+            case .nickname: NicknameView()
+            case .rate: RateView()
+            case .decision: DecisionView()
+            case .morningReport: MorningReportView()
+            case .eveningReport: EveningReportView()
+            case .favorites: LocalQuoteFavoritesView()
+            default: MacHomeView()
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
 // MARK: - Mac Detail View
 struct MacDetailView: View {
     let selectedFeature: MacFeature
@@ -359,7 +428,7 @@ struct MacDetailView: View {
             case .home:
                 MacHomeView()
             case .chat:
-                MacChatView(chatViewModel: chatViewModel)
+                MacChatView(chatViewModel: chatViewModel, selectedConversationId: conversationId)
             case .memories:
                 AssistantMemoriesView(userId: AuthService.shared.user?.id ?? "local-device")
             case .proactive:
@@ -368,6 +437,8 @@ struct MacDetailView: View {
                 MacSubscriptionPlaceholder()
             case .settings:
                 AssistantSettingsSheet()
+            case .tools:
+                MacToolsView()
             case .fortune:
                 AssistantTasksView(userId: AuthService.shared.user?.id ?? "local-device")
             case .analyze:
@@ -387,7 +458,7 @@ struct MacDetailView: View {
             case .eveningReport:
                 EveningReportView()
             case .favorites:
-                FavoritesView()
+                LocalQuoteFavoritesView()
             case .history:
                 MacHistoryPlaceholder()
             case .profile:
