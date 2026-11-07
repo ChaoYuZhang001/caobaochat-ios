@@ -12,10 +12,16 @@ final class AssistantNotificationRouter: NSObject, UNUserNotificationCenterDeleg
     @MainActor private var pendingTask: (owner: String, id: String)?
     @MainActor private var pendingProactiveRun: (owner: String, id: String)?
 
+    private static func validRouteValue(_ value: String?) -> String? {
+        guard let value, !value.isEmpty, value.utf8.count <= 256,
+              !value.unicodeScalars.contains(where: CharacterSet.controlCharacters.contains) else { return nil }
+        return value
+    }
+
     @MainActor func takePendingTask() -> String? {
         guard let pendingTask else { return nil }
         let currentOwner = AuthService.shared.user?.id ?? "local-device"
-        guard pendingTask.owner == currentOwner else {
+        guard AssistantOwnerIdentity.matches(pendingTask.owner, currentOwner) else {
             // During cold launch AuthService may still be restoring the
             // session. Keep the payload until the authenticated owner is
             // available; discard it only after a different signed-in owner
@@ -30,7 +36,7 @@ final class AssistantNotificationRouter: NSObject, UNUserNotificationCenterDeleg
     @MainActor func takePendingProactiveRun() -> String? {
         guard let pendingProactiveRun else { return nil }
         let currentOwner = AuthService.shared.user?.id ?? "local-device"
-        guard pendingProactiveRun.owner == currentOwner else {
+        guard AssistantOwnerIdentity.matches(pendingProactiveRun.owner, currentOwner) else {
             if currentOwner != "local-device" { self.pendingProactiveRun = nil }
             return nil
         }
@@ -52,10 +58,10 @@ final class AssistantNotificationRouter: NSObject, UNUserNotificationCenterDeleg
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
                                 withCompletionHandler completionHandler: @escaping () -> Void) {
         let values = response.notification.request.content.userInfo
-        let owner = values["ownerId"] as? String
-        let task = values["taskId"] as? String
+        let owner = Self.validRouteValue(values["ownerId"] as? String)
+        let task = Self.validRouteValue(values["taskId"] as? String)
         let route = values["route"] as? String
-        let proactiveRun = values["proactiveRunId"] as? String
+        let proactiveRun = Self.validRouteValue(values["proactiveRunId"] as? String)
         Task { @MainActor in
             defer { completionHandler() }
             // Store the owner-bound route before checking the live session.
@@ -63,10 +69,10 @@ final class AssistantNotificationRouter: NSObject, UNUserNotificationCenterDeleg
             // this callback; takePendingTask/takePendingProactiveRun performs
             // the owner check when the workspace is ready.
             guard let owner, !owner.isEmpty else { return }
-            if route == "task", let task, !task.isEmpty {
+            if route == "task", let task {
                 self.pendingTask = (owner, task)
                 NotificationCenter.default.post(name: Self.openTaskNotification, object: task)
-            } else if route == "proactive", let proactiveRun, !proactiveRun.isEmpty {
+            } else if route == "proactive", let proactiveRun {
                 self.pendingProactiveRun = (owner, proactiveRun)
                 NotificationCenter.default.post(name: Self.openProactiveNotification, object: proactiveRun)
             }
@@ -75,10 +81,10 @@ final class AssistantNotificationRouter: NSObject, UNUserNotificationCenterDeleg
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification,
                                 withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        let owner = notification.request.content.userInfo["ownerId"] as? String
+        let owner = Self.validRouteValue(notification.request.content.userInfo["ownerId"] as? String)
         Task { @MainActor in
             let currentOwner = AuthService.shared.user?.id ?? "local-device"
-            completionHandler(owner == currentOwner ? [.banner, .sound] : [])
+            completionHandler(AssistantOwnerIdentity.matches(owner, currentOwner) ? [.banner, .sound] : [])
         }
     }
 }
