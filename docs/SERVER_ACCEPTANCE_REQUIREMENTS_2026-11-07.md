@@ -16,8 +16,8 @@
 | `GET /api/v2/proactive/rules` | `401 UNAUTHENTICATED` | 路由存在；需要真实账号验证规则和执行记录 |
 | `GET /api/v2/subscriptions/apple/config` | `401 UNAUTHENTICATED` | 路由存在；需要真实账号和 App Store 商品配置验证 |
 | `GET /api/v2/entitlements` | `401 UNAUTHENTICATED` | 路由存在；需要真实账号验证订阅权益和额度账本 |
-| `GET /api/v2/devices` | `404 Invalid URL` | 当前设备路由是 `POST` 注册；这条 GET 结果不能证明注销接口存在，当前部署仍需单独验收 `DELETE /api/v2/devices/{deviceId}` |
-| `DELETE /api/v2/devices/{deviceId}`（真实 Bearer、随机设备 ID） | `2xx`，客户端解码为 `unregistered` | DELETE handler 已挂载且对随机 ID 幂等可用；仍需真实已注册设备验证 owner 隔离、禁用和 outbox 清理 |
+| `GET /api/v2/devices` | `404 Invalid URL` | 当前设备路由是 `POST` 注册；这条 GET 结果不能证明注销接口存在 |
+| `DELETE /api/v2/devices/{deviceId}`（真实 Bearer、随机设备 ID） | 生产曾返回 `2xx`，客户端解码为 `unregistered`；当前 `feat/caobao-server-v2` 路由源码只注册 `POST /devices` | 生产与 checkout 契约不一致，不能把随机 ID 成功当作 handler 已验证；必须完成 production-versus-branch 比较，并用真实已注册设备验证 owner 隔离、禁用和 outbox 清理 |
 | `GET /api/v2/sync/conversations?cursor=0&limit=1` | `401 UNAUTHENTICATED` | 会话 change feed 路由存在；需要真实账号和双设备验证 |
 | `GET /api/v2/conversations/changes?cursor=0&limit=1` | `401 UNAUTHENTICATED` | 会话 change feed 兼容路由存在；需要真实账号和双设备验证 |
 | `GET /api/v2/tasks/changes?cursor=0&limit=1` | `401 UNAUTHENTICATED` | 任务 change feed 路由存在；需要真实账号验证重复规则和墓碑 |
@@ -29,7 +29,7 @@
 
 同一真实账号随后通过客户端仅 Debug 的一次性探针完成自定义角色 `list → create → versioned update/disable → list 验证 → delete`，日志返回 `version=2` 和 `delete=deleted`；探针已撤销。该结果证明当前生产角色基础 CRUD 可达，但不证明版本冲突、跨设备墓碑或对话绑定协议。
 
-同一真实账号读取主动 profile/rules 成功（`enabled=false`、规则数 `0`）。订阅配置请求返回 HTTP 200 且包含 2 个 Product ID，但当前 Simulator 的 StoreKit 返回 0 个可用自动续订商品；这把失败范围收敛到 App Store Connect/StoreKit 商品环境或商品配置，不代表客户端配置解析失败。随机设备 DELETE 返回 `unregistered`；真实已注册设备、APNs token、outbox 清理和锁屏送达仍需验收。
+同一真实账号读取主动 profile/rules 成功（`enabled=false`、规则数 `0`）。订阅配置请求返回 HTTP 200 且包含 2 个 Product ID，但当前 Simulator 的 StoreKit 返回 0 个可用自动续订商品；这把失败范围收敛到 App Store Connect/StoreKit 商品环境或商品配置，不代表客户端配置解析失败。生产随机设备 DELETE 曾返回 `unregistered`，但当前 checkout 路由未注册 DELETE；真实已注册设备、生产/分支契约比对、APNs token、outbox 清理和锁屏送达仍需验收。
 
 同一真实账号又创建了一个 7 天后运行的临时 schedule 规则，完成版本更新、列表验证和删除墓碑，返回 `version=2` 与 `delete=deleted`；规则未执行，探针已撤销。该结果证明生产主动规则基础 CRUD 可达，不证明 Worker、运行状态、APNs 或多设备阅读/稍后同步。
 
@@ -62,7 +62,7 @@
 - 设备注销或切换 Apple 账号时，必须失效旧 owner 的 APNs 设备绑定；不能只按 `(user_id, device_id_hash)` 保留旧账号 enabled 行，否则旧账号主动推送可能落到新账号设备；
 - 高风险动作只能产生提案，不能由 Worker 直接写外部系统。
 
-客户端已在 `603462a` 实现 logout 时使用旧 access token 异步 best-effort 调用 `DELETE /api/v2/devices/{deviceId}`，网络失败不能阻塞退出。真实 Bearer 对随机设备 ID 已返回 `unregistered`，确认 handler 已挂载；服务端仍需用真实已注册设备验证 owner-scoped、幂等禁用、旧账号失效和对应 outbox 清理。
+客户端已在 `603462a` 实现 logout 时使用旧 access token 异步 best-effort 调用 `DELETE /api/v2/devices/{deviceId}`，网络失败不能阻塞退出。生产随机设备 ID 曾返回 `unregistered`，但当前 `feat/caobao-server-v2` 路由源码只看到 `POST /devices`；服务端必须先完成 production-versus-branch 比较并确认正式 DELETE handler，再用真实已注册设备验证 owner-scoped、幂等禁用、旧账号失效和对应 outbox 清理。
 
 客户端目前只在本机保存未读/稍后状态，并明确标注不代表多设备同步。
 
@@ -99,12 +99,13 @@
 本轮客户端静态契约审计还确认以下服务端要求不能省略：
 
 - `confirmed` 与 `explicit` 都是已授权记忆；bridge/history 注入逻辑必须接受两者，不能静默丢弃 `confirmed`。
+- 当前客户端会话同步只恢复文本；如果产品要求跨设备恢复图片、tool_call/tool_result 或 taskProposal，服务端必须先定义安全附件引用、大小/类型限制、提案历史降权和不可执行的只读回放协议，不能要求客户端直接信任任意远端 content part。
 - 云任务必须返回稳定 `version`，支持 owner-scoped 条件 PATCH、幂等键、冲突错误和删除墓碑；服务端状态 `draft`、`waiting_approval`、`running`、`failed`、`completed`、`cancelled`、`paused` 必须保持可区分。
 - 云任务 `pause`、`cancel` 和恢复写操作也必须接受 `expectedVersion` 或 `If-Match-Version` 并返回新的权威任务；当前部署路由可调用但没有条件版本参数，客户端因此继续禁用云任务的无条件状态按钮，避免双设备覆盖。
 - 任务审批必须有客户端可调用的明确接口（例如 `/approve`），并返回一次性结果；不能让客户端把等待审批或失败任务误显示为 active。
 - 主动 profile 更新必须支持 `expectedVersion`；规则运行重试必须复用稳定幂等键，避免超时后重复执行。
 - APNs sender 必须保留 Worker 写入的 `ownerId`、`route`、`taskId`、`proactiveRunId` 等路由字段；否则客户端收到锁屏通知后无法完成 owner 校验和 conversation deep link。设备 DELETE handler 也必须实际挂载并清理旧 owner 的 outbox。
-- 真实 Bearer 随机设备 DELETE 已返回 `unregistered`，因此当前部署的 handler 已可达；仍需补充真实已注册设备、owner 隔离、旧账号失效和 outbox 清理证据，不能用随机 ID 的成功替代完整 APNs 验收。
+- 生产随机设备 DELETE 曾返回 `unregistered`，但当前 checkout 路由未注册 DELETE；必须先解释生产/分支差异，再补充真实已注册设备、owner 隔离、旧账号失效和 outbox 清理证据，不能用随机 ID 的成功替代完整 APNs 验收。
 
 ### 7. AI 群聊（新增功能）
 
