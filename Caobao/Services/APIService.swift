@@ -2256,6 +2256,12 @@ struct CloudProactiveRun: Codable, Identifiable {
     let idempotencyKey: String
     let createdAt: String
     let deliveredAt: String?
+    /// Optional fields are accepted for forward compatibility with the
+    /// server-side read/snooze/dismissal contract. Older deployments omit
+    /// them, so the client continues using its owner-scoped local fallback.
+    let readAt: String?
+    let snoozedUntil: String?
+    let dismissedAt: String?
 }
 
 struct CloudProactiveRunsResponse: Codable {
