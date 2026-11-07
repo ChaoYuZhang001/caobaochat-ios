@@ -961,70 +961,6 @@ class APIService {
         }
     }
     
-    // MARK: - Guest Upgrade
-    /// 游客升级为正式用户
-    func guestUpgrade(
-        guestToken: String,
-        provider: String,
-        identityToken: String? = nil,
-        authorizationCode: String? = nil,
-        email: String? = nil,
-        verifyCode: String? = nil
-    ) async throws -> AuthResponse {
-        print("🔄 开始游客升级...")
-        print("📍 API URL: \(APIConfig.baseURL)/auth/guest/upgrade")
-        
-        return try await withCheckedThrowingContinuation { continuation in
-            var parameters: [String: Any] = [
-                "guestToken": guestToken,
-                "provider": provider,
-                "migrateData": true
-            ]
-            
-            // 根据不同的升级方式添加参数
-            if let identityToken = identityToken {
-                parameters["idToken"] = identityToken
-            }
-            if let authorizationCode = authorizationCode {
-                parameters["code"] = authorizationCode
-            }
-            if let email = email {
-                parameters["email"] = email
-            }
-            if let verifyCode = verifyCode {
-                parameters["verifyCode"] = verifyCode
-            }
-            
-            session.request(
-                "\(APIConfig.baseURL)/auth/guest/upgrade",
-                method: .post,
-                parameters: parameters,
-                encoding: JSONEncoding.default
-            )
-            .validate()
-            .response { response in
-                if let error = response.error {
-                    print("❌ 游客升级网络错误: \(error.localizedDescription)")
-                    continuation.resume(throwing: error)
-                    return
-                }
-                
-                // 尝试解码
-                do {
-                    guard let data = response.data else {
-                        throw NSError(domain: "APIService", code: -1, userInfo: [NSLocalizedDescriptionKey: "无响应数据"])
-                    }
-                    let authResponse = try JSONDecoder().decode(AuthResponse.self, from: data)
-                    print("✅ 游客升级成功")
-                    continuation.resume(returning: authResponse)
-                } catch {
-                    print("❌ 游客升级解码错误: \(error.localizedDescription)")
-                    continuation.resume(throwing: error)
-                }
-            }
-        }
-    }
-    
     // MARK: - Sync Chat Messages
     /// 同步聊天记录到云端
     func syncChatMessages(token: String, messages: [[String: Any]]) async throws -> SyncResponse {
@@ -1193,38 +1129,6 @@ class APIService {
                         continuation.resume(throwing: error)
                     }
                 }
-        }
-    }
-    
-    // MARK: - Feedback
-    /// 提交用户反馈
-    func submitFeedback(type: String, content: String, contact: String?, rating: Int) async throws {
-        print("🔄 提交反馈...")
-        
-        return try await withCheckedThrowingContinuation { continuation in
-            let parameters: [String: Any?] = [
-                "type": type,
-                "content": content,
-                "contact": contact,
-                "rating": rating
-            ]
-            
-            session.request(
-                "\(APIConfig.baseURL)/feedback",
-                method: .post,
-                parameters: parameters.compactMapValues { $0 },
-                encoding: JSONEncoding.default
-            )
-            .validate()
-            .response { response in
-                if let error = response.error {
-                    print("❌ 提交反馈失败: \(error.localizedDescription)")
-                    continuation.resume(throwing: error)
-                    return
-                }
-                print("✅ 提交反馈成功")
-                continuation.resume(returning: ())
-            }
         }
     }
     
