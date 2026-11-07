@@ -1403,8 +1403,9 @@ final class ChatViewModel: ObservableObject {
     }
 
     /// Pulls owner-scoped conversations and memories, then refreshes the local
-    /// projections. Conversation sync is pull-only because the server has no
-    /// deletion stream; drafts and local generation state stay on-device.
+    /// projections. Conversation mutations arrive through the server change
+    /// feed, while local deletes are queued and submitted as tombstones.
+    /// Drafts and in-flight generation state stay on-device.
     func syncFromCloud() async {
         let owner = ownerUserId
         isSyncing = true
