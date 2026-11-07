@@ -17,14 +17,24 @@ struct LegalView: View {
     @Environment(\.dismiss) var dismiss
     @State private var isLoading = true
     @State private var loadError = false
+    @State private var reloadToken = UUID()
     
     var body: some View {
         ZStack {
-            if let url = type.webURL {
+            if loadError {
+                localContent
+            } else if let url = type.webURL {
                 // 优先加载 H5 页面
-                WebView(url: url) {
-                    isLoading = false
-                }
+                WebView(url: url,
+                        onLoadComplete: {
+                            isLoading = false
+                            loadError = false
+                        },
+                        onLoadFailure: {
+                            isLoading = false
+                            loadError = true
+                        })
+                .id(reloadToken)
                 .opacity(isLoading ? 0 : 1)
                 
                 // 加载中状态
@@ -54,6 +64,28 @@ struct LegalView: View {
                     dismiss()
                 }
             }
+        }
+    }
+
+    private var localContent: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Label("在线文档暂时不可用，以下为本地版本", systemImage: "wifi.slash")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+
+                Text(type.content)
+                    .font(.body)
+                    .lineSpacing(6)
+
+                Button("重新加载在线文档") {
+                    isLoading = true
+                    loadError = false
+                    reloadToken = UUID()
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding()
         }
     }
 }
