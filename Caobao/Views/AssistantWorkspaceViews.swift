@@ -610,9 +610,18 @@ struct AssistantProactiveView: View {
         do {
             let token = try await AuthService.shared.validAccessToken()
             guard AssistantOwnerIdentity.matches(owner, AuthService.shared.user?.id ?? "local-device") else { return }
-            let response = try await APIService.shared.pauseAllProactive(token: token, paused: target)
+            let expectedVersion = serverProfileVersion
+            let response = try await APIService.shared.pauseAllProactive(token: token, paused: target,
+                                                                         expectedVersion: expectedVersion)
             guard AssistantOwnerIdentity.matches(owner, AuthService.shared.user?.id ?? "local-device") else { return }
+            if let expectedVersion, response.profile.version <= expectedVersion {
+                savedMessage = "服务器未确认主动任务版本，请刷新后重试。"
+                await loadRuns()
+                return
+            }
             pausedAll = response.profile.pausedAll
+            serverProfileVersion = response.profile.version
+            UserDefaults.standard.set(response.profile.version, forKey: serverProfileVersionKey())
             savedMessage = pausedAll ? "已暂停全部主动任务，规则仍保留。" : "已恢复全部主动任务。"
         } catch is CancellationError {
             return
