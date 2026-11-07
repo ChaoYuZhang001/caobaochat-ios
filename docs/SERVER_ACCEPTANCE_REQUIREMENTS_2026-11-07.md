@@ -41,6 +41,7 @@
 - scheduler/事件队列、租约、去重、重试、死信和每 owner 频率限制；
 - 安静时段、每日上限、全局暂停和账号删除必须在 Worker 侧强制执行；
 - APNs transactional outbox、旧 token 清理、锁屏通用标题和点击 conversation deep link；
+- 设备注销或切换 Apple 账号时，必须失效旧 owner 的 APNs 设备绑定；不能只按 `(user_id, device_id_hash)` 保留旧账号 enabled 行，否则旧账号主动推送可能落到新账号设备；
 - 高风险动作只能产生提案，不能由 Worker 直接写外部系统。
 
 客户端目前只在本机保存未读/稍后状态，并明确标注不代表多设备同步。
