@@ -220,6 +220,16 @@ struct MacProfileView: View {
                         } label: {
                             Label("助理设置", systemImage: "gearshape")
                         }
+                        NavigationLink {
+                            AssistantCharactersView(ownerId: AuthService.shared.user?.id ?? "local-device")
+                        } label: {
+                            Label("自定义角色", systemImage: "person.2")
+                        }
+                        NavigationLink {
+                            AccountSettingsView()
+                        } label: {
+                            Label("账号与数据", systemImage: "person.crop.circle.badge.gearshape")
+                        }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
