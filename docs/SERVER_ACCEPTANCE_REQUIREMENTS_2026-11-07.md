@@ -44,6 +44,8 @@
 - 设备注销或切换 Apple 账号时，必须失效旧 owner 的 APNs 设备绑定；不能只按 `(user_id, device_id_hash)` 保留旧账号 enabled 行，否则旧账号主动推送可能落到新账号设备；
 - 高风险动作只能产生提案，不能由 Worker 直接写外部系统。
 
+建议新增认证接口 `DELETE /api/v2/devices/{deviceId}`。接口必须 owner-scoped、幂等，禁用对应设备并清理该设备待发送 outbox；客户端 logout 时使用旧 access token 异步调用，网络失败不能阻塞退出。当前服务端只有 `POST /api/v2/devices`，因此这项不能仅靠客户端完成。
+
 客户端目前只在本机保存未读/稍后状态，并明确标注不代表多设备同步。
 
 ### 3. 自定义角色
