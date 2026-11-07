@@ -57,7 +57,7 @@
 | macOS 详细统计/关于/官方页 | 部分缺失 | **客户端 UI** | macOS 当前个人页只有摘要统计，详细统计、关于和官方页没有等同 iOS 的完整入口；属于 macOS parity 待补，不影响 iPhone 首发核心闭环。 |
 | macOS 对话图片/任务提案 | 任务提案流程和本地图片选择已补；真实上传/交互未验收 | **客户端 macOS parity** | `MacChatView` 现在复用统一消息气泡，显示本地图片附件、朗读入口，提供 security-scoped 图片文件选择、缩略图移除，并在后台读取文件后接入任务提案查看、编辑确认、拒绝和一次性继续请求。多图预处理、真实上传、权限和大文件仍需设备验收。 |
 | 图片保存权限 | 客户端修复；真实设备未验收 | **客户端配置** | `UIImageWriteToSavedPhotosAlbum` 需要写入权限说明；已在 `Info.plist` 增加 `NSPhotoLibraryAddUsageDescription`。真实相册授权、保存失败和取消流程仍需设备验收。 |
-| Universal Links | 客户端路由已补；AASA/真机未验收 | **客户端 + 服务端发布配置** | `CaobaoApp` 现在解析 `https://caobao.chat/conversation/{id}`、`/task/{id}`、`/proactive/{runId}`，支持登录延迟消费、owner 绑定和 iOS/macOS 路由。仍需服务端 AASA、正式 Associated Domains 签名和真机点击验收；若首发不需要网页深链，应移除 `applinks`。 |
+| Universal Links | 客户端路由已补；AASA 配置不合格、真机未验收 | **客户端 + 服务端发布配置** | `CaobaoApp` 现在解析 `https://caobao.chat/conversation/{id}`、`/task/{id}`、`/proactive/{runId}`，支持登录延迟消费、owner 绑定和 iOS/macOS 路由。2026-11-08 实测 AASA 返回 200，但 `appIDs` 为空且只声明旧的 `/chat/*`、`/morning` 等路径，未覆盖三类新路由；服务端需先修 AASA，再做正式 Associated Domains 签名和真机点击验收。 |
 | 旧设置状态 | 客户端已修复；真实账号切换未验收 | **客户端状态整合** | 旧 `SettingsView` 已移除无消费者的 `voiceEnabled` 开关，毒舌程度只读写 owner-scoped `appState.userSettings`，避免与旧 `UserDefaults` 键分裂。真实账号切换和服务端 persona 偏好仍需验收。 |
 | 游客升级 | 死链 | **客户端产品/认证** | `AuthService` 的 `canUpgrade` 永远为 false，游客升级区和升级弹窗无法到达；需要重新接通游客转 Apple 账号，或删除误导入口。 |
 | 反馈提交 | 未验收 | **客户端 + 服务端协议** | `FeedbackView` 仍调用旧 `/feedback` 且未带 Bearer；当前只能证明表单可达，不能证明生产提交成功。应迁移到 owner-scoped 认证接口或明确支持匿名反馈后再验收。 |
