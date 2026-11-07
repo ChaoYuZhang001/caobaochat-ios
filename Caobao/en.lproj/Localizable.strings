@@ -115,6 +115,9 @@
 "服务请求失败（HTTP %d）" = "Service request failed (HTTP %d)";
 "服务返回的数据超过安全限制" = "The response exceeded the safety limit.";
 "服务返回错误：%@" = "The service returned an error: %@";
+"平台额度暂时不可用，请稍后重试" = "Platform capacity is temporarily unavailable. Please try again later.";
+"上游模型暂时不可用，请稍后重试" = "The upstream model is temporarily unavailable. Please try again later.";
+"今日额度已用完，请稍后再试或升级订阅" = "Today's quota is used up. Try again later or upgrade your plan.";
 "未关联来源消息" = "No source message linked";
 "未设置到期时间" = "No due date";
 "未选择" = "Not selected";
