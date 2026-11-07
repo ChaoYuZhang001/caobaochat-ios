@@ -119,6 +119,15 @@ private enum AssistantProtocolTests {
         try run("errors-malformed-and-caobao-content") {
             try expectRemote(#"{"type":"error","error":{"type":"rate_limit_error","message":"Do not leak the secret"}}"#, code: "rate_limit_error")
             try expectRemote(#"{"error":{"code":"AUTH!@#ERROR","message":"Sensitive upstream text"}}"#, code: "AUTHERROR")
+            for (code, message) in [("PLATFORM_FUNDING_UNAVAILABLE", "平台额度暂时不可用，请稍后重试"),
+                                    ("UPSTREAM_UNAVAILABLE", "上游模型暂时不可用，请稍后重试")] {
+                let error = try failure { _ = try decode(#"{"error":{"code":"PLACEHOLDER","message":"private diagnostic"}}"#.replacingOccurrences(of: "PLACEHOLDER", with: code)) }
+                guard case .remote(let received) = error as? AssistantTransportError, received == code else {
+                    throw ProtocolTestFailure(description: "New production error code must survive protocol normalization: \(code)")
+                }
+                try expect(error.localizedDescription == message && !error.localizedDescription.contains("private diagnostic"),
+                           "New production error code must map to a safe localized message: \(code)")
+            }
             try expect(try decode(#"{"type":"cancelled"}"#) == [.cancelled], "A server cancellation must remain a terminal cancellation event")
             let malformed = try failure { _ = try decode("[]") }
             guard case .malformedEvent = malformed as? AssistantTransportError else { throw ProtocolTestFailure(description: "Array roots must not decode as empty successes") }
@@ -129,6 +138,12 @@ private enum AssistantProtocolTests {
             try expect(try decode(#"{"type":"usage","usage":{"input_tokens":7,"output_tokens":9}}"#) == [.usage(AssistantUsage(inputTokens: 7, outputTokens: 9))], "CaoBao usage must decode")
         try expect(try decode(#"{"type":"usage","usage":{"promptTokens":17,"completionTokens":5,"totalTokens":22}}"#) == [.usage(AssistantUsage(inputTokens: 17, outputTokens: 5))], "Unified platform usage must decode camelCase fields")
             try expect(try decode(#"{"type":"completed"}"#) == [.completed], "CaoBao completed must be terminal")
+            let genericFunding = String(format: AssistantLocalization.string("服务返回错误：%@"), "PLATFORM_FUNDING_UNAVAILABLE")
+            let genericUpstream = String(format: AssistantLocalization.string("服务返回错误：%@"), "UPSTREAM_UNAVAILABLE")
+            let genericQuota = String(format: AssistantLocalization.string("服务返回错误：%@"), "QUOTA_EXCEEDED")
+            try expect(AssistantTransportError.remote("PLATFORM_FUNDING_UNAVAILABLE").localizedDescription != genericFunding, "Funding outage must have an actionable localized message")
+            try expect(AssistantTransportError.remote("UPSTREAM_UNAVAILABLE").localizedDescription != genericUpstream, "Upstream outage must have an actionable localized message")
+            try expect(AssistantTransportError.remote("QUOTA_EXCEEDED").localizedDescription != genericQuota, "Quota exhaustion must have an actionable localized message")
         }
         try run("byok-url-validation-and-paths") {
             let rejected = [
