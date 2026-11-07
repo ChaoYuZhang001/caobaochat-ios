@@ -30,6 +30,8 @@
 
 2026-11-08 内容举报同样改为邮件反馈：消息气泡的举报表单不再调用旧 `/feedback`，改为生成包含原因和截断消息正文的系统邮件；`allowsReporting` 仍默认关闭，避免未授权的举报入口出现在核心对话路径。
 
+2026-11-08 生产配置复核：`https://ciyuan2api.com/api/status` 返回 HTTP 200，版本头仍为 `v1.0.0-rc.48+ciyuan.reconstructed.20261106.1`；`https://caobao.chat/.well-known/apple-app-site-association` 和根路径均返回 HTTP 200，但 `appIDs` 为空且仍只声明旧工具路径，新的 conversation/task/proactive 深链仍不能验收。
+
 签名门禁记录：项目的 iOS Debug/Release `DEVELOPMENT_TEAM` 仍为空，`security find-identity -v -p codesigning` 返回 `0 valid identities found`；因此 Apple Sign In、APNs 和正式 archive/TestFlight 不能在当前环境完成。归类为发布签名环境阻塞，不写入猜测的 Team ID 或证书信息。
 
 服务端需要处理的接口、幂等、owner 隔离和生产门禁见 [SERVER_ACCEPTANCE_REQUIREMENTS_2026-11-07.md](SERVER_ACCEPTANCE_REQUIREMENTS_2026-11-07.md)。
