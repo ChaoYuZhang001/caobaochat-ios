@@ -36,7 +36,17 @@ enum AssistantTransportError: LocalizedError {
         switch self {
         case .configuration(let message): return message
         case .http(let code): return String(format: AssistantLocalization.string("服务请求失败（HTTP %d）"), code)
-        case .remote(let code): return String(format: AssistantLocalization.string("服务返回错误：%@"), code)
+        case .remote(let code):
+            switch code.uppercased() {
+            case "PLATFORM_FUNDING_UNAVAILABLE":
+                return AssistantLocalization.string("平台额度暂时不可用，请稍后重试")
+            case "UPSTREAM_UNAVAILABLE":
+                return AssistantLocalization.string("上游模型暂时不可用，请稍后重试")
+            case "QUOTA_EXCEEDED":
+                return AssistantLocalization.string("今日额度已用完，请稍后再试或升级订阅")
+            default:
+                return String(format: AssistantLocalization.string("服务返回错误：%@"), code)
+            }
         case .malformedEvent: return AssistantLocalization.string("无法识别服务的响应格式")
         case .interrupted: return AssistantLocalization.string("连接提前结束，已保存收到的内容。请检查网络后重试。")
         case .emptyResult: return AssistantLocalization.string("模型未返回有效正文")
