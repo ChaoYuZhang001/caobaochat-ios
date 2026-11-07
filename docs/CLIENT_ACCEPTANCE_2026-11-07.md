@@ -12,6 +12,8 @@
 
 2026-11-08 生产契约探针补充：未携带认证访问 `/api/v2/characters`、`/api/v2/proactive/profile` 和 `/api/v2/proactive/rules` 均返回 `401 UNAUTHENTICATED`，证明路由和认证中间件可达，但不替代真实账号 CRUD/读写验收；`GET /api/v2/feedback` 返回 `404 Invalid URL`，当前没有可供客户端提交的 v2 反馈接口；`GET /api/v2/devices` 返回 `404`，服务端路由审计只确认 `POST /api/v2/devices`，客户端登出所需的 `DELETE /api/v2/devices/{deviceId}` 仍未证实。以上是服务端契约缺口，不计为客户端通过。
 
+2026-11-08 自定义角色真实联调补充：在同一台已登录 iPhone 17 Pro Max Simulator 上通过仅 Debug 的临时启动参数调用现有客户端 API，完成 `list → create → versioned update/disable → list 验证 → delete`；运行日志为 `CAOBAO_E2E_CHARACTER success ... version=2 delete=deleted`。探针代码已撤销且未进入产品包；本证据只覆盖基础 CRUD，不覆盖角色绑定对话、版本冲突、多设备墓碑或群聊。
+
 签名门禁记录：项目的 iOS Debug/Release `DEVELOPMENT_TEAM` 仍为空，`security find-identity -v -p codesigning` 返回 `0 valid identities found`；因此 Apple Sign In、APNs 和正式 archive/TestFlight 不能在当前环境完成。归类为发布签名环境阻塞，不写入猜测的 Team ID 或证书信息。
 
 服务端需要处理的接口、幂等、owner 隔离和生产门禁见 [SERVER_ACCEPTANCE_REQUIREMENTS_2026-11-07.md](SERVER_ACCEPTANCE_REQUIREMENTS_2026-11-07.md)。
@@ -55,7 +57,7 @@
 | 记忆授权字段兼容 | 客户端已做兼容；服务端仍需修复 | **客户端 + 服务端协议** | 本地策略把 `confirmed` 和 `explicit` 都视为已授权；当前客户端平台请求把 `confirmed` 规范化为 `explicit`，避免现有 bridge 静默丢失已确认记忆，并有 ChatViewModel 回归覆盖。服务端 bridge 仍需正式接受 `confirmed`，否则其他客户端或旧版本仍会丢上下文。 |
 | 云任务编辑、状态和审批 | 未完成 | **客户端 + 服务端协议** | 客户端没有持久化云端 `version`，已有云任务的编辑/状态变化不会安全 PATCH；`waiting_approval`、`failed`、`running`、`draft` 目前会被压成 active，客户端也没有云端审批调用。需要补 `version`/条件 PATCH、状态枚举映射、`/approve` 闭环、幂等和冲突 UI，再做双设备验收。 |
 | 主动更新 | 客户端版本/幂等已补；仍未完成服务端闭环 | **客户端 + 服务端** | 当前签名 Simulator 已打开主动更新页，开关从关闭切换到开启再恢复关闭；频率选择、未读数量、下一次运行、陪伴模式和每日上限入口均可见。二轮 UI 验收实际启用安静时段并保存，页面显示“安静时段已启用”，随后关闭并保存恢复原状态。此前已验证暂停/恢复全部、运行记录的查看/稍后、本机已读状态及通知关联对话回流；客户端现已把服务端会话 ID 解析为本地会话 ID，且兼容服务端返回的 `readAt`、`snoozedUntil`、`dismissedAt`，旧部署仍回退 owner-scoped 本机状态（`5dc27bf`）。Profile 更新现在携带并持久化服务端 `expectedVersion`，规则运行失败重试复用 owner/rule 级幂等键，避免重复执行。服务端关闭此类、阅读/稍后多设备写入、生产 Worker/APNs 和真实冲突验收仍未完成。服务端还需在 logout/换账号时失效旧账号的 APNs 设备绑定，避免旧账号推送落到新账号设备。 |
-| 自定义角色 | 客户端契约错误已修复；仍待真实认证/API 验收 | **客户端 + 服务端联调** | 客户端已将记忆范围从错误的 `private/workspace` 对齐为服务端接受的 `none/character/group`，默认使用 `character`，避免新建角色必然收到 400。当前签名 Simulator 已从助理设置进入角色列表和新建编辑器，确认名称、头像、简介、语言、启用、行为提示、问候语和记忆范围控件存在；本次未保存测试角色，避免污染账号。客户端支持 owner-scoped 角色列表、新建/编辑/启用/删除和版本墓碑处理，复用 `/api/v2/characters`；公网未认证只能证明路由返回 401，尚未用真实账号完成 CRUD 闭环。角色尚未接入对话请求，需新增 `characterId/version` 与服务端提示词、记忆范围协议。 |
+| 自定义角色 | 基础真实 CRUD 通过；角色聊天接入、冲突和跨设备仍未完成 | **客户端 + 服务端联调** | 客户端已将记忆范围从错误的 `private/workspace` 对齐为服务端接受的 `none/character/group`，默认使用 `character`，避免新建角色必然收到 400。2026-11-08 已在已登录 Simulator 完成 owner-scoped list/create/versioned update-disable/list 验证/delete 墓碑，且已撤销仅 Debug 探针；UI 也已确认名称、头像、简介、语言、启用、行为提示、问候语和记忆范围控件存在。仍需真实版本冲突、多设备墓碑和账号切换验收；角色尚未接入对话请求，需新增 `characterId/version` 与服务端提示词、记忆范围协议。 |
 | AI 群聊 | 未实现 | **客户端 + 服务端新增** | 当前代码没有群聊参与者、编排、speaker/turn 模型或 SSE；不能用现有 personaLevel 代替。 |
 | macOS/iPad 信息架构 | macOS 核心导航、历史和“我的”已补齐；iPad 模拟器布局通过，真机和辅助功能仍未验收 | **客户端 UI** | macOS 侧栏现在保留首页、对话、任务、历史、我的和工作区，旧工具统一进入“工具模板”，最近对话常驻侧栏；历史页支持本地搜索并回到对话，个人页显示账号/统计并提供记忆、订阅和设置入口。最新 iPad Pro 11-inch (M5) Simulator 签名包已启动并显示侧栏、首页、主动更新、任务、工作区、订阅、设置、主 CTA 和四个快速模板；截图 `.build/verification/ipad-acceptance-20261107.png`。真实 iPad 触控、VoiceOver、Dynamic Type、订阅和账号闭环仍需验收。 |
 | iPhone Duo、真机/TestFlight | 未验收 | 发布环境 | 当前普通 Simulator 不能证明 Duo 专用设备、正式签名归档、TestFlight 安装和系统级行为。 |
