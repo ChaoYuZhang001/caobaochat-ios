@@ -17,7 +17,7 @@
 | `GET /api/v2/subscriptions/apple/config` | `401 UNAUTHENTICATED` | 路由存在；需要真实账号和 App Store 商品配置验证 |
 | `GET /api/v2/entitlements` | `401 UNAUTHENTICATED` | 路由存在；需要真实账号验证订阅权益和额度账本 |
 | `GET /api/v2/devices` | `404 Invalid URL` | 当前设备路由是 `POST` 注册；这条 GET 结果不能证明注销接口存在，当前部署仍需单独验收 `DELETE /api/v2/devices/{deviceId}` |
-| `DELETE /api/v2/devices/{deviceId}`（无认证探测） | `401 UNAUTHENTICATED` | 只能证明认证中间件先行拦截，不能证明 DELETE handler 已挂载；必须用真实 token 和服务端路由审计确认 owner-scoped、幂等禁用和 outbox 清理 |
+| `DELETE /api/v2/devices/{deviceId}`（真实 Bearer、随机设备 ID） | `2xx`，客户端解码为 `unregistered` | DELETE handler 已挂载且对随机 ID 幂等可用；仍需真实已注册设备验证 owner 隔离、禁用和 outbox 清理 |
 | `GET /api/v2/sync/conversations?cursor=0&limit=1` | `401 UNAUTHENTICATED` | 会话 change feed 路由存在；需要真实账号和双设备验证 |
 | `GET /api/v2/conversations/changes?cursor=0&limit=1` | `401 UNAUTHENTICATED` | 会话 change feed 兼容路由存在；需要真实账号和双设备验证 |
 | `GET /api/v2/tasks/changes?cursor=0&limit=1` | `401 UNAUTHENTICATED` | 任务 change feed 路由存在；需要真实账号验证重复规则和墓碑 |
@@ -28,6 +28,8 @@
 2026-11-08 客户端用真实已登录 Simulator 账号对当前生产资金池修复做了认证 CN 联调：`https://ciyuan2api.com` 返回完整流式生命周期，客户端捕获到 `generation`、多条 `delta`、`usage`、`completed`，并在本地保存服务端 `generationId`、`requestId` 和 token usage；本次未出现 `INTERNAL_ERROR`、`UPSTREAM_UNAVAILABLE` 或 `PLATFORM_FUNDING_UNAVAILABLE`。这证明当前 CN 资金池/渠道修复已通过一条真实对话链路，但不替代下面的 Apple、StoreKit、APNs、双设备同步、账号删除和 TestFlight 门禁。
 
 同一真实账号随后通过客户端仅 Debug 的一次性探针完成自定义角色 `list → create → versioned update/disable → list 验证 → delete`，日志返回 `version=2` 和 `delete=deleted`；探针已撤销。该结果证明当前生产角色基础 CRUD 可达，但不证明版本冲突、跨设备墓碑或对话绑定协议。
+
+同一真实账号读取主动 profile/rules 成功（`enabled=false`、规则数 `0`）。订阅配置请求返回 HTTP 200 且包含 2 个 Product ID，但当前 Simulator 的 StoreKit 返回 0 个可用自动续订商品；这把失败范围收敛到 App Store Connect/StoreKit 商品环境或商品配置，不代表客户端配置解析失败。随机设备 DELETE 返回 `unregistered`；真实已注册设备、APNs token、outbox 清理和锁屏送达仍需验收。
 
 ## 必须完成的服务端项目
 
@@ -54,7 +56,7 @@
 - 设备注销或切换 Apple 账号时，必须失效旧 owner 的 APNs 设备绑定；不能只按 `(user_id, device_id_hash)` 保留旧账号 enabled 行，否则旧账号主动推送可能落到新账号设备；
 - 高风险动作只能产生提案，不能由 Worker 直接写外部系统。
 
-客户端已在 `603462a` 实现 logout 时使用旧 access token 异步 best-effort 调用 `DELETE /api/v2/devices/{deviceId}`，网络失败不能阻塞退出。当前服务端代码审计尚未确认 DELETE handler；服务端必须挂载该接口，保持 owner-scoped、幂等，禁用对应设备并清理该设备待发送 outbox，再用真实 token 验收。无认证 401 不能替代路由和业务证据。
+客户端已在 `603462a` 实现 logout 时使用旧 access token 异步 best-effort 调用 `DELETE /api/v2/devices/{deviceId}`，网络失败不能阻塞退出。真实 Bearer 对随机设备 ID 已返回 `unregistered`，确认 handler 已挂载；服务端仍需用真实已注册设备验证 owner-scoped、幂等禁用、旧账号失效和对应 outbox 清理。
 
 客户端目前只在本机保存未读/稍后状态，并明确标注不代表多设备同步。
 
@@ -95,7 +97,7 @@
 - 任务审批必须有客户端可调用的明确接口（例如 `/approve`），并返回一次性结果；不能让客户端把等待审批或失败任务误显示为 active。
 - 主动 profile 更新必须支持 `expectedVersion`；规则运行重试必须复用稳定幂等键，避免超时后重复执行。
 - APNs sender 必须保留 Worker 写入的 `ownerId`、`route`、`taskId`、`proactiveRunId` 等路由字段；否则客户端收到锁屏通知后无法完成 owner 校验和 conversation deep link。设备 DELETE handler 也必须实际挂载并清理旧 owner 的 outbox。
-- 当前服务端源码/路由审计还确认没有 `DELETE /api/v2/devices/{deviceId}` handler；客户端登出已经发起该调用，因此设备注销、旧 owner 失效和对应 outbox 清理必须先在服务端挂载，再用真实 token 验收。无认证请求返回 401 不能替代 handler 证据。
+- 真实 Bearer 随机设备 DELETE 已返回 `unregistered`，因此当前部署的 handler 已可达；仍需补充真实已注册设备、owner 隔离、旧账号失效和 outbox 清理证据，不能用随机 ID 的成功替代完整 APNs 验收。
 
 ### 7. AI 群聊（新增功能）
 
