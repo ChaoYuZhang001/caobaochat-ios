@@ -344,7 +344,7 @@ struct HomeView: View {
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(profile.enabled ? Color.caobaoPrimary : .secondary)
                     }
-                    Text(profile.enabled ? "按你的规则提醒、跟进和生成更新" : "开启后，曹宝会按你的规则主动提醒")
+                    Text(profile.enabled ? "按你的规则提醒、跟进和生成更新" : "开启后，草包会按你的规则主动提醒")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     if let summaryError {
