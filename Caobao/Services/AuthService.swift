@@ -328,13 +328,23 @@ final class AuthService: ObservableObject {
             guard status == errSecSuccess || status == errSecItemNotFound else { throw LocalDeletionCleanupError.failed }
         case .preferences:
             let defaults = UserDefaults.standard
-            let prefix = "caobao.assistant.\(Data(owner.utf8).base64EncodedString())."
+            let encodedOwner = Data(owner.utf8).base64EncodedString()
+            let prefix = "caobao.assistant.\(encodedOwner)."
             let byokPrefix = "assistant.byok.\(owner)."
             for key in defaults.dictionaryRepresentation().keys {
                 if key.hasPrefix(prefix) || (key.hasPrefix(byokPrefix) && !key.dropFirst(byokPrefix.count).contains(".")) {
                     defaults.removeObject(forKey: key)
                 }
             }
+            // These stores intentionally live outside the general assistant
+            // preference namespace. They are still account-owned and must be
+            // removed during an accepted account deletion so a later local
+            // session cannot expose the deleted owner's data or sync cursor.
+            defaults.removeObject(forKey: "assistant.cloud-memory.\(encodedOwner)")
+            let quoteOwner = encodedOwner
+                .replacingOccurrences(of: "/", with: "_")
+                .replacingOccurrences(of: "+", with: "-")
+            defaults.removeObject(forKey: "caobao.quote_favorites.\(quoteOwner)")
         }
     }
 
