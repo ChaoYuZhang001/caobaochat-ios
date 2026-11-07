@@ -6,7 +6,9 @@ import SwiftUI
 /// the macOS target, so this view keeps the desktop target self-contained.
 struct MacChatView: View {
     @ObservedObject var chatViewModel: ChatViewModel
+    let selectedConversationId: String?
     @FocusState private var inputFocused: Bool
+    @State private var showSwitchConfirmation = false
 
     private var ownerId: String { AuthService.shared.user?.id ?? "local-device" }
 
@@ -65,7 +67,27 @@ struct MacChatView: View {
             .padding(14)
         }
         .navigationTitle("自由对话")
-        .task { try? await chatViewModel.waitForArchiveReady(ownerId: ownerId) }
+        .task {
+            try? await chatViewModel.waitForArchiveReady(ownerId: ownerId)
+            await openSelectedConversation()
+        }
+        .onChange(of: selectedConversationId) { _ in
+            Task { await openSelectedConversation() }
+        }
+        .onChange(of: chatViewModel.requiresConversationSwitchConfirmation) { required in
+            showSwitchConfirmation = required
+        }
+        .alert("切换对话", isPresented: $showSwitchConfirmation) {
+            Button("切换", role: .destructive) {
+                guard let source = chatViewModel.pendingConversationSwitch else { return }
+                Task { _ = await chatViewModel.confirmConversationSwitch(source) }
+            }
+            Button("取消", role: .cancel) {
+                chatViewModel.rejectConversationSwitch()
+            }
+        } message: {
+            Text("当前对话有未保存内容或正在生成，切换后将停止当前生成并保留已保存内容。")
+        }
     }
 
     private func messageBubble(_ message: ChatMessage) -> some View {
@@ -82,6 +104,13 @@ struct MacChatView: View {
               !chatViewModel.isLoading, chatViewModel.archiveIsReady else { return }
         chatViewModel.sendMessage(userId: ownerId)
         inputFocused = true
+    }
+
+    private func openSelectedConversation() async {
+        guard let id = selectedConversationId,
+              id != chatViewModel.conversationId,
+              chatViewModel.archiveIsReady else { return }
+        _ = await chatViewModel.requestOpenConversation(id: id, ownerId: ownerId)
     }
 }
 #endif
