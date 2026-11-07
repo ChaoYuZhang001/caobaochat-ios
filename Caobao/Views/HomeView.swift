@@ -192,6 +192,7 @@ struct HomeView: View {
                 guard phase == .active, !chat.isSyncing else { return }
                 Task { @MainActor in
                     await chat.syncFromCloud()
+                    await loadCloudTaskSummary(ownerId: owner)
                     await loadProactiveSummary(ownerId: owner)
                 }
             }
