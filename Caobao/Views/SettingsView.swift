@@ -4,19 +4,9 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
     @State private var showAssistantPreferences = false
-    @AppStorage("selectedModel") private var selectedModel = "qwen-plus"
     @AppStorage("colorScheme") private var colorScheme = "system"
     @AppStorage("toxicLevel") private var toxicLevel = "normal"
     @AppStorage("voiceEnabled") private var voiceEnabled = true
-    
-    // 模型列表 - 与后端保持一致
-    private let models = [
-        ("qwen-plus", "通义千问 Plus", "推荐，平衡性能与速度", "🚀"),
-        ("qwen-turbo", "通义千问 Turbo", "快速响应，适合简单对话", "⚡"),
-        ("deepseek-chat", "DeepSeek Chat", "深度思考，逻辑性强", "🧠"),
-        ("kimi-32k", "Kimi", "长文本处理能力强", "📚"),
-        ("grok-2-1212", "Grok 2", "马斯克出品，幽默毒舌", "🧪"),
-    ]
     
     // 毒舌程度 - 与后端保持一致
     private let toxicLevels = [
@@ -50,42 +40,11 @@ struct SettingsView: View {
                         } label: {
                             Label("助理账号偏好", systemImage: "slider.horizontal.3")
                         }
+                        Text("服务区域、平台模型和自定义 API 统一在助理设置中管理，首页会同步当前选择。")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     } header: {
                         Text("助理")
-                    }
-
-                    // 模型选择
-                    Section {
-                        ForEach(models, id: \.0) { model in
-                            Button {
-                                selectedModel = model.0
-                            } label: {
-                                HStack {
-                                    Text(model.3)
-                                        .font(.title2)
-                                    
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(model.1)
-                                            .font(.headline)
-                                            .foregroundStyle(.primary)
-                                        
-                                        Text(model.2)
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                    
-                                    Spacer()
-                                    
-                                    if selectedModel == model.0 {
-                                        Image(systemName: "checkmark.circle.fill")
-                                            .foregroundStyle(.green)
-                                    }
-                                }
-                                .contentShape(Rectangle())
-                            }
-                        }
-                    } header: {
-                        Text("AI 模型")
                     }
                     
                     // 毒舌程度

@@ -8,9 +8,11 @@
 | --- | --- | --- | --- |
 | 本地核心回归 | 通过 | `Scripts/test-assistant.sh`，`.build/verification/summary.json` | 18 套、528 个独立组、`exitCode: 0`；使用隔离文件、mock 网络和 fake 通知，不代表生产联调 |
 | 代码卫生 | 通过 | `git diff --check` | 本轮修复、测试和构建完成后检查通过；提交后再确认工作树和 commit |
-| CN 平台对话 | 通过 | iPhone 17 Pro Max Simulator，CN 模式 | 资金池修复后消息成功返回；额度从 `8/8` 变为 `7/8`；无 `INTERNAL_ERROR`/`UPSTREAM_UNAVAILABLE` |
+| CN 平台对话 | 通过 | iPhone 17 Pro Max Simulator，CN 模式 | 资金池修复后连续消息成功返回；额度从 `8/8` 变为 `7/8` 再到 `6/8`；无 `INTERNAL_ERROR`/`UPSTREAM_UNAVAILABLE` |
 | 任务基础 CRUD | 通过 | iPhone Simulator | 创建 `QA task`、完成/重开入口和编辑/删除入口可用；测试任务暂保留，未确认不可逆删除 |
 | 四 Tab 导航 | 通过 | `ContentView.swift` + Simulator | 首页、对话、任务、我的可进入 |
+| 模型设置统一入口 | 通过 | iPhone 17 Pro Max Simulator，最新签名构建 | 设置页不再展示只写入无效 `selectedModel` 的旧静态列表；仅保留助理设置入口，区域、平台模型、BYOK 和首页使用同一状态源 |
+| 客户端协议与隔离回归 | 通过 | 多个 `Scripts/test-assistant-*.sh` | Apple 身份 17 套、权益 14 套、设备注册、媒体 12 套、记忆同步 3 套、会话同步均通过；使用 mock HTTP/隔离数据，不替代真实设备验收 |
 
 ## 失败或未完成项
 
@@ -18,7 +20,6 @@
 | --- | --- | --- | --- |
 | 我的收藏 | 失败 | **功能去处待定；服务端优先** | 生产 `GET /api/favorites` 和 `GET /api/sync/favorites` 均返回 HTTP 404；v2 契约也没有收藏接口，服务端代码中未找到对应路由。应二选一：补 owner-scoped v2 收藏 API，或隐藏在线“我的收藏”并保留 Quote 页本地收藏。 |
 | 数据统计 | 通过 | **客户端** | 新增 owner-scoped `AssistantUsageStatsStore`；仅成功完成的非空回答计数，取消/失败不计数，重试按 message ID 幂等，账号隔离。真实 Simulator 发送后详细页显示累计发送 1、我的消息 1、AI 回复 1、今日/周/月各 2；安装最新构建后“我的”概览同步显示对话 1、使用 1 天、连续 1 天。 |
-| 设置中的模型与首页模型 | 待确认 | **客户端/产品契约** | 设置选择 `DeepSeek Chat` 后首页仍显示区域默认 `DeepSeek-V4.1-flash`。需明确“设置模型”是否应覆盖平台区域默认；若应联动，修正状态源和展示。 |
 | Apple 登录全生命周期 | 未验收 | 服务端 + 系统环境 | 仅有模拟器已有登录状态和拦截式协议测试；未完成真实授权、刷新、退出、撤销及真实 Bearer 验证。 |
 | StoreKit 订阅 | 未验收 | 服务端 + App Store Connect + 客户端 | 当前代码有 StoreKit 流程，但未配置/验证真实商品、购买、恢复、退款、撤销和额度账本闭环；订阅页可能显示不可用。 |
 | APNs/系统提醒 | 未验收 | 服务端 Worker/APNs + 客户端 | 本地提醒策略和协议测试通过；未验证真实 token、锁屏送达、点击深链、服务端 outbox、安静时段生产行为。 |
@@ -40,6 +41,5 @@
 ## 下一轮验收顺序
 
 1. 先决定收藏功能去处：服务端补 owner-scoped v2 API（含认证、删除墓碑和同步），或客户端移除在线收藏入口并明确本地收藏范围；完成后再复测。
-2. 明确模型偏好优先级并修复设置/首页展示一致性。
-3. 在真实账号和真实设备上验收 Apple、StoreKit、APNs、图片/语音、双设备同步、账号删除和 TestFlight。
-4. 再实现主动更新缺失交互、自定义角色页面和 AI 群聊协议/编排。
+2. 在真实账号和真实设备上验收 Apple、StoreKit、APNs、图片/语音、双设备同步、账号删除和 TestFlight。
+3. 再实现主动更新缺失交互、自定义角色页面和 AI 群聊协议/编排。
