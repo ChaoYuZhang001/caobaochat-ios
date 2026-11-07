@@ -142,10 +142,14 @@ struct MacHomeView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Label("主动更新", systemImage: "bell.badge.fill")
                             .font(.headline)
-                        Text(proactiveStore.profile(for: ownerId).enabled
-                             ? "已开启 · \(proactiveStore.profile(for: ownerId).mode.rawValue)"
-                             : "默认关闭，可在主动规则中开启")
-                            .foregroundStyle(.secondary)
+                        let currentProfile = proactiveStore.profile(for: ownerId)
+                        if currentProfile.enabled {
+                            Text("已开启 · \(currentProfile.mode.rawValue)")
+                                .foregroundStyle(.secondary)
+                        } else {
+                            Text("默认关闭，可在主动规则中开启")
+                                .foregroundStyle(.secondary)
+                        }
                         NavigationLink("管理主动规则") {
                             AssistantProactiveView(userId: ownerId)
                         }
@@ -222,6 +226,7 @@ enum MacFeature: String, CaseIterable, Identifiable, Hashable {
     case profile = "我的"
     
     var id: String { rawValue }
+    var localizedTitle: LocalizedStringKey { LocalizedStringKey(rawValue) }
     
     var icon: String {
         switch self {
@@ -380,7 +385,7 @@ struct MacFeatureRow: View {
                 .foregroundStyle(feature.iconColor)
                 .frame(width: 20)
             
-            Text(feature.rawValue)
+            Text(feature.localizedTitle)
                 .font(.body)
                 .foregroundStyle(.primary)
         }
