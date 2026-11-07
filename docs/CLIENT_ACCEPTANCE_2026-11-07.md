@@ -133,6 +133,7 @@
 2026-11-08 客户端接口覆盖审计：核心首页、对话、任务、记忆、主动规则和订阅页面调用 `/api/v2` 契约；旧 `/api/caobao/*`、`/api/report/*`、`/api/analyze` 只存在于二级兼容页面或未挂载代码，未发现核心导航直接调用旧路径。该审计支持将旧工具从首发核心范围移出，而不是把静态 API 方法存在误判为功能完成。
 
 2026-11-08 主动更新展示收口：执行记录现在显示本地化“生成于”时间、可用时显示“送达于”时间，并补齐“查看 / 稍后 / 关闭此类”操作。关闭此类目前只提示服务端接口尚未提供，引导用户到主动规则中暂停或删除，不伪造成功状态。iOS/macOS Debug 构建均明确返回 `BUILD SUCCEEDED`（`/tmp/caobao-proactive-row-ios-20261108.log`、`/tmp/caobao-proactive-row-macos-20261108.log`）。
+2026-11-08 主动更新展示改动后的完整回归复跑：`Scripts/test-assistant.sh` 明确退出 `0`，日志为 `/tmp/caobao-final-regression-after-proactive-row-20261108.log`，末尾为 `All 168 actual ChatViewModel integration suites passed`；该回归仍使用隔离文件、mock 网络和 fake 通知，不替代真实 Apple、StoreKit、APNs、模型请求或双设备生产门禁。
 
 2026-11-08 自定义角色绑定专项审计：`AssistantMessageRequest`（`APIService.swift:1627-1670`）只有 `persona.level`，`ChatViewModel.prepare()`（`ChatViewModel.swift:1716-1725`）的平台请求和 BYOK 请求都没有 `characterId/version`；对话页也没有当前角色选择或会话绑定状态。角色 CRUD 通过不等于角色对话完成；此项归类为客户端 + 服务端新增功能，需先确定 `characterId`、版本/冲突和 memory scope 协议，再补客户端选择、持久化、请求字段和同步。
 
