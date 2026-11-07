@@ -32,7 +32,7 @@
 | StoreKit 订阅 | 未验收；Simulator 页面可进入 | 服务端 + App Store Connect + 客户端 | 真实 Simulator 已进入订阅页，显示“订阅暂不可用”和“当前 App Store 地区暂无可购买的订阅商品”；客户端入口、恢复购买和管理入口存在，但尚未配置/验证真实商品、购买、恢复、退款、撤销和额度账本闭环。当前失败归因于服务端商品配置/App Store Connect 环境，不能据此判定客户端购买流程通过。 |
 | APNs/系统提醒 | 未验收 | 服务端 Worker/APNs + 客户端 | 本地提醒策略和协议测试通过；未验证真实 token、锁屏送达、点击深链、服务端 outbox、安静时段生产行为。 |
 | 图片 | 部分通过 | 客户端 + 上游 | 图片入口和本地预处理测试通过；未在真实账号下发送图片并验证生产上游能力。 |
-| 语音输入/朗读 | iPhone 路径已实现，真实设备未验收 | 客户端/系统权限 | `AssistantSpeechController` 已覆盖权限、locale、设备端识别回退、60 秒上限、账号切换、中断和 TTS 8,000 字上限；未真实录音、识别或朗读。macOS 目前是明确 no-op，若纳入 macOS 首发需新增原生音频入口。 |
+| 语音输入/朗读 | iPhone 路径已实现，真实设备未验收；macOS 属于后续功能 | 客户端/系统权限 | `AssistantSpeechController` 已覆盖权限、locale、设备端识别回退、60 秒上限、账号切换、中断和 TTS 8,000 字上限；未真实录音、识别或朗读。macOS 当前是明确 no-op，且 `MacChatView` 没有语音入口；完整实现需要原生 `AVFoundation + Speech`、权限/entitlement、桌面 UI 和真实 macOS 权限验收，按 iPhone 首发计划不作为本轮小修。 |
 | 会话/任务/记忆云同步 | 未验收；客户端协议已具备，生产闭环未证实 | 服务端 + 客户端联调 | 客户端已有 owner-scoped 会话 change feed pull、全量回填、消息合并、删除队列和 tombstone 提交；`syncToCloud` 仍只负责记忆上行，会话消息由对话接口写入。生产未认证探针显示 `/api/v2/sync/conversations`、`/api/v2/conversations/changes`、`/api/v2/conversations` 均返回 401，说明路由已挂载，但尚未用两个真实账号/设备验证增量、冲突、删除墓碑和账号切换闭环。 |
 | 主动更新 | 部分补齐，仍未完成 | **客户端 + 服务端** | 已在 iPhone 17 Pro Max Simulator 实际显示并验证暂停/恢复全部、首页未读数和下一次排程、运行记录的查看/稍后、本机已读状态及通知关联对话回流；客户端现已把服务端会话 ID 解析为本地会话 ID，且兼容服务端返回的 `readAt`、`snoozedUntil`、`dismissedAt`，旧部署仍回退 owner-scoped 本机状态（`5dc27bf`）。本机状态明确不冒充多设备同步。仍缺服务端关闭此类接口、多设备写入闭环和生产 Worker/APNs 验收。服务端还需在 logout/换账号时失效旧账号的 APNs 设备绑定，避免旧账号推送落到新账号设备。 |
 | 自定义角色 | 客户端已补 UI，待真实认证/API 验收 | **客户端 + 服务端联调** | 已在 iPhone 17 Pro Max Simulator 实际进入角色入口和新建编辑器，支持 owner-scoped 角色列表、新建/编辑/启用/删除和版本墓碑处理，复用 `/api/v2/characters`；公网未认证只能证明路由返回 401，尚未用真实账号完成 CRUD 闭环。 |
