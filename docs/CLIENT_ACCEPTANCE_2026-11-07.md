@@ -54,6 +54,8 @@
 
 2026-11-08 最新 iPhone Simulator 冷启动：将当前 Debug 包安装到 iPhone 17 Pro Max `15AFDF2E-A189-48E0-BD56-DC18BD7AC926`，启动截图 `/tmp/caobao-ui-acceptance-home-20261108.png` 显示登录页、Apple 登录、BYOK 入口和协议入口；进程日志未发现 Caobao crash/fatal。该证据只证明未登录首屏可见性，不能替代 Apple 认证、登录后 Home、真实设备或签名验收。
 
+2026-11-08 macOS Debug 冷启动：当前 `Caobao-macOS.app` 构建明确退出 `0`，实际打开窗口并显示中文登录页、Apple 登录和 BYOK 入口；截图 `/tmp/caobao-macos-ui-smoke-20261108.png`，系统日志未发现 Caobao crash/fatal。该证据只覆盖本机 macOS 未登录首屏，不替代 VoiceOver、Dynamic Type、真实账号、签名和订阅验收。
+
 2026-11-08 二级旧工具契约复核：运势、金句、昵称、吐槽、决策、评分、早晚报和旧图片分析仍调用 `/api/caobao/*`、`/api/report/*` 或 `/api/analyze`；当前 `feat/caobao-server-v2` 路由源码只挂载 `/api/v2` 助理契约，未找到这些旧路径。它们继续作为二级/兼容入口，不计入核心完成；若保留，服务端需明确兼容路由，否则客户端应迁移或下线入口。
 
 2026-11-08 冷启动 UI smoke：将最新 iOS Simulator 包安装到已启动的 iPhone 17 Pro Max，启动后截图显示首页主动更新、任务、主 CTA、额度卡和四个一级 Tab，2 分钟日志无 Caobao 崩溃记录。该证据只覆盖 Simulator 冷启动和首屏可见性，不替代真实设备权限、签名和网络验收。
