@@ -48,6 +48,8 @@
 
 2026-11-08 图片分析选图修复：`AnalyzeView` 在已有图片时的“相册”按钮此前只切换未绑定的 `showingImagePicker`，iOS 不会打开系统 PhotosPicker；客户端现将 picker 绑定到页面根部，并统一处理首次选择与更换图片。`db7be41`，iOS Simulator Debug 构建退出 `0`；旧 `/api/analyze` 的认证、owner 和额度协议仍未验收，继续按二级兼容功能记录。
 
+2026-11-08 macOS 图片导入修复：`fileImporter` 返回的安全作用域 URL 现在显式开启访问，读取受控 Data 后构造 `NSImage` 并释放作用域，避免直接 `NSImage(contentsOf:)` 在沙盒下失败。`b029f29`；媒体测试明确退出 `0`，macOS Debug 构建明确退出 `0`。真实大文件、权限拒绝和网络上传仍未验收。
+
 2026-11-08 二级旧工具契约复核：运势、金句、昵称、吐槽、决策、评分、早晚报和旧图片分析仍调用 `/api/caobao/*`、`/api/report/*` 或 `/api/analyze`；当前 `feat/caobao-server-v2` 路由源码只挂载 `/api/v2` 助理契约，未找到这些旧路径。它们继续作为二级/兼容入口，不计入核心完成；若保留，服务端需明确兼容路由，否则客户端应迁移或下线入口。
 
 2026-11-08 冷启动 UI smoke：将最新 iOS Simulator 包安装到已启动的 iPhone 17 Pro Max，启动后截图显示首页主动更新、任务、主 CTA、额度卡和四个一级 Tab，2 分钟日志无 Caobao 崩溃记录。该证据只覆盖 Simulator 冷启动和首屏可见性，不替代真实设备权限、签名和网络验收。
