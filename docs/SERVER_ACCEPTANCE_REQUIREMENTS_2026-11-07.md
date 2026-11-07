@@ -113,6 +113,8 @@
 - 正式签名包嵌入 `applinks:caobao.chat`，并在真实 iPhone 上从 Safari、冷启动和已登录/未登录状态分别验证；
 - AASA 变更后验证 CDN/反向代理没有缓存旧文件，点击后 owner 校验和错误路由不会泄露会话数据。
 
+当前实测两个 AASA 地址均返回 HTTP 200，但 `appIDs` 为空，路径仍是旧的 `/chat/*`、`/morning`、`/evening`、`/fortune`、`/roast`，因此不能触发当前客户端的三类 Universal Link。
+
 ## 服务端完成门禁
 
 只有以下项目全部有真实证据，客户端和服务端才可标记完成：
