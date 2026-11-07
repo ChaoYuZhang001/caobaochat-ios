@@ -26,10 +26,11 @@
 | Dynamic Type 登录布局 | 通过（Simulator） | iPad Pro 13-inch Simulator `content_size=accessibility-extra-extra-large`；`.build/verification/ipad13-dynamic-type-fixed-20261107.png`；`53cb592` | 大字体下能力入口改为纵向排列，避免 `Personal`、`Multilingual` 等英文单词被断词；普通字体继续横向排列。VoiceOver 焦点顺序、真实 iPad 和其他页面的大字体仍需验收。 |
 | Apple 撤销通知处理与敏感日志清理 | 客户端修复通过 | `Caobao/CaobaoApp.swift`、`Caobao/Services/APIService.swift`、`Caobao/Views/QuoteView.swift`、`Caobao/Views/FavoritesView.swift`；`416f716`；macOS Debug/iOS signed build | macOS 已补齐 `credentialRevokedNotification` 的退出处理；旧 legacy Apple/删除接口、兼容流式接口、图片分析和金句/收藏入口不再打印原始认证响应、对话内容、图片链接、用户内容或 token 前缀。真实 Apple 授权、刷新和撤销仍需真账号验收 |
 | 音频播放器生命周期 | 客户端修复通过 | `Caobao/Views/AudioPlayerView.swift`；签名 iOS/macOS Debug build | 播放结束通知和 periodic time observer 都保存 token，并在离开页面时移除，避免重复进入消息页累积 observer。 |
-| macOS 首页导航与侧栏无障碍 | 客户端修复通过；真实 UI 未验收 | `Caobao/Views/MacContentView.swift`；macOS Debug build | 首页开始对话/查看任务现在真正切换工作区；侧栏入口改为 Button，支持键盘和 VoiceOver 语义并扩大点击区域。真实 macOS VoiceOver、Dynamic Type 和订阅/账号占位页仍未验收。 |
+| macOS 首页导航与侧栏无障碍 | 客户端修复通过；真实 UI 未验收 | `Caobao/Views/MacContentView.swift`；macOS Debug build | 首页开始对话/查看任务现在真正切换工作区；侧栏入口改为 Button，支持键盘和 VoiceOver 语义并扩大点击区域。个人页已挂载历史、记忆、订阅、助理设置、自定义角色和账号与数据入口；真实 macOS VoiceOver、Dynamic Type、账号删除和订阅闭环仍未验收。 |
 | 账号删除后的本地同步清理 | 客户端修复通过 | `Caobao/Services/AuthService.swift`、`Caobao/Views/AssistantWorkspaceViews.swift`；删除/同步测试；`f98f486` | 账号删除会清理记忆、会话、任务同步游标及待删除队列，同时清理本机收藏、主动模式配置和主动更新的已读/稍后状态，避免旧账号同步状态或本地状态残留。 |
 | 冷启动通知路由 | 客户端修复通过；真实锁屏点击未验收 | `Caobao/Services/AssistantNotificationRouter.swift`、`AssistantWorkspaceViews.swift`；签名 iOS Simulator build | 通知回调先保留 owner-bound route，等待认证恢复后再校验；任务页在登录账号云同步失败时保留待处理任务 ID，只有同步成功后才把缺失任务判为删除，避免临时网络故障丢失深链。真实 APNs 锁屏点击和生产深链仍需验收。 |
 | 客户端协议与隔离回归 | 通过 | 多个 `Scripts/test-assistant-*.sh` | Apple 身份 17 套、权益 14 套、设备注册、媒体 12 套、记忆同步 3 套、会话同步均通过；使用 mock HTTP/隔离数据，不替代真实设备验收 |
+| macOS 图片/音视频表面 | 客户端构建通过；真实媒体未验收 | `AnalyzeView.swift`、`MessageBubble.swift`、`AudioPlayerView.swift`；iOS/macOS Debug build | macOS 图片分析现在接入文件选择器，视频和音频使用真实播放器；真实 URL、权限、网络失败和大文件仍需设备验收。远程媒体默认仍关闭，避免把不可信回复中的 URL 自动拉取。 |
 
 ## 失败或未完成项
 
@@ -45,11 +46,25 @@
 | 会话/任务/记忆云同步 | 未验收；客户端协议已具备，生产闭环未证实 | 服务端 + 客户端联调 | 客户端已有 owner-scoped 会话 change feed pull、全量回填、消息合并、删除队列和 tombstone 提交；记忆同步支持版本/墓碑；任务页当前只把本地独有任务 POST 到云端，已有云任务的本地编辑/状态变更暂不自动 PATCH（本地没有持久化 server version，避免无版本覆盖）。`syncToCloud` 仍只负责记忆上行，会话消息由对话接口写入。生产未认证探针显示 `/api/v2/sync/conversations`、`/api/v2/conversations/changes`、`/api/v2/conversations` 均返回 401，说明路由已挂载，但尚未用两个真实账号/设备验证增量、冲突、删除墓碑和账号切换闭环。 |
 | 记忆授权字段兼容 | 客户端已做兼容；服务端仍需修复 | **客户端 + 服务端协议** | 本地策略把 `confirmed` 和 `explicit` 都视为已授权；当前客户端平台请求把 `confirmed` 规范化为 `explicit`，避免现有 bridge 静默丢失已确认记忆，并有 ChatViewModel 回归覆盖。服务端 bridge 仍需正式接受 `confirmed`，否则其他客户端或旧版本仍会丢上下文。 |
 | 云任务编辑、状态和审批 | 未完成 | **客户端 + 服务端协议** | 客户端没有持久化云端 `version`，已有云任务的编辑/状态变化不会安全 PATCH；`waiting_approval`、`failed`、`running`、`draft` 目前会被压成 active，客户端也没有云端审批调用。需要补 `version`/条件 PATCH、状态枚举映射、`/approve` 闭环、幂等和冲突 UI，再做双设备验收。 |
-| 主动更新 | 部分补齐，仍未完成 | **客户端 + 服务端** | 当前签名 Simulator 已打开主动更新页，开关从关闭切换到开启再恢复关闭；频率选择、未读数量、下一次运行、陪伴模式和每日上限入口均可见。二轮 UI 验收实际启用安静时段并保存，页面显示“安静时段已启用”，随后关闭并保存恢复原状态。此前已验证暂停/恢复全部、运行记录的查看/稍后、本机已读状态及通知关联对话回流；客户端现已把服务端会话 ID 解析为本地会话 ID，且兼容服务端返回的 `readAt`、`snoozedUntil`、`dismissedAt`，旧部署仍回退 owner-scoped 本机状态（`5dc27bf`）。本机状态明确不冒充多设备同步。Profile 更新仍未携带 `expectedVersion`，运行重试每次生成新幂等键，可能覆盖并发修改或重复执行；服务端关闭此类、阅读/稍后多设备写入、生产 Worker/APNs 和版本/幂等语义仍未完成。服务端还需在 logout/换账号时失效旧账号的 APNs 设备绑定，避免旧账号推送落到新账号设备。 |
+| 主动更新 | 客户端版本/幂等已补；仍未完成服务端闭环 | **客户端 + 服务端** | 当前签名 Simulator 已打开主动更新页，开关从关闭切换到开启再恢复关闭；频率选择、未读数量、下一次运行、陪伴模式和每日上限入口均可见。二轮 UI 验收实际启用安静时段并保存，页面显示“安静时段已启用”，随后关闭并保存恢复原状态。此前已验证暂停/恢复全部、运行记录的查看/稍后、本机已读状态及通知关联对话回流；客户端现已把服务端会话 ID 解析为本地会话 ID，且兼容服务端返回的 `readAt`、`snoozedUntil`、`dismissedAt`，旧部署仍回退 owner-scoped 本机状态（`5dc27bf`）。Profile 更新现在携带并持久化服务端 `expectedVersion`，规则运行失败重试复用 owner/rule 级幂等键，避免重复执行。服务端关闭此类、阅读/稍后多设备写入、生产 Worker/APNs 和真实冲突验收仍未完成。服务端还需在 logout/换账号时失效旧账号的 APNs 设备绑定，避免旧账号推送落到新账号设备。 |
 | 自定义角色 | 客户端契约错误已修复；仍待真实认证/API 验收 | **客户端 + 服务端联调** | 客户端已将记忆范围从错误的 `private/workspace` 对齐为服务端接受的 `none/character/group`，默认使用 `character`，避免新建角色必然收到 400。当前签名 Simulator 已从助理设置进入角色列表和新建编辑器，确认名称、头像、简介、语言、启用、行为提示、问候语和记忆范围控件存在；本次未保存测试角色，避免污染账号。客户端支持 owner-scoped 角色列表、新建/编辑/启用/删除和版本墓碑处理，复用 `/api/v2/characters`；公网未认证只能证明路由返回 401，尚未用真实账号完成 CRUD 闭环。角色尚未接入对话请求，需新增 `characterId/version` 与服务端提示词、记忆范围协议。 |
 | AI 群聊 | 未实现 | **客户端 + 服务端新增** | 当前代码没有群聊参与者、编排、speaker/turn 模型或 SSE；不能用现有 personaLevel 代替。 |
 | macOS/iPad 信息架构 | macOS 核心导航、历史和“我的”已补齐；iPad 模拟器布局通过，真机和辅助功能仍未验收 | **客户端 UI** | macOS 侧栏现在保留首页、对话、任务、历史、我的和工作区，旧工具统一进入“工具模板”，最近对话常驻侧栏；历史页支持本地搜索并回到对话，个人页显示账号/统计并提供记忆、订阅和设置入口。最新 iPad Pro 11-inch (M5) Simulator 签名包已启动并显示侧栏、首页、主动更新、任务、工作区、订阅、设置、主 CTA 和四个快速模板；截图 `.build/verification/ipad-acceptance-20261107.png`。真实 iPad 触控、VoiceOver、Dynamic Type、订阅和账号闭环仍需验收。 |
 | iPhone Duo、真机/TestFlight | 未验收 | 发布环境 | 当前普通 Simulator 不能证明 Duo 专用设备、正式签名归档、TestFlight 安装和系统级行为。 |
+| macOS 详细统计/关于/官方页 | 部分缺失 | **客户端 UI** | macOS 当前个人页只有摘要统计，详细统计、关于和官方页没有等同 iOS 的完整入口；属于 macOS parity 待补，不影响 iPhone 首发核心闭环。 |
+| 游客升级 | 死链 | **客户端产品/认证** | `AuthService` 的 `canUpgrade` 永远为 false，游客升级区和升级弹窗无法到达；需要重新接通游客转 Apple 账号，或删除误导入口。 |
+| 反馈提交 | 未验收 | **客户端 + 服务端协议** | `FeedbackView` 仍调用旧 `/feedback` 且未带 Bearer；当前只能证明表单可达，不能证明生产提交成功。应迁移到 owner-scoped 认证接口或明确支持匿名反馈后再验收。 |
+| 远程媒体与举报 | 默认关闭/未验收 | **客户端接线 + 服务端协议** | `MessageBubble` 的举报和远程音视频路径由 `allowsReporting/allowsRemoteMedia` 控制，现有聊天/历史调用未显式开启；媒体默认关闭是安全策略，举报若保留需补认证接口和真实提交验收。 |
+| 旧收藏/旧工具协议 | 二级兼容面未验收 | **客户端清理 + 服务端兼容** | `FavoritesView` 和 `FeaturesView` 仍有旧 `/api` 方法定义，但核心入口已转本机收藏和 Assistant v2；旧页面应删除或标明兼容范围，不能把静态方法当作可用功能。 |
+
+## 未纳入首发或未挂载的客户端表面
+
+- **watchOS**：当前工程有独立 watchOS target，但仍使用旧的 `/api` 运势/早报/吐槽/决策接口，没有 Bearer、owner 隔离或云同步；按产品计划暂不纳入首发。若恢复该范围，责任归类为客户端 watchOS 重做 + 服务端认证兼容，不能把现有 target 当作已完成。
+- **WidgetKit**：`CaobaoWidgets/CaobaoWidget.swift` 有实现文件，但工程没有 Widget target 引用，当前不可构建；若需要桌面/锁屏小组件，责任归类为客户端工程接入、签名和深链验收。
+- **Optimized/**：其中的 Dynamic Island、Siri、推送管理、分享和图片上传等 Swift 文件没有加入 Xcode target；它们是未挂载代码，不能计入已完成功能。产品需要时应逐项接入并补真实系统验收，否则作为待清理的死代码。
+- **旧 APIService 方法**：旧收藏、旧聊天流、旧设置和旧云同步方法目前只有定义，没有核心页面调用；当前产品以 `Assistant*` v2 客户端为准。旧接口应标记兼容范围或删除，不能用静态方法存在证明功能完成。
+- **macOS 设置差异**：当前 `AssistantMacPreferencesView` 只覆盖语言、风格和服务区域；语音、通知/安静时段、主动模式、BYOK 和数据管理仍通过工作区入口分散提供。若要求与 iOS 完全同构，归类为客户端补齐；否则保留平台化设置并在产品说明中明确范围。
+- **官方页标签**：已修复“开发中”标签条件错误，改为显式 `isComingSoon`，并通过 iOS/macOS 构建验证。
 
 ## 功能去处与新增
 
