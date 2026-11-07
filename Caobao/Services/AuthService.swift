@@ -345,6 +345,10 @@ final class AuthService: ObservableObject {
             defaults.removeObject(forKey: "caobao.assistant.cloudConversationDeletes.\(encodedOwner)")
             defaults.removeObject(forKey: "caobao.assistant.cloudTaskSync.\(encodedOwner)")
             defaults.removeObject(forKey: "caobao.assistant.cloudTaskDeletes.\(encodedOwner)")
+            // Cloud task versions and dirty markers are owner-scoped sync
+            // metadata. Remove them with the task cursor/tombstones so a later
+            // session cannot reuse stale versions or resurrect deleted edits.
+            defaults.removeObject(forKey: "caobao.assistant.cloudTaskMetadata.\(encodedOwner)")
             let quoteOwner = encodedOwner
                 .replacingOccurrences(of: "/", with: "_")
                 .replacingOccurrences(of: "+", with: "-")
