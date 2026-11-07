@@ -10,7 +10,7 @@
 | --- | --- | --- | --- |
 | 本地核心回归 | 通过 | `Scripts/test-assistant.sh`，`.build/verification/summary.json` | 18 套、528 个独立组、`exitCode: 0`；使用隔离文件、mock 网络和 fake 通知，不代表生产联调 |
 | 代码卫生 | 通过 | `git diff --check` | 本轮修复、测试和构建完成后检查通过；提交后再确认工作树和 commit |
-| CN 平台对话 | 通过 | iPhone 17 Pro Max Simulator，CN 模式 | 资金池修复后连续消息成功返回；额度从 `8/8` 变为 `7/8` 再到 `6/8`；无 `INTERNAL_ERROR`/`UPSTREAM_UNAVAILABLE` |
+| CN 平台对话 | 通过（服务端资金池修复后复测） | iPhone 17 Pro Max Simulator，当前签名包；HTTP 200 网络日志；UI 完成态 | 发送 `: ping` 后返回 `pong 🏓`，界面从“正在连接…”进入完成态；额度从 `6/8` 变为 `5/8`；未出现 `INTERNAL_ERROR`/`UPSTREAM_UNAVAILABLE`。原始 SSE 的逐事件日志未持久化，因此 `started/delta/completed` 的 UI/扣额结果已验证，事件序列仍不作为独立日志证据。 |
 | 任务基础 CRUD | 通过 | iPhone Simulator | 创建 `QA task`、完成/重开入口和编辑/删除入口可用；测试任务暂保留，未确认不可逆删除 |
 | 四 Tab 导航 | 通过 | `ContentView.swift` + Simulator | 首页、对话、任务、我的可进入 |
 | 模型设置统一入口 | 通过 | iPhone 17 Pro Max Simulator，最新签名构建 | 设置页不再展示只写入无效 `selectedModel` 的旧静态列表；仅保留助理设置入口，区域、平台模型、BYOK 和首页使用同一状态源 |
