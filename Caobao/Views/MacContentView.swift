@@ -12,6 +12,7 @@ struct MacContentView: View {
     @State private var selectedConversationId: String?
     @State private var showSettings = false
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
+    @State private var newChatTask: Task<Void, Never>?
     
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
@@ -57,8 +58,32 @@ struct MacContentView: View {
                 .frame(width: 560, height: 700)
         }
         .onReceive(NotificationCenter.default.publisher(for: .newChat)) { _ in
-            selectedConversationId = nil
-            selectedFeature = .chat
+            newChatTask?.cancel()
+            let ownerId = AuthService.shared.user?.id ?? "local-device"
+            newChatTask = Task { @MainActor in
+                let opened = await chatViewModel.requestNewConversation(ownerId: ownerId)
+                guard !Task.isCancelled else { return }
+                selectedConversationId = nil
+                selectedFeature = .chat
+                if !opened {
+                    // ChatView owns the confirmation dialog when the current
+                    // conversation has a draft or an active generation.
+                    return
+                }
+            }
+        }
+        .onChange(of: appState.selectedTab) { tab in
+            switch tab {
+            case .home: selectedFeature = .home
+            case .chat: selectedFeature = .chat
+            case .fortune: selectedFeature = .fortune
+            case .profile: selectedFeature = .profile
+            }
+            if tab != .chat { selectedConversationId = nil }
+        }
+        .onDisappear {
+            newChatTask?.cancel()
+            newChatTask = nil
         }
         .task {
             // Login/foreground on macOS has no iOS scene task. Refresh the
@@ -101,13 +126,13 @@ struct MacHomeView: View {
                 }
                 HStack(spacing: 12) {
                     Button {
-                        appState.selectedTab = .chat
+                        NotificationCenter.default.post(name: .newChat, object: nil)
                     } label: {
                         Label("开始对话", systemImage: "message.fill")
                     }
                     .buttonStyle(.borderedProminent)
-                    NavigationLink {
-                        AssistantTasksView(userId: ownerId)
+                    Button {
+                        appState.selectedTab = .fortune
                     } label: {
                         Label("查看任务", systemImage: "checklist")
                     }
