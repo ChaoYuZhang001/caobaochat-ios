@@ -4,6 +4,8 @@
 
 本轮失败记录：第一次 iPad 构建中 Xcode 输出 `BUILD SUCCEEDED`，但脚本验签发现复用 DerivedData 后的 `Assets.car` 为无效密封资源（`sealed resource is missing or invalid`）。隔离旧 DerivedData 后重新构建，签名校验通过；归类为构建缓存/验签环境问题，不是客户端 Swift 功能失败。
 
+本轮 UI 重试记录：同一台 iPad Pro 11-inch 在更新本地化资源后 `simctl io screenshot` 出现纯白画面，但系统日志显示 Caobao 进程和 SwiftUI 场景仍为 running-active、没有崩溃；换用干净的 iPad Pro 13-inch Simulator 后，中英文登录页均正常渲染。当前归类为单台 Simulator 前台/渲染状态问题，iPad 真机仍未验收。
+
 服务端需要处理的接口、幂等、owner 隔离和生产门禁见 [SERVER_ACCEPTANCE_REQUIREMENTS_2026-11-07.md](SERVER_ACCEPTANCE_REQUIREMENTS_2026-11-07.md)。
 
 ## 当前已通过
@@ -17,7 +19,7 @@
 | 四 Tab 导航 | 通过 | `ContentView.swift` + Simulator | 首页、对话、任务、我的可进入 |
 | 模型设置统一入口 | 通过 | iPhone 17 Pro Max Simulator，最新签名构建 | 设置页不再展示只写入无效 `selectedModel` 的旧静态列表；仅保留助理设置入口，区域、平台模型、BYOK 和首页使用同一状态源 |
 | 本地备份导出/导入 | 本地协议与恢复链路通过；真实文件供应商/真机未验收 | 客户端独立测试脚本 | 导出 35 组、导入解析 29 组、文件读取 6 组、恢复 ViewModel 15 组全部通过；覆盖 owner 隔离、版本/字段校验、重复恢复、权限中和、图片与工具提案降权、SQL/工作区失败回滚和取消。仍需真实 iPhone/iPad 文件选择器、多图片大文件和跨设备恢复验收；本地备份不等于云同步。 |
-| 本轮新增界面本地化 | 通过（新增入口） | `Caobao/en.lproj/Localizable.strings`、`Caobao/zh-Hans.lproj/Localizable.strings`；`Scripts/test-assistant-localization.sh`；全新 QA19 Simulator 启动截图 | 主动更新、暂停/恢复、运行记录、自定义角色、macOS 工具模板、本机收藏和对话切换提示已补齐中英文资源；系统原生 Apple 登录按钮随系统语言显示；历史工具仍有既存中文文案，未在本轮扩展范围内 |
+| 本轮新增界面本地化 | 通过（核心首页/登录入口） | `Caobao/en.lproj/Localizable.strings`、`Caobao/zh-Hans.lproj/Localizable.strings`；`Scripts/test-assistant-localization.sh`（19 组）；iPad Pro 13-inch Simulator 中英文启动截图 `.build/verification/ipad13-localization-en-20261107.png`、`.build/verification/ipad13-localization-20261107.png` | 修复首页 CTA、任务副文案、主动更新说明、快速模板提示和记忆同步错误的英文资源（`5eee890`）；中英文登录页已分别显示一致语言。历史工具仍有既存中文文案，未在本轮扩展范围内。 |
 | Apple 撤销通知处理与敏感日志清理 | 客户端修复通过 | `Caobao/CaobaoApp.swift`、`Caobao/Services/APIService.swift`、`Caobao/Views/QuoteView.swift`、`Caobao/Views/FavoritesView.swift`；`416f716`；macOS Debug/iOS signed build | macOS 已补齐 `credentialRevokedNotification` 的退出处理；旧 legacy Apple/删除接口、兼容流式接口、图片分析和金句/收藏入口不再打印原始认证响应、对话内容、图片链接、用户内容或 token 前缀。真实 Apple 授权、刷新和撤销仍需真账号验收 |
 | 音频播放器生命周期 | 客户端修复通过 | `Caobao/Views/AudioPlayerView.swift`；签名 iOS/macOS Debug build | 播放结束通知和 periodic time observer 都保存 token，并在离开页面时移除，避免重复进入消息页累积 observer。 |
 | macOS 首页导航与侧栏无障碍 | 客户端修复通过；真实 UI 未验收 | `Caobao/Views/MacContentView.swift`；macOS Debug build | 首页开始对话/查看任务现在真正切换工作区；侧栏入口改为 Button，支持键盘和 VoiceOver 语义并扩大点击区域。真实 macOS VoiceOver、Dynamic Type 和订阅/账号占位页仍未验收。 |
