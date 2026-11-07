@@ -64,6 +64,11 @@ private final class TaskWireCapture: @unchecked Sendable {
         if try !value() { throw TaskWireTestFailure(description: message) }
     }
     static func run(_ name: String, _ body: () async throws -> Void) async throws { try await body(); suites += 1; print("PASS \(name)") }
+    static func approvalHashContract() throws {
+        let hash = AssistantCloudTaskApproval.argumentsHash(taskId: "task-123", scheduledAt: 1_730_000_000)
+        try expect(hash == "f6ff0e5b9157ad8897d2f5e8069acff0c81f3b560a0dd6539a4f9273614be61b",
+                   "Cloud task approval hash drifted from the canonical server representation")
+    }
     static func json(_ value: Any) -> String { String(data: try! JSONSerialization.data(withJSONObject: value, options: [.sortedKeys]), encoding: .utf8)! }
     static func frame(_ value: [String: Any]) -> String { "data: " + json(value) + "\n\n" }
     static func config(_ kind: AssistantWireProtocol, path: String = UUID().uuidString, key: String = "fixture-key", model: String = "fixture-model") -> BYOKConfiguration {
@@ -136,6 +141,9 @@ private final class TaskWireCapture: @unchecked Sendable {
             name: name ?? (mode == .capabilityProbe ? "caobao_task_probe" : "create_task"), finish: finish, done: done)
     }
     static func main() async throws {
+        try approvalHashContract()
+        suites += 1
+        print("PASS cloud-task-approval-hash-contract")
         try await run("chat-gateway-stop-valid-probe-native-capture") {
             let result = await collect(try request(.chatCompletions, body: sanitizedGatewayProbeStop, mode: .capabilityProbe), mode: .capabilityProbe)
             try expect(result.error == nil && calls(result.events).count == 1, "Captured valid single probe call with stop and actual native EOF must succeed; got \(String(describing: result.error))")

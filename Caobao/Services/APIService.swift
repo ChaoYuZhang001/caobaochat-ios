@@ -1,7 +1,6 @@
 import Foundation
 import Alamofire
 import Security
-import CryptoKit
 
 // MARK: - API Configuration
 struct APIConfig {
@@ -2373,9 +2372,7 @@ extension APIService {
         guard scheduledAt > 0 else { throw AssistantAPIError.invalidResponse }
         // Keep this byte-for-byte aligned with the server's
         // CaoBaoReminderArgumentsHash implementation.
-        let canonical = "{\"taskId\":\"\(trimmed)\",\"scheduledAt\":\(scheduledAt)}"
-        let argumentsHash = SHA256.hash(data: Data(canonical.utf8))
-            .map { String(format: "%02x", $0) }.joined()
+        let argumentsHash = AssistantCloudTaskApproval.argumentsHash(taskId: trimmed, scheduledAt: scheduledAt)
         let request = CloudTaskApprovalRequest(toolName: "task.reminder", argumentsHash: argumentsHash,
             destination: trimmed, scope: nil, expiresInSeconds: max(1, min(expiresInSeconds, 86_400)))
         return try await session.request("\(APIConfig.v2BaseURL)/tasks/\(escaped)/approve", method: .post,

@@ -12,6 +12,16 @@ enum AssistantTaskToolMode: String, Codable, Hashable, Sendable {
     }
 }
 
+/// Canonical arguments digest used when approving one cloud reminder run.
+/// Field order, quoting, and Unix-second precision are part of the contract.
+enum AssistantCloudTaskApproval {
+    static func argumentsHash(taskId: String, scheduledAt: Int64) -> String {
+        let canonical = "{\"taskId\":\"\(taskId)\",\"scheduledAt\":\(scheduledAt)}"
+        return SHA256.hash(data: Data(canonical.utf8))
+            .map { String(format: "%02x", $0) }.joined()
+    }
+}
+
 enum AssistantTaskToolError: LocalizedError, Equatable {
     case unavailable, invalidArguments, invalidTrace, tooLarge, sourceChanged
     case decisionRequired, alreadyResolved, taskConflict, persistenceFailed, capabilityRequired
