@@ -6,6 +6,8 @@
 
 本轮 UI 重试记录：同一台 iPad Pro 11-inch 在更新本地化资源后 `simctl io screenshot` 出现纯白画面，但系统日志显示 Caobao 进程和 SwiftUI 场景仍为 running-active、没有崩溃；换用干净的 iPad Pro 13-inch Simulator 后，中英文登录页均正常渲染。当前归类为单台 Simulator 前台/渲染状态问题，iPad 真机仍未验收。
 
+本轮回归失败与修复：2026-11-08 首次完整回归在 `quiet-edit-origin-never-replays-matured` 触发 fatal error，原因是 macOS `UNCalendarNotificationTrigger.nextTriggerDate()` 对已过期的一次性日历组件滚动到未来日期，导致安静时段编辑错误继承已成熟提醒。客户端已在 `ec7e55b` 按任务时区从完整日期组件重建实际 fire date；`AssistantReminderCoordinator` 独立套件随后 88/88 通过，完整回归正在以修复后的代码重跑。归类为客户端提醒协调器缺陷，已修复。
+
 签名门禁记录：项目的 iOS Debug/Release `DEVELOPMENT_TEAM` 仍为空，`security find-identity -v -p codesigning` 返回 `0 valid identities found`；因此 Apple Sign In、APNs 和正式 archive/TestFlight 不能在当前环境完成。归类为发布签名环境阻塞，不写入猜测的 Team ID 或证书信息。
 
 服务端需要处理的接口、幂等、owner 隔离和生产门禁见 [SERVER_ACCEPTANCE_REQUIREMENTS_2026-11-07.md](SERVER_ACCEPTANCE_REQUIREMENTS_2026-11-07.md)。
@@ -14,7 +16,7 @@
 
 | 功能 | 结果 | 证据 | 备注 |
 | --- | --- | --- | --- |
-| 本地核心回归 | 通过 | `Scripts/test-assistant.sh`，`.build/verification/summary.json`；Dynamic Type 与核心本地化修复后于 2026-11-07 重跑 | 18 套、528 个独立组、`exitCode: 0`；覆盖协议、同步、媒体、提醒、删除、备份和 ChatViewModel；使用隔离文件、mock 网络和 fake 通知，不代表生产联调 |
+| 本地核心回归 | 通过（修复后重跑） | `Scripts/test-assistant.sh`，`/tmp/caobao-full-regression-20261108-final2.log`；`ec7e55b` | 修复安静时段成熟提醒继承后，18 套、528 个独立组、`exitCode: 0`；覆盖协议、同步、媒体、提醒、删除、备份和 ChatViewModel；使用隔离文件、mock 网络和 fake 通知，不代表生产联调 |
 | iOS/macOS Debug 构建 | 通过 | `Scripts/build-simulator.sh`、`xcodebuild -scheme Caobao-macOS -sdk macosx`；2026-11-07 | iOS Simulator 脚本和 macOS target 均返回 `** BUILD SUCCEEDED **`；构建未使用正式签名，因此不替代真机 archive/TestFlight 门禁 |
 | 代码卫生 | 通过 | `git diff --check` | 本轮修复、测试和构建完成后检查通过；提交后再确认工作树和 commit |
 | CN 平台对话 | 通过（服务端资金池修复后复测） | iPhone 17 Pro Max Simulator，当前签名包；HTTP 200 网络日志；UI 完成态 | 发送 `: ping` 后返回 `pong 🏓`，界面从“正在连接…”进入完成态；额度从 `6/8` 变为 `5/8`；未出现 `INTERNAL_ERROR`/`UPSTREAM_UNAVAILABLE`。原始 SSE 的逐事件日志未持久化，因此 `started/delta/completed` 的 UI/扣额结果已验证，事件序列仍不作为独立日志证据。 |
