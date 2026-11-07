@@ -219,6 +219,27 @@ struct MacProfileView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
+                GroupBox("更多信息") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        NavigationLink {
+                            MacDetailedStatsView()
+                        } label: {
+                            Label("详细统计", systemImage: "chart.bar.xaxis")
+                        }
+                        NavigationLink {
+                            MacAboutView()
+                        } label: {
+                            Label("关于草包", systemImage: "info.circle")
+                        }
+                        NavigationLink {
+                            MacOfficialView()
+                        } label: {
+                            Label("官方信息", systemImage: "building.2")
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
                 GroupBox("工作区") {
                     VStack(alignment: .leading, spacing: 8) {
                         NavigationLink {
@@ -275,6 +296,84 @@ private struct MacProfileMetric: View {
             Text(value).font(.title3.bold())
             Text(title).font(.caption).foregroundStyle(.secondary)
         }
+    }
+}
+
+private struct MacDetailedStatsView: View {
+    @ObservedObject private var auth = AuthService.shared
+    @State private var stats = AssistantUsageStats()
+
+    private var ownerId: String { auth.user?.id ?? "local-device" }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("数据统计").font(.largeTitle.bold())
+                Text("仅统计当前账号在本机完成的对话，不代表服务端额度或账单。")
+                    .font(.subheadline).foregroundStyle(.secondary)
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                    MacStatsMetric(title: "我的消息", value: "\(stats.userMessages)")
+                    MacStatsMetric(title: "AI 回复", value: "\(stats.assistantMessages)")
+                    MacStatsMetric(title: "今日消息", value: "\(stats.todayMessages)")
+                    MacStatsMetric(title: "本月消息", value: "\(stats.monthMessages)")
+                    MacStatsMetric(title: "使用天数", value: "\(stats.usageDays)")
+                    MacStatsMetric(title: "当前连续", value: "\(stats.currentStreak) 天")
+                }
+            }
+            .padding(32)
+            .frame(maxWidth: 760, alignment: .leading)
+        }
+        .navigationTitle("数据统计")
+        .task { stats = AssistantUsageStatsStore.shared.snapshot(ownerId: ownerId) }
+        .onReceive(auth.$user) { _ in
+            stats = AssistantUsageStatsStore.shared.snapshot(ownerId: ownerId)
+        }
+    }
+}
+
+private struct MacStatsMetric: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(value).font(.title2.bold())
+            Text(title).font(.caption).foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+private struct MacAboutView: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Image(systemName: "info.circle").font(.system(size: 42)).foregroundStyle(Color.caobaoPrimary)
+            Text("关于草包").font(.largeTitle.bold())
+            Text("草包是一个以生产力助理为主、陪伴模式可选的个人 AI 助理。")
+                .foregroundStyle(.secondary)
+            Text("对话、记忆、任务和主动更新由同一个工作区管理。")
+                .foregroundStyle(.secondary)
+        }
+        .padding(32)
+        .frame(maxWidth: 760, maxHeight: .infinity, alignment: .topLeading)
+        .navigationTitle("关于草包")
+    }
+}
+
+private struct MacOfficialView: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Image(systemName: "building.2").font(.system(size: 42)).foregroundStyle(.secondary)
+            Text("官方信息").font(.largeTitle.bold())
+            Text("官方信息页面已接入桌面端工作区。")
+                .foregroundStyle(.secondary)
+            Link("访问草包官网", destination: URL(string: "https://caobao.chat")!)
+        }
+        .padding(32)
+        .frame(maxWidth: 760, maxHeight: .infinity, alignment: .topLeading)
+        .navigationTitle("官方信息")
     }
 }
 
