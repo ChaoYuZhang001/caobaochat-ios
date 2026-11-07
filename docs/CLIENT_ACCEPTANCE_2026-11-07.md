@@ -14,14 +14,15 @@
 
 | 功能 | 结果 | 证据 | 备注 |
 | --- | --- | --- | --- |
-| 本地核心回归 | 通过 | `Scripts/test-assistant.sh`，`.build/verification/summary.json`；Dynamic Type 修复后于 2026-11-07 重跑 | 18 套、528 个独立组、`exitCode: 0`；覆盖协议、同步、媒体、提醒、删除、备份和 ChatViewModel；使用隔离文件、mock 网络和 fake 通知，不代表生产联调 |
+| 本地核心回归 | 通过 | `Scripts/test-assistant.sh`，`.build/verification/summary.json`；Dynamic Type 与核心本地化修复后于 2026-11-07 重跑 | 18 套、528 个独立组、`exitCode: 0`；覆盖协议、同步、媒体、提醒、删除、备份和 ChatViewModel；使用隔离文件、mock 网络和 fake 通知，不代表生产联调 |
+| iOS/macOS Debug 构建 | 通过 | `xcodebuild -scheme Caobao`（iOS Simulator）与 `xcodebuild -scheme Caobao-macOS -sdk macosx`；2026-11-07 | 两个 target 均返回 `** BUILD SUCCEEDED **`；构建未使用正式签名，因此不替代真机 archive/TestFlight 门禁 |
 | 代码卫生 | 通过 | `git diff --check` | 本轮修复、测试和构建完成后检查通过；提交后再确认工作树和 commit |
 | CN 平台对话 | 通过（服务端资金池修复后复测） | iPhone 17 Pro Max Simulator，当前签名包；HTTP 200 网络日志；UI 完成态 | 发送 `: ping` 后返回 `pong 🏓`，界面从“正在连接…”进入完成态；额度从 `6/8` 变为 `5/8`；未出现 `INTERNAL_ERROR`/`UPSTREAM_UNAVAILABLE`。原始 SSE 的逐事件日志未持久化，因此 `started/delta/completed` 的 UI/扣额结果已验证，事件序列仍不作为独立日志证据。 |
 | 任务基础 CRUD | 通过 | iPhone Simulator | 创建 `QA task`、完成/重开入口和编辑/删除入口可用；测试任务暂保留，未确认不可逆删除 |
 | 四 Tab 导航 | 通过 | `ContentView.swift` + Simulator | 首页、对话、任务、我的可进入 |
 | 模型设置统一入口 | 通过 | iPhone 17 Pro Max Simulator，最新签名构建 | 设置页不再展示只写入无效 `selectedModel` 的旧静态列表；仅保留助理设置入口，区域、平台模型、BYOK 和首页使用同一状态源 |
 | 本地备份导出/导入 | 本地协议与恢复链路通过；真实文件供应商/真机未验收 | 客户端独立测试脚本 | 导出 35 组、导入解析 29 组、文件读取 6 组、恢复 ViewModel 15 组全部通过；覆盖 owner 隔离、版本/字段校验、重复恢复、权限中和、图片与工具提案降权、SQL/工作区失败回滚和取消。仍需真实 iPhone/iPad 文件选择器、多图片大文件和跨设备恢复验收；本地备份不等于云同步。 |
-| 本轮新增界面本地化 | 通过（核心首页/登录入口） | `Caobao/en.lproj/Localizable.strings`、`Caobao/zh-Hans.lproj/Localizable.strings`；`Scripts/test-assistant-localization.sh`（19 组）；iPad Pro 13-inch Simulator 中英文启动截图 `.build/verification/ipad13-localization-en-20261107.png`、`.build/verification/ipad13-localization-20261107.png` | 修复首页 CTA、任务副文案、主动更新说明、快速模板提示和记忆同步错误的英文资源（`5eee890`）；中英文登录页已分别显示一致语言。历史工具仍有既存中文文案，未在本轮扩展范围内。 |
+| 核心工作区本地化 | 通过（核心页面） | `Caobao/en.lproj/Localizable.strings`、`Caobao/zh-Hans.lproj/Localizable.strings`；核心静态键扫描 `missing static keys: 0`；`Scripts/test-assistant-localization.sh`（19 组）；`c67acc3`、`23ac9e6` | 主动更新、任务规则、设置、账号、订阅、通用状态和 macOS 工作区缺失的英文资源已补齐；首页产品名误写已修正为“草包”。旧工具页面仍有既存中文文案，继续作为二级工具维护，不阻塞首发核心页面验收。 |
 | Dynamic Type 登录布局 | 通过（Simulator） | iPad Pro 13-inch Simulator `content_size=accessibility-extra-extra-large`；`.build/verification/ipad13-dynamic-type-fixed-20261107.png`；`53cb592` | 大字体下能力入口改为纵向排列，避免 `Personal`、`Multilingual` 等英文单词被断词；普通字体继续横向排列。VoiceOver 焦点顺序、真实 iPad 和其他页面的大字体仍需验收。 |
 | Apple 撤销通知处理与敏感日志清理 | 客户端修复通过 | `Caobao/CaobaoApp.swift`、`Caobao/Services/APIService.swift`、`Caobao/Views/QuoteView.swift`、`Caobao/Views/FavoritesView.swift`；`416f716`；macOS Debug/iOS signed build | macOS 已补齐 `credentialRevokedNotification` 的退出处理；旧 legacy Apple/删除接口、兼容流式接口、图片分析和金句/收藏入口不再打印原始认证响应、对话内容、图片链接、用户内容或 token 前缀。真实 Apple 授权、刷新和撤销仍需真账号验收 |
 | 音频播放器生命周期 | 客户端修复通过 | `Caobao/Views/AudioPlayerView.swift`；签名 iOS/macOS Debug build | 播放结束通知和 periodic time observer 都保存 token，并在离开页面时移除，避免重复进入消息页累积 observer。 |
