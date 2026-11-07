@@ -2202,6 +2202,10 @@ struct CloudProactiveRunRequest: Codable {
 
 struct CloudProactivePauseRequest: Codable {
     let paused: Bool
+    /// Optimistic-lock guard for multi-device pause/resume. Older servers may
+    /// ignore this field, so the response version still has to be checked by
+    /// the caller before the local state is treated as authoritative.
+    let expectedVersion: Int64?
 }
 
 struct ChatMessagesResponse: Codable {
@@ -2495,8 +2499,8 @@ extension APIService {
             .serializingDecodable(CloudProactiveRun.self).value
     }
 
-    func pauseAllProactive(token: String, paused: Bool = true) async throws -> CloudProactiveProfileResponse {
-        let request = CloudProactivePauseRequest(paused: paused)
+    func pauseAllProactive(token: String, paused: Bool = true, expectedVersion: Int64? = nil) async throws -> CloudProactiveProfileResponse {
+        let request = CloudProactivePauseRequest(paused: paused, expectedVersion: expectedVersion)
         return try await session.request("\(APIConfig.v2BaseURL)/proactive/pause-all", method: .post,
                                          parameters: request, encoder: JSONParameterEncoder.default,
                                          headers: authHeaders(token)).validate()
