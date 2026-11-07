@@ -50,6 +50,8 @@
 
 2026-11-08 冷启动 UI smoke：将最新 iOS Simulator 包安装到已启动的 iPhone 17 Pro Max，启动后截图显示首页主动更新、任务、主 CTA、额度卡和四个一级 Tab，2 分钟日志无 Caobao 崩溃记录。该证据只覆盖 Simulator 冷启动和首屏可见性，不替代真实设备权限、签名和网络验收。
 
+2026-11-08 APNs 账号切换竞态修复：客户端登出/凭证撤销的设备 `DELETE` 可能异步晚于新账号 `POST`，重复登出还可能并发发送多个 DELETE。`AssistantRemoteNotificationCoordinator` 现在串行等待完整注销链后再注册新 owner；设备注册协议套件 5/5 通过，iOS Simulator 构建成功。该修复降低客户端竞态风险，但仍不能替代服务端 owner-scoped DELETE、旧账号失效和 outbox 清理的真实验收。
+
 2026-11-08 回归复跑补充：当前 checkout 的 `Scripts/test-assistant-chat-viewmodel.sh` 明确退出 `0`，168 个 ChatViewModel 集成套件全部通过；`Scripts/test-assistant-task-tool-protocol.sh` 明确退出 `0`（51/51）；`Scripts/test-assistant-repository.sh` 明确退出 `0`（102/102）。这些测试使用隔离文件、fake 通知和 mock 网络，不代表 Apple、StoreKit、APNs 或双设备生产闭环。
 
 2026-11-08 生产健康复核补充：`GET https://ciyuan2api.com/api/status` curl 退出 `0`、HTTP `200`，响应头 `X-New-Api-Version: v1.0.0-rc.48+ciyuan.reconstructed.20261106.1`，JSON 中 `setup=true` 且 `server_address=https://ciyuan2api.com`。本轮没有重复发送模型请求，避免无必要扣减真实额度；部署后真实 CN `started → delta → usage → completed` 证据沿用本文件既有记录。
