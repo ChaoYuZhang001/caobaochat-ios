@@ -2736,6 +2736,7 @@ struct AssistantCharactersView: View {
                 Image(systemName: "trash")
             }
             .buttonStyle(.borderless)
+            .accessibilityLabel("删除角色")
             .disabled(!isCurrentOwner || isLoading)
         }
         .contentShape(Rectangle())
