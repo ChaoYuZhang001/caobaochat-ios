@@ -108,7 +108,7 @@ class APIService {
         print("📡 测试服务器: \(url)")
         
         do {
-            let response = try await session.request(url, method: .post)
+            _ = try await session.request(url, method: .post)
                 .validate()
                 .serializingString()
                 .value
