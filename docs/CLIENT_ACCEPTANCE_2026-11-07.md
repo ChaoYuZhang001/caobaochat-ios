@@ -20,7 +20,7 @@
 
 | 功能 | 结果 | 证据 | 备注 |
 | --- | --- | --- | --- |
-| 本地核心回归 | 通过（修复后重跑） | `Scripts/test-assistant.sh`，`/tmp/caobao-full-regression-20261108-deeplink.log`；`ec7e55b`、`1bde23f` | 修复安静时段成熟提醒继承后，原有 18 套、528 个独立组保持 `exitCode: 0`，并新增 8 条 `AssistantDeepLink` 路由边界检查；覆盖协议、同步、媒体、提醒、删除、备份和 ChatViewModel；使用隔离文件、mock 网络和 fake 通知，不代表生产联调 |
+| 本地核心回归 | 通过（当前 checkout 重跑） | `Scripts/test-assistant.sh`；`/tmp/caobao-acceptance-regression-20261108.log`；末尾 `All 168 actual ChatViewModel integration suites passed`、`EXIT=0` | 修复安静时段成熟提醒继承后，原有 18 套、528 个独立组保持 `exitCode: 0`，并新增 8 条 `AssistantDeepLink` 路由边界检查；覆盖协议、同步、媒体、提醒、删除、备份和 ChatViewModel；使用隔离文件、mock 网络和 fake 通知，不代表生产联调 |
 | 生产流式错误提示 | 通过（客户端） | `AssistantProtocol.swift`、中英文资源、`4ea0f26`、`5b7c09e`；`test-assistant-protocol.sh`、`test-assistant-localization.sh` | `PLATFORM_FUNDING_UNAVAILABLE`、`UPSTREAM_UNAVAILABLE`、`QUOTA_EXCEEDED` 现在映射为可操作的中英文提示，未知错误仍保留安全错误码；覆盖协议归一化和本地化回归。 |
 | iOS/macOS Debug 构建 | 通过 | `Scripts/build-simulator.sh`、`xcodebuild -scheme Caobao-macOS -sdk macosx`；2026-11-07 | iOS Simulator 脚本和 macOS target 均返回 `** BUILD SUCCEEDED **`；构建未使用正式签名，因此不替代真机 archive/TestFlight 门禁 |
 | 代码卫生 | 通过 | `git diff --check` | 本轮修复、测试和构建完成后检查通过；提交后再确认工作树和 commit |
