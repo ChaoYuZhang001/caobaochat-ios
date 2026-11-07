@@ -27,6 +27,8 @@
 
 2026-11-08 客户端用真实已登录 Simulator 账号对当前生产资金池修复做了认证 CN 联调：`https://ciyuan2api.com` 返回完整流式生命周期，客户端捕获到 `generation`、多条 `delta`、`usage`、`completed`，并在本地保存服务端 `generationId`、`requestId` 和 token usage；本次未出现 `INTERNAL_ERROR`、`UPSTREAM_UNAVAILABLE` 或 `PLATFORM_FUNDING_UNAVAILABLE`。这证明当前 CN 资金池/渠道修复已通过一条真实对话链路，但不替代下面的 Apple、StoreKit、APNs、双设备同步、账号删除和 TestFlight 门禁。
 
+同一真实账号随后通过客户端仅 Debug 的一次性探针完成自定义角色 `list → create → versioned update/disable → list 验证 → delete`，日志返回 `version=2` 和 `delete=deleted`；探针已撤销。该结果证明当前生产角色基础 CRUD 可达，但不证明版本冲突、跨设备墓碑或对话绑定协议。
+
 ## 必须完成的服务端项目
 
 ### 1. 收藏功能去处
