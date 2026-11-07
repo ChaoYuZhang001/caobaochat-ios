@@ -50,6 +50,17 @@ if xcodebuild "${build_args[@]}" CODE_SIGNING_ALLOWED="$signing_allowed" build >
         app="$derived/Build/Products/Debug-iphonesimulator/Caobao.app"
         codesign --verify --deep --strict --verbose=2 "$app" >/dev/null
         echo "Code signing: verified"
+        embedded_entitlements="$(codesign -d --entitlements :- "$app" 2>/dev/null || true)"
+        if [[ "$embedded_entitlements" == *"com.apple.developer.applesignin"* ]]; then
+            echo "Apple Sign In entitlement: present in simulator signature"
+        else
+            echo "Apple Sign In entitlement: absent in simulator signature; real-device archive signing still required"
+        fi
+        if [[ "$embedded_entitlements" == *"aps-environment"* ]]; then
+            echo "APNs entitlement: present in simulator signature"
+        else
+            echo "APNs entitlement: absent in simulator signature; real-device archive signing still required"
+        fi
     fi
     tail -5 "$log"
     echo "Application: $derived/Build/Products/Debug-iphonesimulator/Caobao.app"
