@@ -136,7 +136,7 @@ subscription：plan、status、expiresAt，以及可选 `quota`。quota 用于�
 | memoryPreferences | Object | memoryEnabled 与 excludedMemoryCategories |
 | taskPreferences | Object | quietHours 对象：enabled、startMinute、endMinute、timeZoneIdentifier；字段规则见第 13 节 |
 
-taskPreferences.quietHours 和 reminder-preferences scope 是 schemaVersion=1 的新增内容，不删除或改义旧字段。兼容读取方应忽略未知字段，并在旧备份缺失该偏好时采用默认关闭；这是字段兼容约定，当前客户端仍未实现备份导入/恢复。导出只读取当前 owner 的类型化偏好，字段树预算明确计入全部 quietHours 字段及 scope，不扫描任意 UserDefaults。
+taskPreferences.quietHours 和 reminder-preferences scope 是 schemaVersion=1 的新增内容，不删除或改义旧字段。兼容读取方应忽略未知字段，并在旧备份缺失该偏好时采用默认关闭；这是字段兼容约定。当前客户端已实现本机备份导入/恢复，恢复仍只写入当前 owner 的本地存储，不代表云同步或自动启用提醒。导出只读取当前 owner 的类型化偏好，字段树预算明确计入全部 quietHours 字段及 scope，不扫描任意 UserDefaults。
 
 凭据和连接配置不属于该本地文件范围：服务不读取或附加 Keychain 的访问/刷新 Token、API Key，或 UserDefaults 连接配置。除明确列出的 memoryPreferences 和 taskPreferences 外，其余语言、人格、模型选择等设备偏好不在此 schema 中。用户主动写在会话、草稿、记忆或任务里的原文会保留，不能以正则自动删除“看起来像 Key”的内容后仍宣称原文完整。文件为普通未加密 JSON，应由用户决定保存位置。
 
@@ -150,7 +150,7 @@ taskPreferences.quietHours 和 reminder-preferences scope 是 schemaVersion=1 �
 - 准备 Data 不等于保存成功。当前通过 FileDocument/fileExporter 交给用户选位置，只有成功回调且 owner 仍匹配时显示保存成功；取消和失败另行显示。准备本身不发起上传，用户选用的文件供应商可有自己的同步机制。
 - 服务器导出预览仅展示最多 16,384 个 UTF-8 字节，保存仍使用完整响应 JSON；这不是本地备份 schema，也不能据此声称真实服务器导出和文件保存已经联调完成。
 
-本阶段已经验证一个 iPad 匿名工作区的小样本原生保存，并读取生成的 CaoBao-assistant-backup.json；检验副本位于 `.build/verification/local-export-simulator.json`，逐项 UI 验收记录为 `.build/verification/local-data-ui-checks.json`。样本包含草稿，其他记录数量为0，图片选项为 true；该结果不代替多图片、大容量、所有文件供应商、真机或真实账号验收。当时尚未实现备份导入、跨设备恢复或云同步；Phase 20/21 已分别补本地恢复与长期记忆同步，真实生产验收仍未完成。
+本阶段已经验证一个 iPad 匿名工作区的小样本原生保存，并读取生成的 CaoBao-assistant-backup.json；检验副本位于 `.build/verification/local-export-simulator.json`，逐项 UI 验收记录为 `.build/verification/local-data-ui-checks.json`。样本包含草稿，其他记录数量为0，图片选项为 true；该结果不代替多图片、大容量、所有文件供应商、真机或真实账号验收。当前本地备份导入/恢复已由独立协议、文件读取和 ViewModel 测试覆盖；跨设备恢复和云同步仍需真实设备验收。
 
 ## 10. 本地记忆类别隐私
 
