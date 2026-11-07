@@ -19,6 +19,7 @@
 | 功能 | 结果 | 证据 | 备注 |
 | --- | --- | --- | --- |
 | 本地核心回归 | 通过（修复后重跑） | `Scripts/test-assistant.sh`，`/tmp/caobao-full-regression-20261108-deeplink.log`；`ec7e55b`、`1bde23f` | 修复安静时段成熟提醒继承后，原有 18 套、528 个独立组保持 `exitCode: 0`，并新增 8 条 `AssistantDeepLink` 路由边界检查；覆盖协议、同步、媒体、提醒、删除、备份和 ChatViewModel；使用隔离文件、mock 网络和 fake 通知，不代表生产联调 |
+| 生产流式错误提示 | 通过（客户端） | `AssistantProtocol.swift`、中英文资源、`4ea0f26`、`5b7c09e`；`test-assistant-protocol.sh`、`test-assistant-localization.sh` | `PLATFORM_FUNDING_UNAVAILABLE`、`UPSTREAM_UNAVAILABLE`、`QUOTA_EXCEEDED` 现在映射为可操作的中英文提示，未知错误仍保留安全错误码；覆盖协议归一化和本地化回归。 |
 | iOS/macOS Debug 构建 | 通过 | `Scripts/build-simulator.sh`、`xcodebuild -scheme Caobao-macOS -sdk macosx`；2026-11-07 | iOS Simulator 脚本和 macOS target 均返回 `** BUILD SUCCEEDED **`；构建未使用正式签名，因此不替代真机 archive/TestFlight 门禁 |
 | 代码卫生 | 通过 | `git diff --check` | 本轮修复、测试和构建完成后检查通过；提交后再确认工作树和 commit |
 | CN 平台对话 | 通过（服务端资金池修复后再次复测） | iPhone 17 Pro Max Simulator，签名包；生产 `https://ciyuan2api.com`；`xcrun simctl launch --console-pty` 逐事件日志 | 2026-11-08 发送 `: e2e raw sse acceptance` 后收到 `generation(gen_RjPZPiVVMeACCO53KmrfMg)`、多条 `delta(...)`、`usage`、`completed`；UI 将 assistant 消息标记 `completed`，本地归档保存 `generationId`/`requestId`/token usage；未出现 `INTERNAL_ERROR`、`UPSTREAM_UNAVAILABLE` 或 `PLATFORM_FUNDING_UNAVAILABLE`。此前 `: ping` 验收曾记录额度 `6/8 → 5/8`；本轮重点确认生产资金池修复后的真实 SSE 完整链路。逐事件日志来自仅 Debug 的临时 trace，验证后已撤销，不进入产品代码。 |
@@ -56,7 +57,7 @@
 | AI 群聊 | 未实现 | **客户端 + 服务端新增** | 当前代码没有群聊参与者、编排、speaker/turn 模型或 SSE；不能用现有 personaLevel 代替。 |
 | macOS/iPad 信息架构 | macOS 核心导航、历史和“我的”已补齐；iPad 模拟器布局通过，真机和辅助功能仍未验收 | **客户端 UI** | macOS 侧栏现在保留首页、对话、任务、历史、我的和工作区，旧工具统一进入“工具模板”，最近对话常驻侧栏；历史页支持本地搜索并回到对话，个人页显示账号/统计并提供记忆、订阅和设置入口。最新 iPad Pro 11-inch (M5) Simulator 签名包已启动并显示侧栏、首页、主动更新、任务、工作区、订阅、设置、主 CTA 和四个快速模板；截图 `.build/verification/ipad-acceptance-20261107.png`。真实 iPad 触控、VoiceOver、Dynamic Type、订阅和账号闭环仍需验收。 |
 | iPhone Duo、真机/TestFlight | 未验收 | 发布环境 | 当前普通 Simulator 不能证明 Duo 专用设备、正式签名归档、TestFlight 安装和系统级行为。 |
-| macOS 详细统计/关于/官方页 | 客户端入口和本机统计已补；真实 UI/内容验收未完成 | **客户端 UI** | macOS “我的”现在提供详细统计、关于草包和官方信息入口；详细统计读取 owner-scoped 本机完成对话计数。真实 VoiceOver、内容审校和与 iOS 视觉完全一致仍需验收。 |
+| macOS 详细统计/关于/官方页 | 客户端页面已补；真实 UI/内容验收未完成 | **客户端 UI** | macOS “我的”现在提供详细统计、完整关于页（版本、核心能力、隐私控制、法律/支持）和完整官方信息页（理念、产品矩阵、联系方式）；详细统计读取 owner-scoped 本机完成对话计数。真实 VoiceOver、内容审校和与 iOS 视觉完全一致仍需验收；`75c6765`，macOS Debug build 通过。 |
 | macOS 对话图片/任务提案 | 任务提案流程和本地图片选择已补；真实上传/交互未验收 | **客户端 macOS parity** | `MacChatView` 现在复用统一消息气泡，显示本地图片附件、朗读入口，提供 security-scoped 图片文件选择、缩略图移除，并在后台读取文件后接入任务提案查看、编辑确认、拒绝和一次性继续请求。多图预处理、真实上传、权限和大文件仍需设备验收。 |
 | 图片保存权限 | 客户端修复；真实设备未验收 | **客户端配置** | `UIImageWriteToSavedPhotosAlbum` 需要写入权限说明；已在 `Info.plist` 增加 `NSPhotoLibraryAddUsageDescription`。真实相册授权、保存失败和取消流程仍需设备验收。 |
 | Universal Links | 客户端路由已补；AASA 配置不合格、真机未验收 | **客户端 + 服务端发布配置** | `CaobaoApp` 现在解析 `https://caobao.chat/conversation/{id}`、`/task/{id}`、`/proactive/{runId}`，支持登录延迟消费、owner 绑定和 iOS/macOS 路由。2026-11-08 实测 AASA 返回 200，但 `appIDs` 为空且只声明旧的 `/chat/*`、`/morning` 等路径，未覆盖三类新路由；服务端需先修 AASA，再做正式 Associated Domains 签名和真机点击验收。 |
