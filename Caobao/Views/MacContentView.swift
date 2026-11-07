@@ -72,6 +72,11 @@ struct MacContentView: View {
                 }
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .macOpenConversation)) { notification in
+            guard let id = notification.userInfo?["conversationId"] as? String, !id.isEmpty else { return }
+            selectedConversationId = id
+            selectedFeature = .chat
+        }
         .onChange(of: appState.selectedTab) { tab in
             switch tab {
             case .home: selectedFeature = .home
@@ -164,29 +169,144 @@ struct MacHomeView: View {
     }
 }
 
-struct MacProfilePlaceholder: View {
+struct MacProfileView: View {
+    @EnvironmentObject private var appState: AppState
+    @ObservedObject private var auth = AuthService.shared
+    @State private var usage = AssistantUsageStats()
+
+    private var ownerId: String { auth.user?.id ?? "local-device" }
+    private var displayName: String {
+        let name = auth.user?.name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return name.isEmpty ? (auth.isLoggedIn ? "草包用户" : "本机用户") : name
+    }
+
     var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "person.crop.circle").font(.system(size: 36)).foregroundStyle(.secondary)
-            Text("我的").font(.title3.bold())
-            Text("账号、隐私和数据管理请从工作区设置进入。").foregroundStyle(.secondary)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                HStack(spacing: 14) {
+                    Image(systemName: auth.isLoggedIn ? "person.crop.circle.fill" : "person.crop.circle")
+                        .font(.system(size: 48))
+                        .foregroundStyle(Color.caobaoPrimary)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(displayName).font(.title2.bold())
+                        Text(auth.isLoggedIn ? "Apple 账号已登录" : "本机模式")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+
+                GroupBox("使用统计") {
+                    HStack(spacing: 24) {
+                        MacProfileMetric(title: "对话", value: "\(usage.userMessages)")
+                        MacProfileMetric(title: "使用天数", value: "\(usage.usageDays)")
+                        MacProfileMetric(title: "连续使用", value: "\(usage.currentStreak) 天")
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                GroupBox("工作区") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        NavigationLink {
+                            AssistantMemoriesView(userId: ownerId)
+                        } label: {
+                            Label("记忆与隐私", systemImage: "brain.head.profile")
+                        }
+                        NavigationLink {
+                            AssistantSubscriptionView()
+                        } label: {
+                            Label("订阅与额度", systemImage: "creditcard")
+                        }
+                        NavigationLink {
+                            AssistantSettingsSheet().environmentObject(appState)
+                        } label: {
+                            Label("助理设置", systemImage: "gearshape")
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                if auth.isLoggedIn {
+                    Button("退出登录", role: .destructive) { auth.logout() }
+                        .buttonStyle(.bordered)
+                }
+            }
+            .padding(32)
+            .frame(maxWidth: 760, alignment: .leading)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(32)
         .navigationTitle("我的")
+        .task { usage = AssistantUsageStatsStore.shared.snapshot(ownerId: ownerId) }
+        .onReceive(auth.$user) { _ in
+            usage = AssistantUsageStatsStore.shared.snapshot(ownerId: ownerId)
+        }
     }
 }
 
-struct MacHistoryPlaceholder: View {
+private struct MacProfileMetric: View {
+    let title: String
+    let value: String
+
     var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "clock").font(.system(size: 36)).foregroundStyle(.secondary)
-            Text("历史").font(.title3.bold())
-            Text("最近对话已常驻左侧栏。").foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 3) {
+            Text(value).font(.title3.bold())
+            Text(title).font(.caption).foregroundStyle(.secondary)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(32)
+    }
+}
+
+struct MacHistoryView: View {
+    @ObservedObject var chatViewModel: ChatViewModel
+    @State private var searchText = ""
+
+    private var visibleConversations: [AssistantConversationSummary] {
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !query.isEmpty else { return chatViewModel.conversations }
+        return chatViewModel.conversations.filter {
+            $0.title.lowercased().contains(query) || $0.preview.lowercased().contains(query)
+        }
+    }
+
+    var body: some View {
+        Group {
+            if visibleConversations.isEmpty {
+                VStack(spacing: 10) {
+                    Image(systemName: "clock.arrow.circlepath")
+                        .font(.system(size: 42)).foregroundStyle(.secondary)
+                    Text(searchText.isEmpty ? "暂无历史记录" : "没有匹配的对话")
+                        .font(.headline)
+                    Text("开始一段新对话后，它会出现在这里。")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                List(visibleConversations) { conversation in
+                    Button {
+                        NotificationCenter.default.post(name: .macOpenConversation, object: nil,
+                            userInfo: ["conversationId": conversation.id])
+                    } label: {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(conversation.title.isEmpty ? "未命名对话" : conversation.title)
+                                .font(.headline).lineLimit(1)
+                            if !conversation.preview.isEmpty {
+                                Text(conversation.preview).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+                            }
+                            Text(conversation.date, style: .date).font(.caption2).foregroundStyle(.tertiary)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.vertical, 4)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .listStyle(.inset)
+            }
+        }
         .navigationTitle("历史")
+        .searchable(text: $searchText, prompt: "搜索对话")
+        .task {
+            try? await chatViewModel.waitForArchiveReady(ownerId: AuthService.shared.user?.id ?? "local-device")
+            await chatViewModel.loadConversationsFromHistory()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .conversationHistoryChanged)) { _ in
+            Task { await chatViewModel.loadConversationsFromHistory() }
+        }
     }
 }
 
@@ -299,7 +419,7 @@ struct MacSidebarView: View {
             }
 
             Section("工作区") {
-                ForEach([MacFeature.memories, .proactive, .subscription, .settings]) { feature in
+                ForEach([MacFeature.memories, .proactive, .subscription, .settings, .history, .profile]) { feature in
                     Button {
                             selectedFeature = feature
                             selectedConversationId = nil
@@ -485,9 +605,9 @@ struct MacDetailView: View {
             case .favorites:
                 LocalQuoteFavoritesView()
             case .history:
-                MacHistoryPlaceholder()
+                MacHistoryView(chatViewModel: chatViewModel)
             case .profile:
-                MacProfilePlaceholder()
+                MacProfileView()
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

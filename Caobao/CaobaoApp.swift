@@ -179,6 +179,7 @@ extension Notification.Name {
     static let newChat = Notification.Name("newChat")
     static let clearChat = Notification.Name("clearChat")
     static let conversationHistoryChanged = Notification.Name("conversationHistoryChanged")
+    static let macOpenConversation = Notification.Name("macOpenConversation")
     static let assistantPrompt = Notification.Name("assistantPrompt")
     static let assistantProactiveChanged = Notification.Name("assistantProactiveChanged")
 }
