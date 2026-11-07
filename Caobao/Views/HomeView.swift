@@ -15,6 +15,7 @@ struct HomeView: View {
     @ObservedObject private var proactiveStore = AssistantProactiveStore.shared
     @ObservedObject private var proactiveInboxStore = AssistantProactiveInboxStore.shared
     @State private var tasks: [AssistantTask] = []
+    @State private var cloudTaskSummary: [AssistantTask] = []
     @State private var proactiveRules: [CloudProactiveRule] = []
     @State private var proactiveRuns: [CloudProactiveRun] = []
     private struct ProactiveSummaryLoadState: Equatable {
@@ -28,7 +29,12 @@ struct HomeView: View {
     @State private var navigationTask: Task<Void, Never>?
     @State private var preparationError: String?
     private var owner: String { auth.user?.id ?? "local-device" }
-    private var currentTasks: [AssistantTask] { tasks.filter { AssistantOwnerIdentity.matches($0.userId, owner) } }
+    private var currentTasks: [AssistantTask] {
+        var seen = Set<String>()
+        return (tasks + cloudTaskSummary).filter {
+            AssistantOwnerIdentity.matches($0.userId, owner) && $0.status == .active && seen.insert($0.id).inserted
+        }
+    }
     private var canNavigate: Bool {
         AssistantOwnerIdentity.matches(owner, chat.activeOwner) && chat.archiveIsReady && !chat.archiveIsLoading && !chat.isArchiveBusy && navigationRun == nil
     }
@@ -162,11 +168,14 @@ struct HomeView: View {
                 let epoch = navigationEpoch
                 preparationError = nil
                 tasks = AssistantLocalRepository.shared.tasks(for: sourceOwner).filter { $0.status == .active }
+                cloudTaskSummary = []
                 chat.activateOwner()
                 do {
                     try await chat.waitForArchiveReady(ownerId: sourceOwner)
                     guard !Task.isCancelled, AssistantOwnerIdentity.matches(owner, sourceOwner), navigationEpoch == epoch, loadIdentity.reloadId == recentReloadId else { return }
                     await chat.syncFromCloud()
+                    guard !Task.isCancelled, AssistantOwnerIdentity.matches(owner, sourceOwner), navigationEpoch == epoch, loadIdentity.reloadId == recentReloadId else { return }
+                    await loadCloudTaskSummary(ownerId: sourceOwner)
                     guard !Task.isCancelled, AssistantOwnerIdentity.matches(owner, sourceOwner), navigationEpoch == epoch, loadIdentity.reloadId == recentReloadId else { return }
                     await appState.refreshAssistantState()
                     await loadProactiveSummary(ownerId: sourceOwner)
@@ -175,7 +184,9 @@ struct HomeView: View {
                     preparationError = error.localizedDescription
                 }
             }
-            .onAppear { tasks = AssistantLocalRepository.shared.tasks(for: owner).filter { $0.status == .active } }
+            .onAppear {
+                tasks = AssistantLocalRepository.shared.tasks(for: owner).filter { $0.status == .active }
+            }
             .onChange(of: AssistantOwnerIdentity.ownerKey(owner)) { _ in resetNavigation() }
             .onChange(of: scenePhase) { phase in
                 guard phase == .active, !chat.isSyncing else { return }
@@ -190,6 +201,7 @@ struct HomeView: View {
             .refreshable {
                 recentReloadId = UUID()
                 await chat.syncFromCloud()
+                await loadCloudTaskSummary(ownerId: owner)
                 await appState.refreshAssistantState(force: true)
             }
         }
@@ -422,6 +434,52 @@ struct HomeView: View {
             // a fresh zero count when the summary request failed.
             proactiveSummaryLoadState = ProactiveSummaryLoadState(ownerId: ownerId, error: "暂时无法读取主动更新")
         }
+    }
+
+    /// Home only needs a read-only summary. Full task change-feed, version,
+    /// tombstone, and approval handling remains in AssistantTasksView.
+    private func loadCloudTaskSummary(ownerId: String) async {
+        guard AuthService.shared.isLoggedIn,
+              AssistantOwnerIdentity.matches(ownerId, auth.user?.id ?? "local-device"),
+              !Task.isCancelled else { return }
+        do {
+            let token = try await AuthService.shared.validAccessToken()
+            let response = try await APIService.shared.listCloudTasks(token: token, limit: 200)
+            guard !Task.isCancelled,
+                  AssistantOwnerIdentity.matches(ownerId, owner),
+                  AssistantOwnerIdentity.matches(ownerId, auth.user?.id ?? "local-device") else { return }
+            let summary = response.items.compactMap { cloudTask in
+                homeTask(from: cloudTask, ownerId: ownerId)
+            }
+            cloudTaskSummary = summary
+        } catch is CancellationError {
+            return
+        } catch {
+            // A summary failure must never clear local tasks or show a false
+            // empty state. The task page remains the authoritative retry path.
+        }
+    }
+
+    private func homeTask(from remote: CloudTask, ownerId: String) -> AssistantTask? {
+        guard !remote.id.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              !remote.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              let zone = try? AssistantTaskTimeZonePolicy.validatedIdentifier(remote.timeZone) else { return nil }
+        let status = AssistantCloudTaskStatusPolicy.localStatus(for: remote.status)
+        let created = homeCloudDate(remote.createdAt) ?? Date()
+        return AssistantTask(id: remote.id, userId: ownerId, title: remote.title,
+            instructions: remote.instructions, dueAt: homeCloudDate(remote.dueAt), timeZone: zone,
+            recurrenceRule: remote.recurrenceRule, requiresApproval: remote.requiresApproval,
+            status: status, createdAt: created,
+            updatedAt: homeCloudDate(remote.updatedAt) ?? created, reminderEnabled: false)
+    }
+
+    private func homeCloudDate(_ value: String?) -> Date? {
+        guard let value, !value.isEmpty else { return nil }
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = formatter.date(from: value) { return date }
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter.date(from: value)
     }
 
     private func quickAction(_ title: LocalizedStringKey, icon: String, prompt: String) -> some View {
