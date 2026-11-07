@@ -321,7 +321,7 @@ Scripts/build-simulator.sh
 - iPhone17 Pro/iOS26.5实际本地夹具验证：修改标题后选择New York，返回仍保留草稿；保存后精确dueAt连秒不变。201字符旧标题在修复无效时区为UTC时完整保留，原说明/来源/审批字段不变，UTC没有改存GMT。时区说明和通知隐私说明均可见；两段footer已显式用VStack组织。
 - 实际验证过期completed恢复选择与取消零写；“仅恢复待办”保存active并关闭提醒，保持原过期dueAt；paused经“修改提醒并恢复”页明确关闭旧提醒后保存为active，保存前原记录不变。重启后状态和时区仍在；没有通过UI修改日期/钟点、开启真实提醒或切换真实账号。未来日期/DST/等待竞态由纯策略与fake后端测试覆盖，不能替代系统送达。
 - UI记录 .build/verification/task-zone-reopen-ui-checks.json；截图 .build/screenshots/assistant-task-zone-utc-en-iphone.png 与 assistant-expired-task-recovery-choice-en-iphone.png。比较原记录与偏好未变后，停止应用并恢复受限备份 .build/verification/task-zone-reopen-ui-original/ 的原始仓库字节与归档状态，再启动普通首页。测试未使用真实模型、账号操作或购买，未创建启用中的活动提醒。
-- 第11节末尾的“任务时区/过期恢复待开发”是历史阶段记录，本节更新其本地实现状态；重复任务规则编辑/调度以及任务云同步/Worker/APNs仍未实现，Phase 21 只覆盖长期记忆同步。CiYuan2API、Apple/StoreKit、真实日期操作/语音/通知与强制iPhone Duo专用验收等发布门禁仍在，客户端完整目标尚未完成。
+- 第11节末尾的“任务时区/过期恢复待开发”是历史阶段记录，本节更新其本地实现状态；重复任务规则编辑/调度已由本地 coordinator 覆盖，任务云端目前只同步拉取和本地独有任务创建，已有云任务编辑/状态上行仍待持久化 server version 与真实联调。主动 Worker/APNs仍未完成，Phase 21 只覆盖长期记忆同步。iOS/macOS 语音入口和原生权限处理已补齐，但 CiYuan2API、Apple/StoreKit、真实日期操作/语音/通知与强制iPhone Duo专用验收等发布门禁仍在，客户端完整目标尚未完成。
 
 ## 13. 每日与每周重复计划（2026-10-30，本地回归完成）
 
