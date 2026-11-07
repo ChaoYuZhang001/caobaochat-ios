@@ -238,6 +238,8 @@ struct AssistantProactiveView: View {
     @State private var rulesError: String?
     @State private var ruleEditor: ProactiveRuleEditorDestination?
     @State private var pendingRuleDelete: CloudProactiveRule?
+    @State private var serverProfileVersion: Int64?
+    @State private var pendingRunKeys: [String: String] = [:]
 
     private struct ProactiveRuleEditorDestination: Identifiable {
         let id = UUID()
@@ -547,6 +549,12 @@ struct AssistantProactiveView: View {
     private func reload() {
         guard isCurrentOwner else { loadedOwner = nil; return }
         profile = store.profile(for: userId)
+        serverProfileVersion = UserDefaults.standard.object(forKey: serverProfileVersionKey()) as? Int64
+        if let raw = UserDefaults.standard.dictionary(forKey: pendingRunKeysKey()) as? [String: String] {
+            pendingRunKeys = raw
+        } else {
+            pendingRunKeys = [:]
+        }
         if !store.hasProfile(for: userId),
            let serverMode = AssistantProactiveMode(rawValue: appState.proactiveLevel) {
             profile.mode = serverMode
@@ -612,10 +620,12 @@ struct AssistantProactiveView: View {
                 let quiet = CloudProactiveQuietHours(enabled: profile.quietHours.enabled,
                                                      startMinute: profile.quietHours.startMinute,
                                                      endMinute: profile.quietHours.endMinute)
-                _ = try await APIService.shared.updateProactiveProfile(token: token,
+                let response = try await APIService.shared.updateProactiveProfile(token: token,
                     request: CloudProactiveProfileUpdateRequest(enabled: profile.enabled, mode: profile.mode.rawValue,
                         quietHours: quiet, timeZone: nil, dailyLimit: profile.dailyLimit,
-                        companionEnabled: profile.companionEnabled, pausedAll: nil, expectedVersion: nil))
+                        companionEnabled: profile.companionEnabled, pausedAll: nil, expectedVersion: serverProfileVersion))
+                serverProfileVersion = response.profile.version
+                UserDefaults.standard.set(response.profile.version, forKey: serverProfileVersionKey())
                 savedMessage = "已保存，已同步到账号。"
             } catch is CancellationError {
                 return
@@ -638,6 +648,8 @@ struct AssistantProactiveView: View {
             let remote = try await APIService.shared.fetchProactiveProfile(token: token).profile
             guard isCurrentOwner else { return }
             pausedAll = remote.pausedAll
+            serverProfileVersion = remote.version
+            UserDefaults.standard.set(remote.version, forKey: serverProfileVersionKey())
             if !store.hasProfile(for: userId) {
                 if let mode = AssistantProactiveMode(rawValue: remote.mode) {
                     let zone = AssistantQuietHours.supportedTimeZoneIdentifiers.contains(remote.timeZone)
@@ -740,11 +752,28 @@ struct AssistantProactiveView: View {
         do {
             let token = try await AuthService.shared.validAccessToken()
             guard isCurrentOwner else { return }
-            _ = try await APIService.shared.runProactiveRule(token: token, ruleId: rule.id, idempotencyKey: UUID().uuidString)
+            let key = pendingRunKeys[rule.id] ?? UUID().uuidString
+            pendingRunKeys[rule.id] = key
+            savePendingRunKeys()
+            _ = try await APIService.shared.runProactiveRule(token: token, ruleId: rule.id, idempotencyKey: key)
+            pendingRunKeys.removeValue(forKey: rule.id)
+            savePendingRunKeys()
             await loadRuns()
         } catch {
             runsError = "主动规则暂时无法运行，请检查开启状态和每日上限。"
         }
+    }
+
+    private func pendingRunKeysKey() -> String {
+        "caobao.assistant.proactive.pendingRunKeys." + Data(userId.utf8).base64EncodedString()
+    }
+
+    private func serverProfileVersionKey() -> String {
+        "caobao.assistant.proactive.profileVersion." + Data(userId.utf8).base64EncodedString()
+    }
+
+    private func savePendingRunKeys() {
+        UserDefaults.standard.set(pendingRunKeys, forKey: pendingRunKeysKey())
     }
 }
 
