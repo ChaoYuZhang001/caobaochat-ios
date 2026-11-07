@@ -105,6 +105,14 @@
 
 自定义角色不能替代群聊协议。
 
+### 8. Universal Links 发布配置
+
+客户端已接入 `conversation`、`task` 和 `proactive` 三类 HTTPS 路由；服务端发布前还必须：
+
+- 在 `https://caobao.chat/.well-known/apple-app-site-association` 返回有效 JSON，覆盖当前正式 bundle ID 和 `conversation/*`、`task/*`、`proactive/*` 路径；
+- 正式签名包嵌入 `applinks:caobao.chat`，并在真实 iPhone 上从 Safari、冷启动和已登录/未登录状态分别验证；
+- AASA 变更后验证 CDN/反向代理没有缓存旧文件，点击后 owner 校验和错误路由不会泄露会话数据。
+
 ## 服务端完成门禁
 
 只有以下项目全部有真实证据，客户端和服务端才可标记完成：
