@@ -189,6 +189,7 @@ struct AssistantProactiveView: View {
     @ObservedObject private var auth = AuthService.shared
     @ObservedObject private var store = AssistantProactiveStore.shared
     @ObservedObject private var inboxStore = AssistantProactiveInboxStore.shared
+    @ObservedObject private var chat = ChatViewModel.shared
     @EnvironmentObject private var appState: AppState
     @Environment(\.dismiss) private var dismiss
     @State private var profile = AssistantProactiveProfile.default
@@ -494,7 +495,20 @@ struct AssistantProactiveView: View {
             savedMessage = "已标记为已查看。此执行记录还没有关联对话。"
             return
         }
-        appState.assistantHomePath.append(.historyConversation(id: conversationId, ownerId: userId))
+        let owner = userId
+        Task { @MainActor in
+            do {
+                let localId = try await chat.localConversationId(
+                    forServerConversationId: conversationId, ownerId: owner) ?? conversationId
+                guard isCurrentOwner else { return }
+                appState.assistantHomePath.append(.historyConversation(id: localId, ownerId: owner))
+            } catch is CancellationError {
+                return
+            } catch {
+                guard isCurrentOwner else { return }
+                savedMessage = "无法打开关联对话，请刷新后重试。"
+            }
+        }
     }
 
     private func reload() {
