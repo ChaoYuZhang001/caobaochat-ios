@@ -692,11 +692,22 @@ actor AssistantReminderCoordinator {
                   request.content.userInfo["recurrenceIdentity"] as? String == identity,
                   request.content.userInfo["timeZone"] as? String == task.timeZone,
                   let trigger = request.trigger as? UNCalendarNotificationTrigger, !trigger.repeats,
-                  let fire = trigger.nextTriggerDate(), fire.timeIntervalSince(now) >= 1 else { return nil }
+                  let fire = scheduledFireDate(for: trigger, timeZoneIdentifier: task.timeZone),
+                  fire.timeIntervalSince(now) >= 1 else { return nil }
             return AssistantReminderPolicy.occurrenceOrigin(identifier: request.identifier, ownerId: ownerId, taskId: task.id)
         } : []
         return try AssistantReminderPolicy.plans(for: task, ownerId: ownerId, now: now, quietHours: quiet.policy,
             notBefore: lowerBound, inheritedOrigins: inherited)
+    }
+
+    private func scheduledFireDate(for trigger: UNCalendarNotificationTrigger, timeZoneIdentifier: String) -> Date? {
+        guard let timeZone = TimeZone(identifier: timeZoneIdentifier) else { return trigger.nextTriggerDate() }
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = timeZone
+        var components = trigger.dateComponents
+        components.calendar = calendar
+        components.timeZone = timeZone
+        return calendar.date(from: components) ?? trigger.nextTriggerDate()
     }
     private func allowsAlerts(_ settings: AssistantReminderNotificationSettings) -> Bool { [.authorized, .provisional, .ephemeral].contains(settings.authorizationStatus) && settings.alertsEnabled }
 
