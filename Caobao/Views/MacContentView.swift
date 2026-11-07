@@ -347,33 +347,174 @@ private struct MacStatsMetric: View {
 }
 
 private struct MacAboutView: View {
+    private let features: [(String, String, String)] = [
+        ("bubble.left.and.bubble.right", "对话与任务", "把问题、计划和执行结果放在同一个工作区。"),
+        ("brain.head.profile", "记忆与隐私", "记忆按账号隔离，授权、关闭和删除都由你控制。"),
+        ("bell.badge", "主动更新", "按你创建的规则提醒，支持安静时段和全局暂停。"),
+        ("arrow.triangle.2.circlepath", "跨设备继续", "会话和记忆可以在已登录设备间继续使用。")
+    ]
+
+    private var versionText: String {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "未知"
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "未知"
+        return "版本 \(version)（\(build)）"
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Image(systemName: "info.circle").font(.system(size: 42)).foregroundStyle(Color.caobaoPrimary)
-            Text("关于草包").font(.largeTitle.bold())
-            Text("草包是一个以生产力助理为主、陪伴模式可选的个人 AI 助理。")
-                .foregroundStyle(.secondary)
-            Text("对话、记忆、任务和主动更新由同一个工作区管理。")
-                .foregroundStyle(.secondary)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                HStack(spacing: 16) {
+                    Image("logo")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 76, height: 76)
+                        .clipShape(RoundedRectangle(cornerRadius: 18))
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("关于草包").font(.largeTitle.bold())
+                        Text("少点空话，把事情做好。")
+                            .font(.title3)
+                            .foregroundStyle(Color.caobaoPrimary)
+                        Text(versionText)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Text("草包是一个以生产力助理为主、陪伴模式可选的个人 AI 助理。对话、记忆、任务和主动更新由同一个工作区管理。")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                GroupBox("核心能力") {
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                        ForEach(features, id: \.1) { feature in
+                            HStack(alignment: .top, spacing: 10) {
+                                Image(systemName: feature.0)
+                                    .foregroundStyle(Color.caobaoPrimary)
+                                    .frame(width: 22)
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(feature.1).font(.headline)
+                                    Text(feature.2)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                                Spacer(minLength: 0)
+                            }
+                            .padding(10)
+                            .background(.quaternary.opacity(0.25), in: RoundedRectangle(cornerRadius: 10))
+                        }
+                    }
+                }
+
+                GroupBox("隐私与控制") {
+                    Text("草包不会把本机统计当作服务端额度，也不会在没有用户确认时执行高风险外部操作。你可以在“记忆与隐私”和“主动规则”中查看、暂停或删除相关数据。")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                GroupBox("法律与支持") {
+                    VStack(alignment: .leading, spacing: 9) {
+                        NavigationLink("用户协议") { LegalView(type: .agreement) }
+                        NavigationLink("隐私政策") { LegalView(type: .privacy) }
+                        NavigationLink("AI 使用声明") { LegalView(type: .aiDeclaration) }
+                        Link("联系客服：2900814034@qq.com", destination: URL(string: "mailto:2900814034@qq.com")!)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            .padding(32)
+            .frame(maxWidth: 860, alignment: .leading)
         }
-        .padding(32)
-        .frame(maxWidth: 760, maxHeight: .infinity, alignment: .topLeading)
         .navigationTitle("关于草包")
     }
 }
 
 private struct MacOfficialView: View {
+    private let products: [(String, String, String, Bool)] = [
+        ("草包助手", "毒舌但有用的个人 AI 助理", "对话、记忆、任务、主动更新", false),
+        ("草根社区", "AI 原生内容与工具社区", "创作分享、提示词和 Agent 工坊", true)
+    ]
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Image(systemName: "building.2").font(.system(size: 42)).foregroundStyle(.secondary)
-            Text("官方信息").font(.largeTitle.bold())
-            Text("官方信息页面已接入桌面端工作区。")
-                .foregroundStyle(.secondary)
-            Link("访问草包官网", destination: URL(string: "https://caobao.chat")!)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Label("草台班子", systemImage: "building.2")
+                        .font(.largeTitle.bold())
+                        .foregroundStyle(Color.caobaoPrimary)
+                    Text("世界就是一个巨大的草台班子")
+                        .font(.title3.bold())
+                    Text("看似严肃的世界，其实每个人都在摸着石头过河。我们做有用、好用、有趣的 AI 产品。")
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                GroupBox("我们的理念") {
+                    VStack(alignment: .leading, spacing: 10) {
+                        officialPrinciple("有用", "不装高大上，只解决实际问题。", "checkmark.seal")
+                        officialPrinciple("好用", "简单直接，上手就会。", "hand.thumbsup")
+                        officialPrinciple("有趣", "毒舌但温暖，吐槽但有爱。", "face.smiling")
+                    }
+                }
+
+                GroupBox("产品矩阵") {
+                    VStack(spacing: 10) {
+                        ForEach(products, id: \.0) { product in
+                            HStack(alignment: .top, spacing: 12) {
+                                Image(systemName: product.3 ? "sparkles" : "person.crop.circle")
+                                    .foregroundStyle(product.3 ? .purple : Color.caobaoPrimary)
+                                    .frame(width: 22)
+                                VStack(alignment: .leading, spacing: 3) {
+                                    HStack {
+                                        Text(product.0).font(.headline)
+                                        if product.3 {
+                                            Text("开发中")
+                                                .font(.caption2)
+                                                .padding(.horizontal, 6)
+                                                .padding(.vertical, 3)
+                                                .background(.purple.opacity(0.12), in: Capsule())
+                                                .foregroundStyle(.purple)
+                                        }
+                                    }
+                                    Text(product.1).font(.subheadline)
+                                    Text(product.2).font(.caption).foregroundStyle(.secondary)
+                                }
+                                Spacer(minLength: 0)
+                            }
+                            .padding(10)
+                            .background(.quaternary.opacity(0.25), in: RoundedRectangle(cornerRadius: 10))
+                        }
+                    }
+                }
+
+                GroupBox("联系我们") {
+                    VStack(alignment: .leading, spacing: 9) {
+                        Link("商务合作：2900814034@qq.com", destination: URL(string: "mailto:2900814034@qq.com")!)
+                        Text("工作时间：工作日 9:00–18:00")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                        Link("访问草包官网", destination: URL(string: "https://caobao.chat")!)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            .padding(32)
+            .frame(maxWidth: 860, alignment: .leading)
         }
-        .padding(32)
-        .frame(maxWidth: 760, maxHeight: .infinity, alignment: .topLeading)
         .navigationTitle("官方信息")
+    }
+
+    private func officialPrinciple(_ title: String, _ detail: String, _ icon: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon).foregroundStyle(Color.caobaoPrimary).frame(width: 22)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(.headline)
+                Text(detail).font(.callout).foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 0)
+        }
     }
 }
 
