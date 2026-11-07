@@ -33,7 +33,9 @@ private struct AssistantDeepLinkTests {
             "https://caobao.chat/unknown/id",
             "https://caobao.chat/task",
             "https://caobao.chat/task/a/b",
-            "https://caobao.chat/task/%20"
+            "https://caobao.chat/task/%20",
+            "https://caobao.chat/task/a%2Fb",
+            "https://caobao.chat/task/a%0Ab"
         ]
         for raw in invalid {
             try expect(AssistantDeepLink(url: URL(string: raw)!) == nil, "invalid link accepted: \(raw)")
