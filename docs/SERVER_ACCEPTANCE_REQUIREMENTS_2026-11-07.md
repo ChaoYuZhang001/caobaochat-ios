@@ -25,6 +25,8 @@
 | `POST /api/v2/feedback` | `404 Invalid URL` | 当前部署没有客户端旧反馈路径；若保留反馈，需新增认证 owner-scoped 契约，或明确匿名反馈并同步修改客户端 |
 | `POST /api/v2/proactive/runs/{runId}/snooze` | `404 Invalid URL` | 主动运行状态接口尚未部署；需补 read/snooze/dismiss/close-this-kind 的 owner-scoped 写接口和幂等版本校验 |
 
+2026-11-08 客户端用真实已登录 Simulator 账号对当前生产资金池修复做了认证 CN 联调：`https://ciyuan2api.com` 返回完整流式生命周期，客户端捕获到 `generation`、多条 `delta`、`usage`、`completed`，并在本地保存服务端 `generationId`、`requestId` 和 token usage；本次未出现 `INTERNAL_ERROR`、`UPSTREAM_UNAVAILABLE` 或 `PLATFORM_FUNDING_UNAVAILABLE`。这证明当前 CN 资金池/渠道修复已通过一条真实对话链路，但不替代下面的 Apple、StoreKit、APNs、双设备同步、账号删除和 TestFlight 门禁。
+
 ## 必须完成的服务端项目
 
 ### 1. 收藏功能去处
