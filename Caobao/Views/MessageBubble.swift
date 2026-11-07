@@ -536,7 +536,7 @@ struct MediaContentView: View {
                 UIImageWriteToSavedPhotosAlbum(uiImage, nil, nil, nil)
             }
         } catch {
-            print("保存图片失败: \(error)")
+            assistantDebugLog("保存图片失败: \(error)")
         }
         #endif
     }
