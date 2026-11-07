@@ -339,7 +339,7 @@ struct AssistantProactiveView: View {
                     if isSyncing { ProgressView().controlSize(.small) }
                 }
             }
-            .disabled(!isCurrentOwner || loadedOwner == nil || isSyncing)
+            .disabled(!isCurrentOwner || loadedOwner == nil || !auth.isLoggedIn || isSyncing)
             Text(pausedAll ? "全部主动任务已暂停；规则和执行记录会保留。" : "可临时暂停全部主动任务，不会删除已创建的规则。")
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -407,7 +407,11 @@ struct AssistantProactiveView: View {
     @ViewBuilder
     private var proactiveRulesSection: some View {
         Section("主动规则") {
-            if isLoadingRules {
+            if !auth.isLoggedIn {
+                Text("登录后才能创建和同步主动规则。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else if isLoadingRules {
                 ProgressView("正在读取规则…")
             } else if let rulesError {
                 Text(verbatim: rulesError)
@@ -427,14 +431,18 @@ struct AssistantProactiveView: View {
             } label: {
                 Label("添加主动规则", systemImage: "plus")
             }
-            .disabled(!isCurrentOwner || isSyncing)
+            .disabled(!isCurrentOwner || !auth.isLoggedIn || isSyncing)
         }
     }
 
     @ViewBuilder
     private var proactiveRunsSection: some View {
         Section("最近主动更新") {
-            if isLoadingRuns {
+            if !auth.isLoggedIn {
+                Text("登录后才能读取和同步主动执行记录。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else if isLoadingRuns {
                 ProgressView("正在读取执行记录…")
             } else if let runsError {
                 Text(verbatim: runsError)
@@ -452,7 +460,7 @@ struct AssistantProactiveView: View {
             Button("刷新执行记录") {
                 Task { await loadRuns() }
             }
-            .disabled(isLoadingRuns || !isCurrentOwner)
+            .disabled(isLoadingRuns || !isCurrentOwner || !auth.isLoggedIn)
         }
     }
 
@@ -486,7 +494,9 @@ struct AssistantProactiveView: View {
                 Text(proactiveTriggerTitle(run.triggerReason))
                     .font(.subheadline.weight(.semibold))
                 Spacer()
-                Text(run.status).font(.caption).foregroundStyle(.secondary)
+                proactiveRunStatusLabel(run.status)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
             Text("创建于 \(run.createdAt)").font(.caption).foregroundStyle(.secondary)
             if let refs = run.sourceRefs, !refs.isEmpty {
@@ -519,6 +529,18 @@ struct AssistantProactiveView: View {
         case "inactivity": return "一段时间未互动"
         case "manual", "": return "手动运行"
         default: return "主动事件：\(reason)"
+        }
+    }
+
+    private func proactiveRunStatusLabel(_ status: String) -> Text {
+        switch status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+        case "queued", "scheduled": return Text("云端已排程")
+        case "running": return Text("云端执行中")
+        case "completed", "delivered": return Text("云端已完成")
+        case "failed": return Text("云端执行失败")
+        case "paused": return Text("云端已暂停")
+        case "cancelled", "canceled": return Text("云端已取消")
+        default: return Text(verbatim: "云端状态：\(status)")
         }
     }
 
