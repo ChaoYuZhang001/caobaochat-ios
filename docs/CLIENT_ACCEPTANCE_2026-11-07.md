@@ -132,6 +132,8 @@
 
 2026-11-08 客户端接口覆盖审计：核心首页、对话、任务、记忆、主动规则和订阅页面调用 `/api/v2` 契约；旧 `/api/caobao/*`、`/api/report/*`、`/api/analyze` 只存在于二级兼容页面或未挂载代码，未发现核心导航直接调用旧路径。该审计支持将旧工具从首发核心范围移出，而不是把静态 API 方法存在误判为功能完成。
 
+2026-11-08 主动更新展示收口：执行记录现在显示本地化“生成于”时间、可用时显示“送达于”时间，并补齐“查看 / 稍后 / 关闭此类”操作。关闭此类目前只提示服务端接口尚未提供，引导用户到主动规则中暂停或删除，不伪造成功状态。iOS/macOS Debug 构建均明确返回 `BUILD SUCCEEDED`（`/tmp/caobao-proactive-row-ios-20261108.log`、`/tmp/caobao-proactive-row-macos-20261108.log`）。
+
 2026-11-08 自定义角色绑定专项审计：`AssistantMessageRequest`（`APIService.swift:1627-1670`）只有 `persona.level`，`ChatViewModel.prepare()`（`ChatViewModel.swift:1716-1725`）的平台请求和 BYOK 请求都没有 `characterId/version`；对话页也没有当前角色选择或会话绑定状态。角色 CRUD 通过不等于角色对话完成；此项归类为客户端 + 服务端新增功能，需先确定 `characterId`、版本/冲突和 memory scope 协议，再补客户端选择、持久化、请求字段和同步。
 
 2026-11-08 主动/任务状态写入专项审计：客户端主动运行只有 owner-scoped 本机 read/snooze，明确不宣称跨设备；没有服务端 read/snooze/dismiss/close-kind API。客户端暂停全部会发送 `expectedVersion` 并拒绝不递增响应，但 checkout 服务端 `PauseAllProactive` 只读取 `paused`，`SetTaskStatus` 也没有版本条件；云任务页面因此禁用已有云任务的本地 pause/cancel。归类为服务端契约/Worker 缺口，客户端暂不补无效或不安全的写入。
