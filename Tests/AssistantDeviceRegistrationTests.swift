@@ -6,9 +6,9 @@ private final class DeviceRegistrationFixtureURLProtocol: URLProtocol, @unchecke
     private static var responses: [String: Response] = [:]
     private static var requests: [URLRequest] = []
 
-    static func reset(_ response: Response) {
+    static func reset(_ response: Response, path: String = "/api/v2/devices") {
         lock.lock(); defer { lock.unlock() }
-        responses = ["/api/v2/devices": response]; requests = []
+        responses = [path: response]; requests = []
     }
     static var captured: [URLRequest] { lock.lock(); defer { lock.unlock() }; return requests }
     override class func canInit(with request: URLRequest) -> Bool { request.url?.host == "fixture.invalid" }
@@ -48,6 +48,7 @@ private func bodyData(_ request: URLRequest) -> Data {
 struct AssistantDeviceRegistrationTests {
     static func main() async throws {
         try await validRequestUsesAuthenticatedHTTPSContract()
+        try await unregisterUsesOwnerScopedDeleteContract()
         try await malformedInputsFailBeforeTransport()
         try await redirectsAreRejected()
         try await serverErrorsAreNotReportedAsSuccess()
@@ -83,6 +84,18 @@ struct AssistantDeviceRegistrationTests {
             try expect(error == .invalidInput, "empty device id returned the wrong error")
         }
         try expect(DeviceRegistrationFixtureURLProtocol.captured.isEmpty, "invalid input reached transport")
+    }
+
+    private static func unregisterUsesOwnerScopedDeleteContract() async throws {
+        let path = "/api/v2/devices/device-uuid"
+        DeviceRegistrationFixtureURLProtocol.reset(.init(status: 200, headers: ["Content-Type": "application/json"], body: try json(["status": "unregistered"])), path: path)
+        try await client().unregister(deviceId: "device-uuid", accessToken: "access-token")
+        let requests = DeviceRegistrationFixtureURLProtocol.captured
+        try expect(requests.count == 1, "unregistration did not issue exactly one request")
+        let request = requests[0]
+        try expect(request.httpMethod == "DELETE" && request.url?.path == path, "missing owner-scoped DELETE contract")
+        try expect(request.value(forHTTPHeaderField: "Authorization") == "Bearer access-token", "unregistration did not authenticate")
+        try expect(request.value(forHTTPHeaderField: "Content-Type") == nil, "unregistration sent an unnecessary request body")
     }
 
     private static func redirectsAreRejected() async throws {
