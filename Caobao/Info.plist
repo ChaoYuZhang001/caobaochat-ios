@@ -81,6 +81,8 @@
     <!-- 相册权限 -->
     <key>NSPhotoLibraryUsageDescription</key>
     <string>草包需要访问相册来选择图片进行AI分析，支持多模态对话功能。</string>
+    <key>NSPhotoLibraryAddUsageDescription</key>
+    <string>草包需要将生成的图片保存到您的相册。</string>
     
     <!-- Face ID 权限 (可选，用于快速登录) -->
     <key>NSFaceIDUsageDescription</key>
