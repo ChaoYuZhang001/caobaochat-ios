@@ -14,6 +14,7 @@
 | `GET /api/v2/proactive/rules` | `401 UNAUTHENTICATED` | 路由存在；需要真实账号验证规则和执行记录 |
 | `GET /api/v2/subscriptions/apple/config` | `401 UNAUTHENTICATED` | 路由存在；需要真实账号和 App Store 商品配置验证 |
 | `GET /api/v2/entitlements` | `401 UNAUTHENTICATED` | 路由存在；需要真实账号验证订阅权益和额度账本 |
+| `GET /api/v2/devices` | `404 Invalid URL` | 当前设备路由是 `POST` 注册；这条 GET 结果不能证明注销接口存在，当前部署仍需单独验收 `DELETE /api/v2/devices/{deviceId}` |
 | `GET /api/v2/sync/conversations?cursor=0&limit=1` | `401 UNAUTHENTICATED` | 会话 change feed 路由存在；需要真实账号和双设备验证 |
 | `GET /api/v2/conversations/changes?cursor=0&limit=1` | `401 UNAUTHENTICATED` | 会话 change feed 兼容路由存在；需要真实账号和双设备验证 |
 | `GET /api/v2/tasks/changes?cursor=0&limit=1` | `401 UNAUTHENTICATED` | 任务 change feed 路由存在；需要真实账号验证重复规则和墓碑 |
