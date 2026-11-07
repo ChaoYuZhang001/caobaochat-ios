@@ -46,6 +46,12 @@ struct CaobaoApp: App {
             }
             .environment(\.locale, assistantLocale)
             .safeAreaInset(edge: .top, spacing: 0) { deletionNoticeBanner }
+            .onReceive(NotificationCenter.default.publisher(for: ASAuthorizationAppleIDProvider.credentialRevokedNotification)) { _ in
+                // Keep macOS in the same Apple credential-revocation path as
+                // iOS so a revoked identity cannot leave a trusted session
+                // visible in the desktop workspace.
+                authService.logout()
+            }
         }
         .commands {
             CommandGroup(replacing: .newItem) {
