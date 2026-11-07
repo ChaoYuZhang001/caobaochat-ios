@@ -31,6 +31,8 @@
 
 同一真实账号读取主动 profile/rules 成功（`enabled=false`、规则数 `0`）。订阅配置请求返回 HTTP 200 且包含 2 个 Product ID，但当前 Simulator 的 StoreKit 返回 0 个可用自动续订商品；这把失败范围收敛到 App Store Connect/StoreKit 商品环境或商品配置，不代表客户端配置解析失败。随机设备 DELETE 返回 `unregistered`；真实已注册设备、APNs token、outbox 清理和锁屏送达仍需验收。
 
+同一真实账号又创建了一个 7 天后运行的临时 schedule 规则，完成版本更新、列表验证和删除墓碑，返回 `version=2` 与 `delete=deleted`；规则未执行，探针已撤销。该结果证明生产主动规则基础 CRUD 可达，不证明 Worker、运行状态、APNs 或多设备阅读/稍后同步。
+
 ## 必须完成的服务端项目
 
 ### 1. 收藏功能去处
