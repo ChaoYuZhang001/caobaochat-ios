@@ -204,14 +204,14 @@ struct DecisionView: View {
                         )
                     } else if let error = response.error {
                         // 显示错误提示
-                        print("决策错误: \(error)")
+                        assistantDebugLog("决策错误: \(error)")
                     }
                     loading = false
                 }
             } catch {
                 await MainActor.run {
                     loading = false
-                    print("决策请求失败: \(error.localizedDescription)")
+                    assistantDebugLog("决策请求失败: \(error.localizedDescription)")
                 }
             }
         }
