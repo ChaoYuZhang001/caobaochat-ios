@@ -1703,6 +1703,14 @@ final class ChatViewModel: ObservableObject {
             [["type": "text", "text": text]] + images.map { ["type": "image", "mimeType": $0.mimeType,
                 "base64Data": $0.base64Data, "width": $0.width, "height": $0.height] }
         }
+        // The current production bridge accepts the legacy `explicit` token
+        // but may silently omit the equivalent `confirmed` token. Both values
+        // are authorized locally; normalize only the platform wire payload so
+        // an already-confirmed memory is not lost in transit.
+        func platformConsent(_ value: String) -> String {
+            value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "confirmed"
+                ? "explicit" : value
+        }
         let selectedModel = AssistantModelPreferences.selectedModel(ownerId: owner, region: region, defaults: defaults)
         var body: [String: Any] = ["requestId": requestId, "clientMessageId": inputTurns.last!.id,
             "clientConversationId": currentSessionId, "mode": "platform", "locale": locale, "persona": ["level": level],
@@ -1710,7 +1718,7 @@ final class ChatViewModel: ObservableObject {
             "content": parts(text: prompt, images: images), "stream": true,
             "context": ["messageIds": turns.map(\.id), "memoryIds": context.memories.map(\.id), "taskIds": context.tasks.map(\.id),
                         "messages": turns.map { ["id": $0.id, "role": $0.role, "content": parts(text: $0.text, images: $0.images ?? [])] },
-                        "memories": context.memories.map { ["id": $0.id, "text": $0.text, "consent": $0.consent] },
+                        "memories": context.memories.map { ["id": $0.id, "text": $0.text, "consent": platformConsent($0.consent)] },
                         "tasks": context.tasks.map { taskContextReference($0) }]]
         if !selectedModel.isEmpty { body["model"] = selectedModel }
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
