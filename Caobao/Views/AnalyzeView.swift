@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 #if os(iOS)
 import PhotosUI
 typealias AnalyzePlatformImage = UIImage
@@ -294,6 +295,11 @@ struct AnalyzeView: View {
                 ImagePicker(sourceType: .camera) { image in
                     selectedImage = image
                 }
+            }
+            #else
+            .fileImporter(isPresented: $showingImagePicker, allowedContentTypes: [.image], allowsMultipleSelection: false) { result in
+                guard case .success(let urls) = result, let url = urls.first else { return }
+                selectedImage = NSImage(contentsOf: url)
             }
             #endif
         }
