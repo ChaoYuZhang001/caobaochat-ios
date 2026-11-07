@@ -6,7 +6,7 @@
 
 本轮 UI 重试记录：同一台 iPad Pro 11-inch 在更新本地化资源后 `simctl io screenshot` 出现纯白画面，但系统日志显示 Caobao 进程和 SwiftUI 场景仍为 running-active、没有崩溃；换用干净的 iPad Pro 13-inch Simulator 后，中英文登录页均正常渲染。当前归类为单台 Simulator 前台/渲染状态问题，iPad 真机仍未验收。
 
-本轮回归失败与修复：2026-11-08 首次完整回归在 `quiet-edit-origin-never-replays-matured` 触发 fatal error，原因是 macOS `UNCalendarNotificationTrigger.nextTriggerDate()` 对已过期的一次性日历组件滚动到未来日期，导致安静时段编辑错误继承已成熟提醒。客户端已在 `ec7e55b` 按任务时区从完整日期组件重建实际 fire date；`AssistantReminderCoordinator` 独立套件随后 88/88 通过，完整回归正在以修复后的代码重跑。归类为客户端提醒协调器缺陷，已修复。
+本轮回归失败与修复：2026-11-08 首次完整回归在 `quiet-edit-origin-never-replays-matured` 触发 fatal error，原因是 macOS `UNCalendarNotificationTrigger.nextTriggerDate()` 对已过期的一次性日历组件滚动到未来日期，导致安静时段编辑错误继承已成熟提醒。客户端已在 `ec7e55b` 按任务时区从完整日期组件重建实际 fire date；`AssistantReminderCoordinator` 独立套件随后 88/88 通过，完整回归修复后也已 exit 0。归类为客户端提醒协调器缺陷，已修复。
 
 签名门禁记录：项目的 iOS Debug/Release `DEVELOPMENT_TEAM` 仍为空，`security find-identity -v -p codesigning` 返回 `0 valid identities found`；因此 Apple Sign In、APNs 和正式 archive/TestFlight 不能在当前环境完成。归类为发布签名环境阻塞，不写入猜测的 Team ID 或证书信息。
 
