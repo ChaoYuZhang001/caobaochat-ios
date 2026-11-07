@@ -29,7 +29,7 @@
 | 我的收藏 | 客户端已降级为 owner-scoped 本机金句收藏；在线收藏仍失败 | **客户端已处理；服务端待定** | 生产 `GET /api/favorites` 和 `GET /api/sync/favorites` 均返回 HTTP 404；客户端入口已改为明确的“本机金句收藏”，可查看和删除，并按账号隔离，不再调用必失败的在线接口。若需要跨设备收藏，服务端仍需补 owner-scoped v2 API、认证和删除墓碑。 |
 | 数据统计 | 通过 | **客户端** | 新增 owner-scoped `AssistantUsageStatsStore`；仅成功完成的非空回答计数，取消/失败不计数，重试按 message ID 幂等，账号隔离。真实 Simulator 发送后详细页显示累计发送 1、我的消息 1、AI 回复 1、今日/周/月各 2；安装最新构建后“我的”概览同步显示对话 1、使用 1 天、连续 1 天。 |
 | Apple 登录全生命周期 | 未验收；客户端撤销处理已补 | 服务端 + 系统环境 | iOS/macOS 已有撤销通知处理、nonce/state/JWT/授权码和 Keychain 会话逻辑；仍未完成真实授权、刷新、退出、撤销及真实 Bearer 验证。 |
-| StoreKit 订阅 | 未验收；Simulator 页面可进入 | 服务端 + App Store Connect + 客户端 | 当前签名 Simulator 已进入订阅页并完成商品加载，显示“订阅暂不可用”和“当前 App Store 地区暂无可购买的订阅商品”；客户端入口、恢复购买和管理入口存在，但尚未配置/验证真实商品、购买、恢复、退款、撤销和额度账本闭环。当前失败归因于服务端商品配置/App Store Connect 环境，不能据此判定客户端购买流程通过。 |
+| StoreKit 订阅 | 未验收；Simulator 页面可进入 | 服务端 + App Store Connect + 客户端 | 当前签名 Simulator 已进入订阅页并完成商品加载，显示“订阅暂不可用”和“当前 App Store 地区暂无可购买的订阅商品”；客户端不硬编码 Product ID，会读取服务端 `subscriptions/apple/config` 后调用 StoreKit。客户端入口、恢复购买和管理入口存在，但尚未配置/验证真实商品、购买、恢复、退款、撤销和额度账本闭环。当前失败归因于服务端商品配置/App Store Connect 环境，不能据此判定客户端购买流程通过。 |
 | APNs/系统提醒 | 未验收 | 服务端 Worker/APNs + 客户端 | 本地提醒策略和协议测试通过；未验证真实 token、锁屏送达、点击深链、服务端 outbox、安静时段生产行为。 |
 | 图片 | 部分通过 | 客户端 + 上游 | 图片入口和本地预处理测试通过；未在真实账号下发送图片并验证生产上游能力。 |
 | 语音输入/朗读 | iPhone 路径已实现，真实设备未验收；macOS 属于后续功能 | 客户端/系统权限 | `AssistantSpeechController` 已覆盖权限、locale、设备端识别回退、60 秒上限、账号切换、中断和 TTS 8,000 字上限；未真实录音、识别或朗读。macOS 当前是明确 no-op，且 `MacChatView` 没有语音入口；完整实现需要原生 `AVFoundation + Speech`、权限/entitlement、桌面 UI 和真实 macOS 权限验收，按 iPhone 首发计划不作为本轮小修。 |
