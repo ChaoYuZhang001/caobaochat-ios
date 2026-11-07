@@ -1153,3 +1153,5 @@
 "升级为正式账号，您的聊天记录将永久保存" = "Upgrade to a full account and keep your chat history permanently.";
 "升级中..." = "Upgrading...";
 "正在加载..." = "Loading...";
+"在线文档暂时不可用，以下为本地版本" = "The online document is temporarily unavailable. Showing the local version.";
+"重新加载在线文档" = "Reload online document";

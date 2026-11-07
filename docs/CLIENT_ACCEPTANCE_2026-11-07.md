@@ -53,7 +53,9 @@
 | macOS/iPad 信息架构 | macOS 核心导航、历史和“我的”已补齐；iPad 模拟器布局通过，真机和辅助功能仍未验收 | **客户端 UI** | macOS 侧栏现在保留首页、对话、任务、历史、我的和工作区，旧工具统一进入“工具模板”，最近对话常驻侧栏；历史页支持本地搜索并回到对话，个人页显示账号/统计并提供记忆、订阅和设置入口。最新 iPad Pro 11-inch (M5) Simulator 签名包已启动并显示侧栏、首页、主动更新、任务、工作区、订阅、设置、主 CTA 和四个快速模板；截图 `.build/verification/ipad-acceptance-20261107.png`。真实 iPad 触控、VoiceOver、Dynamic Type、订阅和账号闭环仍需验收。 |
 | iPhone Duo、真机/TestFlight | 未验收 | 发布环境 | 当前普通 Simulator 不能证明 Duo 专用设备、正式签名归档、TestFlight 安装和系统级行为。 |
 | macOS 详细统计/关于/官方页 | 部分缺失 | **客户端 UI** | macOS 当前个人页只有摘要统计，详细统计、关于和官方页没有等同 iOS 的完整入口；属于 macOS parity 待补，不影响 iPhone 首发核心闭环。 |
-| macOS 对话图片/任务提案 | 部分补齐；真实交互未验收 | **客户端 macOS parity** | `MacChatView` 现在复用统一消息气泡，显示本地图片附件并保留朗读入口；任务提案显示标题、备注和截止时间摘要。仍没有 macOS 的图片选择/上传、多图预处理以及任务提案接受/拒绝/继续编辑流程，需要继续补齐后做真实交互验收。 |
+| macOS 对话图片/任务提案 | 任务提案流程已补；图片输入仍缺；真实交互未验收 | **客户端 macOS parity** | `MacChatView` 现在复用统一消息气泡，显示本地图片附件、朗读入口，并接入任务提案查看、编辑确认、拒绝和一次性继续请求。仍没有 macOS 的图片选择/上传和多图预处理，需要继续补齐后做真实交互验收。 |
+| 图片保存权限 | 客户端修复；真实设备未验收 | **客户端配置** | `UIImageWriteToSavedPhotosAlbum` 需要写入权限说明；已在 `Info.plist` 增加 `NSPhotoLibraryAddUsageDescription`。真实相册授权、保存失败和取消流程仍需设备验收。 |
+| Universal Links | 未实现/未纳入首发验收 | **客户端范围或路由** | `Caobao.entitlements` 声明 `applinks:caobao.chat`，但 App 没有 `onOpenURL`/NSUserActivity 路由。若产品不需要网页深链，应移除 `applinks`；若需要，必须定义并接入会话、任务和主动更新路由后再验收。 |
 | 旧设置状态 | 客户端已修复；真实账号切换未验收 | **客户端状态整合** | 旧 `SettingsView` 已移除无消费者的 `voiceEnabled` 开关，毒舌程度只读写 owner-scoped `appState.userSettings`，避免与旧 `UserDefaults` 键分裂。真实账号切换和服务端 persona 偏好仍需验收。 |
 | 游客升级 | 死链 | **客户端产品/认证** | `AuthService` 的 `canUpgrade` 永远为 false，游客升级区和升级弹窗无法到达；需要重新接通游客转 Apple 账号，或删除误导入口。 |
 | 反馈提交 | 未验收 | **客户端 + 服务端协议** | `FeedbackView` 仍调用旧 `/feedback` 且未带 Bearer；当前只能证明表单可达，不能证明生产提交成功。应迁移到 owner-scoped 认证接口或明确支持匿名反馈后再验收。 |
@@ -62,7 +64,7 @@
 
 ## 未纳入首发或未挂载的客户端表面
 
-- **watchOS**：当前工程有独立 watchOS target，但仍使用旧的 `/api` 运势/早报/吐槽/决策接口，没有 Bearer、owner 隔离或云同步；按产品计划暂不纳入首发。若恢复该范围，责任归类为客户端 watchOS 重做 + 服务端认证兼容，不能把现有 target 当作已完成。
+- **watchOS**：当前工程有独立 watchOS target，但仍使用旧的 `/api` 运势/早报/吐槽/决策接口，没有 Bearer、owner 隔离或云同步；本轮 `xcodebuild -scheme Caobao-watchOS -sdk watchsimulator` 还因 `Multiple commands produce .../Caobao-watchOS.app/Caobao-watchOS` 失败。按产品计划暂不纳入首发；若恢复该范围，责任归类为客户端 watchOS 重做 + target 构建修复 + 服务端认证兼容，不能把现有 target 当作已完成。
 - **WidgetKit**：`CaobaoWidgets/CaobaoWidget.swift` 有实现文件，但工程没有 Widget target 引用，当前不可构建；若需要桌面/锁屏小组件，责任归类为客户端工程接入、签名和深链验收。
 - **Optimized/**：其中的 Dynamic Island、Siri、推送管理、分享和图片上传等 Swift 文件没有加入 Xcode target；它们是未挂载代码，不能计入已完成功能。产品需要时应逐项接入并补真实系统验收，否则作为待清理的死代码。
 - **HapticManager**：虽然已加入 iOS target，但全仓没有调用点；当前不能把触觉反馈计入已完成能力。需要时接入消息发送、任务完成等明确交互，否则清理死代码。

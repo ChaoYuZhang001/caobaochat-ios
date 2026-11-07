@@ -11,6 +11,10 @@ struct MacChatView: View {
     let selectedConversationId: String?
     @FocusState private var inputFocused: Bool
     @State private var showSwitchConfirmation = false
+    @State private var taskProposalEditor: AssistantTaskProposalActionSource?
+    @State private var continuationSource: AssistantTaskProposalActionSource?
+    @State private var taskProposalErrorMessageId: String?
+    @State private var taskProposalError: String?
     @ObservedObject private var speech = AssistantSpeechController.shared
 
     private var ownerId: String { AuthService.shared.user?.id ?? "local-device" }
@@ -123,6 +127,24 @@ struct MacChatView: View {
         } message: {
             Text("当前对话有未保存内容或正在生成，切换后将停止当前生成并保留已保存内容。")
         }
+        .alert("向自定义 API 发送上下文？", isPresented: $chatViewModel.requiresBYOKConfirmation) {
+            Button("取消", role: .cancel) { chatViewModel.rejectBYOKContext() }
+            Button("确认发送") { chatViewModel.confirmBYOKContext() }
+        } message: {
+            Text("当前会话历史、已启用的相关记忆和活动任务将发送到：\(chatViewModel.pendingDestination)。API Key 仅保存在设备 Keychain。")
+        }
+        .sheet(item: $taskProposalEditor) { source in
+            macTaskProposalEditor(source)
+                .frame(minWidth: 520, minHeight: 560)
+        }
+        .confirmationDialog("让助理继续？", isPresented: Binding(
+            get: { continuationSource != nil },
+            set: { if !$0 { continuationSource = nil } }), titleVisibility: .visible, presenting: continuationSource) { source in
+            Button("继续请求") { confirmTaskProposalContinuation(source) }
+            Button("取消", role: .cancel) { continuationSource = nil }
+        } message: { _ in
+            Text("将尝试发送本次真实处理结果，最多新增一次 API 请求，服务商可能收费；失败也不会再次创建待办。")
+        }
     }
 
     private func messageBubble(_ message: ChatMessage) -> some View {
@@ -153,7 +175,7 @@ struct MacChatView: View {
                 .disabled(speech.isRecording || speech.isRequestingPermission)
             }
             if let proposal = message.taskProposal {
-                MacTaskProposalSummary(proposal: proposal)
+                macTaskProposalCard(messageId: message.id, proposal: proposal, isComplete: message.status == .completed)
             }
         }
         .frame(maxWidth: 620, alignment: message.role == .user ? .trailing : .leading)
@@ -163,6 +185,146 @@ struct MacChatView: View {
         guard !value.isEmpty else { return }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(value, forType: .string)
+    }
+
+    private func taskProposalReceipt(messageId: String) -> (receipt: AssistantTaskToolReceipt?, failed: Bool) {
+        do { return (try chatViewModel.taskProposalReceipt(messageId: messageId), false) }
+        catch { return (nil, true) }
+    }
+
+    private func reviewTaskProposal(messageId: String) {
+        guard chatViewModel.taskToolOperationMessageId == nil,
+              chatViewModel.canApproveTaskProposal(messageId: messageId) else { return }
+        do {
+            taskProposalErrorMessageId = nil
+            taskProposalError = nil
+            taskProposalEditor = try chatViewModel.makeTaskProposalSource(messageId: messageId)
+        } catch {
+            taskProposalErrorMessageId = messageId
+            taskProposalError = error.localizedDescription
+        }
+    }
+
+    private func declineTaskProposal(messageId: String) {
+        guard chatViewModel.taskToolOperationMessageId == nil,
+              chatViewModel.canReviewTaskProposal(messageId: messageId) else { return }
+        do {
+            let source = try chatViewModel.makeTaskProposalSource(messageId: messageId)
+            performTaskProposalAction(source) {
+                _ = try await self.chatViewModel.declineTaskProposal(source)
+            }
+        } catch {
+            taskProposalErrorMessageId = messageId
+            taskProposalError = error.localizedDescription
+        }
+    }
+
+    private func requestTaskProposalContinuation(messageId: String) {
+        guard chatViewModel.taskToolOperationMessageId == nil,
+              chatViewModel.canContinueTaskProposal(messageId: messageId) else { return }
+        do {
+            continuationSource = try chatViewModel.makeTaskProposalSource(messageId: messageId)
+        } catch {
+            taskProposalErrorMessageId = messageId
+            taskProposalError = error.localizedDescription
+        }
+    }
+
+    private func confirmTaskProposalContinuation(_ source: AssistantTaskProposalActionSource) {
+        guard continuationSource?.id == source.id else { return }
+        continuationSource = nil
+        performTaskProposalAction(source) {
+            _ = try await self.chatViewModel.continueTaskProposal(source)
+        }
+    }
+
+    private func performTaskProposalAction(_ source: AssistantTaskProposalActionSource,
+                                           operation: @escaping @MainActor () async throws -> Void) {
+        taskProposalErrorMessageId = source.messageId
+        taskProposalError = nil
+        Task { @MainActor in
+            do {
+                try await operation()
+                guard AssistantOwnerIdentity.matches(source.ownerId, chatViewModel.activeOwner),
+                      source.conversationId == chatViewModel.conversationId else { return }
+                taskProposalError = nil
+            } catch {
+                guard AssistantOwnerIdentity.matches(source.ownerId, chatViewModel.activeOwner),
+                      source.conversationId == chatViewModel.conversationId else { return }
+                taskProposalError = error.localizedDescription
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func macTaskProposalEditor(_ source: AssistantTaskProposalActionSource) -> some View {
+        AssistantTaskEditor(
+            userId: source.ownerId,
+            task: nil,
+            initialTitle: source.proposal.arguments.title,
+            initialNotes: source.proposal.arguments.notes,
+            initialDueAt: source.proposal.arguments.parsedDueDate,
+            initialTimeZone: source.proposal.arguments.timeZone,
+            initialTaskId: source.proposal.taskId,
+            sourceMessageId: source.messageId,
+            requiresApprovalForNewTask: true,
+            allowsRecurrenceEditing: false
+        ) { record, isNew in
+            do {
+                guard isNew,
+                      AssistantOwnerIdentity.matches(record.userId, source.ownerId),
+                      record.id == source.proposal.taskId,
+                      record.requiresApproval else {
+                    throw AssistantTaskToolError.invalidArguments
+                }
+                _ = try await chatViewModel.approveTaskProposal(
+                    source,
+                    editedTask: record,
+                    enableReminder: record.reminderEnabled == true,
+                    scheduleReminder: { baseTask, commitGuard in
+                        try commitGuard.validate()
+                        var enabled = baseTask
+                        enabled.reminderEnabled = true
+                        try await AssistantReminderCoordinator.shared.saveTask(
+                            enabled,
+                            isNew: false,
+                            ownerId: baseTask.userId,
+                            requestAuthorization: true,
+                            expectedTask: baseTask,
+                            validateBeforeCommit: { try commitGuard.validate() }
+                        )
+                    }
+                )
+                return nil
+            } catch {
+                if let receipt = try? chatViewModel.taskProposalReceipt(proposal: source.proposal),
+                   receipt.decision == .saved, receipt.taskId == source.proposal.taskId {
+                    return nil
+                }
+                return error.localizedDescription
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func macTaskProposalCard(messageId: String, proposal: AssistantTaskProposal, isComplete: Bool) -> some View {
+        let read = taskProposalReceipt(messageId: messageId)
+        AssistantTaskToolProposalView(
+            proposal: proposal,
+            receipt: read.receipt,
+            isHistorical: false,
+            isBusy: chatViewModel.taskToolOperationMessageId != nil,
+            canReview: chatViewModel.canApproveTaskProposal(messageId: messageId),
+            canDecline: chatViewModel.canReviewTaskProposal(messageId: messageId),
+            canContinue: chatViewModel.canContinueTaskProposal(messageId: messageId),
+            proposalIsComplete: isComplete,
+            receiptReadFailed: read.failed,
+            operationError: taskProposalErrorMessageId == messageId ? taskProposalError : nil,
+            onReview: { reviewTaskProposal(messageId: messageId) },
+            onDecline: { declineTaskProposal(messageId: messageId) },
+            onContinue: { requestTaskProposalContinuation(messageId: messageId) },
+            onOpenCurrentChat: {}
+        )
     }
 
     private func send() {
@@ -177,39 +339,6 @@ struct MacChatView: View {
               id != chatViewModel.conversationId,
               chatViewModel.archiveIsReady else { return }
         _ = await chatViewModel.requestOpenConversation(id: id, ownerId: ownerId)
-    }
-}
-
-private struct MacTaskProposalSummary: View {
-    let proposal: AssistantTaskProposal
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Label("待办提案", systemImage: "checklist")
-                .font(.headline)
-            Text(proposal.arguments.title)
-                .font(.subheadline.weight(.semibold))
-            if !proposal.arguments.notes.isEmpty {
-                Text(proposal.arguments.notes)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .textSelection(.enabled)
-            }
-            if let dueAt = proposal.arguments.dueAt {
-                Text("截止：\(dueAt)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Text("macOS 当前只展示摘要；接受、编辑、拒绝和继续操作尚未接入。")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.orange.opacity(0.10))
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("待办提案：\(proposal.arguments.title)")
     }
 }
 

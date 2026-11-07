@@ -3,3 +3,5 @@
 "NSMicrophoneUsageDescription" = "CaoBao uses the microphone only when you start voice input to transcribe what you say. Speech recognition may be processed by Apple when on-device recognition is unavailable.";
 "NSSpeechRecognitionUsageDescription" = "CaoBao turns your speech into text for your message. Recognition uses on-device processing when available; otherwise Apple may process the audio.";
 "NSCameraUsageDescription" = "CaoBao uses the camera to take a photo you choose to send for AI analysis.";
+"NSPhotoLibraryUsageDescription" = "CaoBao accesses photos you choose to send for AI analysis.";
+"NSPhotoLibraryAddUsageDescription" = "CaoBao saves generated images to your photo library when you choose to do so.";
