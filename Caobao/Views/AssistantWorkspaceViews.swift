@@ -82,6 +82,16 @@ final class AssistantProactiveStore: ObservableObject {
         return true
     }
 
+    /// Removes all device-local proactive preferences for an owner after an
+    /// accepted account deletion. This is deliberately owner-scoped so a
+    /// different signed-in account cannot inherit the deleted account's mode.
+    func clear(ownerId: String) {
+        guard !ownerId.isEmpty else { return }
+        defaults.removeObject(forKey: key(for: ownerId))
+        revision &+= 1
+        NotificationCenter.default.post(name: .assistantProactiveChanged, object: ownerId)
+    }
+
     private func key(for ownerId: String) -> String {
         let encoded = Data(ownerId.utf8).base64EncodedString()
             .replacingOccurrences(of: "/", with: "_")
@@ -146,6 +156,15 @@ final class AssistantProactiveInboxStore: ObservableObject {
         var current = state(for: ownerId)
         current.snoozedUntil[runId] = Date().addingTimeInterval(interval)
         save(current, ownerId: ownerId)
+    }
+
+    /// Removes local read/snooze markers after account deletion. Server run
+    /// history is deleted by the account lifecycle; these markers must not
+    /// survive locally and be mistaken for a later account's state.
+    func clear(ownerId: String) {
+        guard !ownerId.isEmpty else { return }
+        defaults.removeObject(forKey: key(for: ownerId))
+        revision &+= 1
     }
 
     private func state(for ownerId: String) -> State {
