@@ -199,7 +199,7 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("CaoBao")
+                    Text("草包")
                         .font(.system(.largeTitle, design: .rounded).weight(.bold))
                     Text("少点空话，把事情做好。")
                         .font(.title3.weight(.semibold))

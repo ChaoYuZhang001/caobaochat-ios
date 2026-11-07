@@ -163,6 +163,7 @@
 "自定义 API 必须使用公开的 HTTPS 域名" = "Use a public HTTPS domain for your API.";
 "自定义 API（BYOK）" = "Your API (BYOK)";
 "草包" = "CaoBao";
+"草包 个人 AI 助理。" = "CaoBao personal AI assistant.";
 "草包用户" = "CaoBao user";
 "草包风格" = "Assistant style";
 "表达风格" = "Tone";

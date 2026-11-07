@@ -441,7 +441,8 @@ private struct AssistantReminderCoordinatorTests {
             try expect(backend.authorizationRequests == 1, "Explicit opt-in Save requests permission once")
             try expect(backend.lastAuthorizationOptions.contains([.alert, .sound]), "Request alert/sound permissions only")
             let request = backend.pendingSnapshot.first!
-            try expect(request.content.title == "CaoBao" && !request.content.body.contains("Private"), "Lockscreen text must stay generic")
+            let expectedBrand = AssistantLocalization.string("草包")
+            try expect(request.content.title == expectedBrand && !request.content.body.contains("Private"), "Lockscreen text must use the localized brand and stay generic")
             try expect(request.content.userInfo["taskId"] as? String == "explicit" && request.content.userInfo["ownerId"] as? String == "A", "Notification must contain scoped deep-link keys")
             try expect((request.trigger as? UNCalendarNotificationTrigger)?.repeats == false, "Reminders must be one-shot")
         }

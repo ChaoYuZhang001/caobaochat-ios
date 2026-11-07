@@ -15,7 +15,7 @@ struct LoginView: View {
             VStack(spacing: 28) {
                 VStack(spacing: 12) {
                     Image("Logo").resizable().scaledToFit().frame(width: 80, height: 80)
-                    Text("CaoBao").font(.system(.largeTitle, design: .rounded).bold())
+                    Text("草包").font(.system(.largeTitle, design: .rounded).bold())
                     Text("少点空话，把事情做好。").font(.title3.weight(.semibold))
                     Text("你的个人 AI 助理").foregroundStyle(.secondary)
                 }.padding(.top, 36)

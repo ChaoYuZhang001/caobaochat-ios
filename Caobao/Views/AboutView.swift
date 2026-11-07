@@ -354,7 +354,7 @@ struct AboutView: View {
         VStack(spacing: 12) {
             Image(systemName: "info.circle").font(.system(size: 36)).foregroundStyle(.secondary)
             Text("关于草包").font(.title3.bold())
-            Text("CaoBao 个人 AI 助理。").foregroundStyle(.secondary)
+            Text("草包 个人 AI 助理。").foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(32)
