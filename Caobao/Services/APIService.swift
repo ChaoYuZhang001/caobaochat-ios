@@ -1,6 +1,7 @@
 import Foundation
 import Alamofire
 import Security
+import CryptoKit
 
 // MARK: - API Configuration
 struct APIConfig {
@@ -2046,6 +2047,19 @@ struct CloudTaskUpsertRequest: Codable {
     let expectedVersion: Int64?
 }
 
+struct CloudTaskApprovalRequest: Codable {
+    let toolName: String
+    let argumentsHash: String
+    let destination: String
+    let scope: String?
+    let expiresInSeconds: Int64
+}
+
+struct CloudTaskApprovalResponse: Codable {
+    let status: String
+    let expiresAt: String
+}
+
 // MARK: - Cloud custom character models
 /// An owner-scoped custom AI role. The server owns versioning and tombstones.
 struct CloudCharacter: Codable, Identifiable, Equatable {
@@ -2340,6 +2354,34 @@ extension APIService {
                                          encoder: JSONParameterEncoder.default,
                                          headers: authHeaders(token))
             .validate().serializingDecodable(CloudTask.self).value
+    }
+
+    /// Approves exactly the next scheduled reminder occurrence. The server
+    /// binds this hash to the task id and nextRunAt, so a stale or changed
+    /// task cannot reuse an approval for a different execution.
+    func approveCloudTask(token: String, id: String, nextRunAt: Date,
+                          expiresInSeconds: Int64 = 3600) async throws -> CloudTaskApprovalResponse {
+        var safeID = CharacterSet.alphanumerics
+        safeID.insert(charactersIn: "-_.~")
+        let trimmed = id.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, trimmed.utf8.count <= 256,
+              !trimmed.unicodeScalars.contains(where: { CharacterSet.controlCharacters.contains($0) || $0 == "\"" || $0 == "\\" }),
+              let escaped = trimmed.addingPercentEncoding(withAllowedCharacters: safeID) else {
+            throw AssistantAPIError.invalidResponse
+        }
+        let scheduledAt = Int64(nextRunAt.timeIntervalSince1970)
+        guard scheduledAt > 0 else { throw AssistantAPIError.invalidResponse }
+        // Keep this byte-for-byte aligned with the server's
+        // CaoBaoReminderArgumentsHash implementation.
+        let canonical = "{\"taskId\":\"\(trimmed)\",\"scheduledAt\":\(scheduledAt)}"
+        let argumentsHash = SHA256.hash(data: Data(canonical.utf8))
+            .map { String(format: "%02x", $0) }.joined()
+        let request = CloudTaskApprovalRequest(toolName: "task.reminder", argumentsHash: argumentsHash,
+            destination: trimmed, scope: nil, expiresInSeconds: max(1, min(expiresInSeconds, 86_400)))
+        return try await session.request("\(APIConfig.v2BaseURL)/tasks/\(escaped)/approve", method: .post,
+                                         parameters: request, encoder: JSONParameterEncoder.default,
+                                         headers: authHeaders(token)).validate()
+            .serializingDecodable(CloudTaskApprovalResponse.self).value
     }
 
     /// Lists active custom roles owned by the authenticated account.
