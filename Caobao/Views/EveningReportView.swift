@@ -62,6 +62,7 @@ struct EveningReportView: View {
                         Image(systemName: "arrow.clockwise")
                             .foregroundStyle(.white)
                     }
+                    .accessibilityLabel("刷新")
                 }
                 #else
                 ToolbarItem(placement: .automatic) {
@@ -71,6 +72,7 @@ struct EveningReportView: View {
                         Image(systemName: "arrow.clockwise")
                             .foregroundStyle(.white)
                     }
+                    .accessibilityLabel("刷新")
                 }
                 #endif
             }

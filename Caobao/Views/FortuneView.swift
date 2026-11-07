@@ -195,6 +195,7 @@ struct FortuneView: View {
                             Image(systemName: "arrow.clockwise")
                                 .foregroundStyle(.caobaoPrimary)
                         }
+                        .accessibilityLabel("刷新")
                     }
                 }
             }

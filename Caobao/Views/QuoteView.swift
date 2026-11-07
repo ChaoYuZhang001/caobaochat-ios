@@ -238,6 +238,7 @@ struct QuoteView: View {
                         Image(systemName: "bookmark.fill")
                             .foregroundStyle(.orange)
                     }
+                    .accessibilityLabel("收藏")
                 }
                 #else
                 ToolbarItem(placement: .automatic) {
@@ -247,6 +248,7 @@ struct QuoteView: View {
                         Image(systemName: "bookmark.fill")
                             .foregroundStyle(.orange)
                     }
+                    .accessibilityLabel("收藏")
                 }
                 #endif
             }
@@ -476,6 +478,7 @@ struct QuoteCard: View {
                     Image(systemName: isFavorited ? "heart.fill" : "heart")
                         .foregroundStyle(isFavorited ? .red : .gray)
                 }
+                .accessibilityLabel(isFavorited ? Text("取消收藏") : Text("收藏"))
             }
         }
         .padding(32)

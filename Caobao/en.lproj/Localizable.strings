@@ -110,6 +110,9 @@
 "取消点踩" = "Remove dislike";
 "删除消息" = "Delete message";
 "播放" = "Play";
+"取消收藏" = "Remove from favorites";
+"添加选项" = "Add option";
+"删除选项" = "Delete option";
 "暂无任务" = "No tasks yet";
 "暂无已保存记忆" = "No saved memories";
 "暂时无法验证额度，请稍后重试" = "Unable to verify your balance. Please try again later.";
