@@ -73,7 +73,7 @@ final class QuoteViewModel: ObservableObject {
     func generateQuote() async {
         let oldContent = currentQuote?.content
         print("🔄 [生成金句] 开始请求...")
-        print("📋 [生成金句] 旧金句: \(oldContent?.prefix(30) ?? "无")")
+        print("📋 [生成金句] 是否已有当前金句: \(oldContent != nil)")
         
         loading = true
         errorMessage = nil
@@ -91,10 +91,10 @@ final class QuoteViewModel: ObservableObject {
                 
                 // 比较新旧金句
                 if oldContent == quoteText {
-                    print("⚠️  [生成金句] 返回了相同的金句: \(quoteText)")
+                    print("⚠️  [生成金句] 返回了相同的金句")
                 } else {
                     print("✅ [生成金句] 新金句生成成功")
-                    print("📝 [生成金句] 新内容: \(quoteText)")
+                    print("📝 [生成金句] 新内容已生成")
                 }
                 
                 // 强制更新（即使内容相同，也创建新对象触发 UI 更新）
@@ -127,7 +127,7 @@ final class QuoteViewModel: ObservableObject {
         #endif
         
         copied = true
-        print("✅ 已复制: \(quote.content.prefix(30))...")
+        print("✅ 已复制当前金句")
         
         // 2秒后重置复制状态
         Task {
@@ -141,10 +141,10 @@ final class QuoteViewModel: ObservableObject {
         
         if let index = favorites.firstIndex(where: { $0.content == quote.content }) {
             favorites.remove(at: index)
-            print("❌ 已取消收藏: \(quote.content.prefix(30))...")
+            print("❌ 已取消收藏")
         } else {
             favorites.append(quote)
-            print("❤️ 已收藏: \(quote.content.prefix(30))...")
+            print("❤️ 已收藏")
         }
         
         saveFavorites()
@@ -162,7 +162,7 @@ final class QuoteViewModel: ObservableObject {
     func selectFavorite(_ quote: QuoteItem) {
         currentQuote = quote
         showFavorites = false
-        print("📖 选择收藏: \(quote.content.prefix(30))...")
+        print("📖 已选择本机收藏")
     }
     
     // MARK: - Private Methods
