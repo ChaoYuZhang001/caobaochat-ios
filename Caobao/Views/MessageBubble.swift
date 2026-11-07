@@ -8,6 +8,7 @@ import AppKit
 
 // MARK: - Message Bubble
 struct MessageBubble: View {
+    @Environment(\.openURL) private var openURL
     let message: ChatMessage
     let userSettings: UserSettings
     let autoPlayAudio: Bool
@@ -27,6 +28,7 @@ struct MessageBubble: View {
     @State private var showReportSheet = false
     @State private var reportReason = ""
     @State private var reportSubmitted = false
+    @State private var reportError: String?
     
     init(message: ChatMessage, 
          userSettings: UserSettings, 
@@ -290,6 +292,13 @@ struct MessageBubble: View {
                         Button("侵犯个人权益") { submitReport(reason: "侵犯个人权益") }
                         Button("其他问题") { submitReport(reason: "其他问题") }
                     }
+                    if let reportError {
+                        Section {
+                            Text(reportError)
+                                .font(.footnote)
+                                .foregroundStyle(.red)
+                        }
+                    }
                 }
                 .navigationTitle("举报内容")
                 #if os(iOS)
@@ -306,20 +315,19 @@ struct MessageBubble: View {
     }
     
     private func submitReport(reason: String) {
-        // 提交举报到服务器
-        Task {
-            do {
-                try await APIService.shared.submitFeedback(
-                    type: "report",
-                    content: "消息举报: \(reason)\n\n消息内容: \(message.content.prefix(200))",
-                    contact: nil,
-                    rating: 1
-                )
-                await MainActor.run {
-                    reportSubmitted = true
-                }
-            } catch {
-                print("举报提交失败: \(error)")
+        reportError = nil
+        guard let url = AssistantFeedbackMail.url(
+            subject: "草包内容举报 · \(reason)",
+            body: "举报原因：\(reason)\n\n消息内容：\(message.content.prefix(200))"
+        ) else {
+            reportError = "无法生成举报邮件，请直接发送邮件至 \(AssistantFeedbackMail.address)。"
+            return
+        }
+        openURL(url) { accepted in
+            if accepted {
+                reportSubmitted = true
+            } else {
+                reportError = "未找到可用的邮件应用，请直接发送邮件至 \(AssistantFeedbackMail.address)。"
             }
         }
     }
