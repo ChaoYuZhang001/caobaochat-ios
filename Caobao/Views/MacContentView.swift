@@ -296,21 +296,25 @@ struct MacSidebarView: View {
             // 核心功能
             Section("核心功能") {
                 ForEach([MacFeature.home, .chat, .fortune]) { feature in
-                    MacFeatureRow(feature: feature, isSelected: selectedFeature == feature)
-                        .onTapGesture {
+                    Button {
                             selectedFeature = feature
                             selectedConversationId = nil
+                        } label: {
+                            MacFeatureRow(feature: feature, isSelected: selectedFeature == feature)
                         }
+                        .buttonStyle(.plain)
                 }
             }
 
             Section("工作区") {
                 ForEach([MacFeature.memories, .proactive, .subscription, .settings]) { feature in
-                    MacFeatureRow(feature: feature, isSelected: selectedFeature == feature)
-                        .onTapGesture {
+                    Button {
                             selectedFeature = feature
                             selectedConversationId = nil
+                        } label: {
+                            MacFeatureRow(feature: feature, isSelected: selectedFeature == feature)
                         }
+                        .buttonStyle(.plain)
                 }
             }
             
@@ -318,11 +322,13 @@ struct MacSidebarView: View {
             // competing with Home, Chat, Tasks and the account workspace.
             Section("发现") {
                 ForEach([MacFeature.tools]) { feature in
-                    MacFeatureRow(feature: feature, isSelected: selectedFeature == feature)
-                        .onTapGesture {
+                    Button {
                             selectedFeature = feature
                             selectedConversationId = nil
+                        } label: {
+                            MacFeatureRow(feature: feature, isSelected: selectedFeature == feature)
                         }
+                        .buttonStyle(.plain)
                 }
             }
 
@@ -378,10 +384,12 @@ struct MacFeatureRow: View {
                 .font(.body)
                 .foregroundStyle(.primary)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 4)
         .padding(.horizontal, 8)
         .background(isSelected ? Color.accentColor.opacity(0.2) : Color.clear)
         .cornerRadius(6)
+        .accessibilityElement(children: .combine)
     }
 }
 
