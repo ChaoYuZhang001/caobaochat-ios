@@ -651,6 +651,7 @@ private struct ChatFixtureTaskStore: Encodable {
             h.defaults.set(true, forKey: h.prefix + "regionConfirmed")
             h.defaults.set("zh-Hans", forKey: h.prefix + "language")
             h.addMemory(text: "platform context preference")
+            h.addMemory(text: "legacy confirmed context", consent: "confirmed")
             let localId = h.vm.conversationId
             ChatFixtureURLProtocol.enqueue(.conversation("server-conversation_1"))
             ChatFixtureURLProtocol.enqueue(.complete("platform answer"))
@@ -667,7 +668,14 @@ private struct ChatFixtureTaskStore: Encodable {
             let generation = try body(1), context = generation["context"] as! [String: Any]
             try await expect(generation["conversationId"] as? String == "server-conversation_1" && generation["clientConversationId"] as? String == localId,
                 "Generation URL/body must share the server ID while retaining the local conversation association")
-            try await expect((context["memories"] as? [[String: String]])?.first?["text"] == "platform context preference", "Platform requests must include authorized local memory snapshots")
+            let memories = context["memories"] as? [[String: String]]
+            let consentByText: [String: String] = Dictionary(uniqueKeysWithValues: (memories ?? []).compactMap { memory in
+                guard let text = memory["text"], let consent = memory["consent"] else { return nil }
+                return (text, consent)
+            })
+            try await expect(consentByText["platform context preference"] == "explicit"
+                && consentByText["legacy confirmed context"] == "explicit",
+                "Platform requests must include authorized local memory snapshots and normalize confirmed consent for the bridge contract")
             try await expect(try h.archive.load(userId: h.owner).first?.serverConversationId == "server-conversation_1", "The server ID must persist with the local conversation")
             ChatFixtureURLProtocol.enqueue(.complete("second platform answer"))
             try await send(h, "follow up")
