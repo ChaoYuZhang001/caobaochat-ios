@@ -702,7 +702,7 @@ class APIService {
     
     /// 使用imageURI分析图片
     func analyzeImage(userId: String, imageURI: String) async throws -> String {
-        print("📸 开始分析图片: \(imageURI)")
+        print("📸 开始分析图片")
 
         let url = URL(string: "\(APIConfig.baseURL)/v1/chat/completions")!
         var request = URLRequest(url: url)
@@ -746,7 +746,7 @@ class APIService {
             throw NSError(domain: "APIService", code: -1, userInfo: [NSLocalizedDescriptionKey: "无法解析响应"])
         }
 
-        print("✅ 图片分析成功: \(content.prefix(50))...")
+        print("✅ 图片分析成功")
         return content
     }
     
@@ -795,7 +795,7 @@ class APIService {
                         throw NSError(domain: "APIService", code: -1, userInfo: [NSLocalizedDescriptionKey: "无响应数据"])
                     }
                     let authResponse = try JSONDecoder().decode(AuthResponse.self, from: data)
-                    print("✅ 游客登录成功: \(authResponse.user?.name ?? "未知用户")")
+                    print("✅ 游客登录成功")
                     continuation.resume(returning: authResponse)
                 } catch {
                     print("❌ 解码错误: \(error.localizedDescription)")
@@ -845,7 +845,7 @@ class APIService {
                         throw NSError(domain: "APIService", code: -1, userInfo: [NSLocalizedDescriptionKey: "无响应数据"])
                     }
                     let authResponse = try JSONDecoder().decode(AuthResponse.self, from: data)
-                    print("✅ Apple 登录成功: \(authResponse.user?.name ?? "未知用户")")
+                    print("✅ Apple 登录成功")
                     continuation.resume(returning: authResponse)
                 } catch {
                     print("❌ Apple 登录解码错误: \(error.localizedDescription)")
@@ -1015,7 +1015,7 @@ class APIService {
                         throw NSError(domain: "APIService", code: -1, userInfo: [NSLocalizedDescriptionKey: "无响应数据"])
                     }
                     let authResponse = try JSONDecoder().decode(AuthResponse.self, from: data)
-                    print("✅ 游客升级成功: \(authResponse.user?.name ?? "未知用户")")
+                    print("✅ 游客升级成功")
                     continuation.resume(returning: authResponse)
                 } catch {
                     print("❌ 游客升级解码错误: \(error.localizedDescription)")

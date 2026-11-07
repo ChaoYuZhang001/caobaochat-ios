@@ -228,7 +228,7 @@ struct FavoritesView: View {
                     return
                 }
                 
-                print("📚 加载收藏，userId: \(userId)")
+                print("📚 加载收藏")
                 let items = try await APIService.shared.getFavorites(userId: userId, type: selectedType)
                 await MainActor.run {
                     favorites = items
