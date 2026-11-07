@@ -341,6 +341,14 @@ final class AuthService: ObservableObject {
             // removed during an accepted account deletion so a later local
             // session cannot expose the deleted owner's data or sync cursor.
             defaults.removeObject(forKey: "assistant.cloud-memory.\(encodedOwner)")
+            // Change-feed cursors and pending cloud tombstones are also
+            // account-owned. Keeping either after deletion can cause a later
+            // sign-in with the same provider identity to resume from stale
+            // state or retry deletes belonging to the deleted account.
+            defaults.removeObject(forKey: "caobao.assistant.cloudConversationSync.\(encodedOwner)")
+            defaults.removeObject(forKey: "caobao.assistant.cloudConversationDeletes.\(encodedOwner)")
+            defaults.removeObject(forKey: "caobao.assistant.cloudTaskSync.\(encodedOwner)")
+            defaults.removeObject(forKey: "caobao.assistant.cloudTaskDeletes.\(encodedOwner)")
             let quoteOwner = encodedOwner
                 .replacingOccurrences(of: "/", with: "_")
                 .replacingOccurrences(of: "+", with: "-")
