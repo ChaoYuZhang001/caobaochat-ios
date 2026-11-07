@@ -1184,6 +1184,10 @@ struct AssistantTasksView: View {
     /// task so waiting/running/failed tasks are never silently shown as
     /// ordinary active tasks.
     @State private var cloudTaskStatuses: [String: String] = [:]
+    /// The worker's next occurrence is required to bind an approval to the
+    /// exact execution shown to the user. It is never inferred from the
+    /// device-local reminder date.
+    @State private var cloudTaskNextRunAt: [String: Date] = [:]
     @State private var activeOperation: OperationIdentity?
     @State private var refreshRunId: UUID?
     private let repository = AssistantLocalRepository.shared
@@ -1344,6 +1348,7 @@ struct AssistantTasksView: View {
         taskCloudSyncAvailable = false
         tasks = []; reminderStates = [:]; reminderCoverage = [:]; reminderSnapshots = [:]; operationError = nil
         cloudTaskStatuses = [:]
+        cloudTaskNextRunAt = [:]
         editor = nil; pendingDeletion = nil; reactivationTarget = nil; endingPlan = nil; searchText = ""
         reload()
     }
@@ -1470,6 +1475,12 @@ struct AssistantTasksView: View {
                 if task.status != .cancelled {
                     Button { setStatus(task, to: .cancelled) } label: { Label("取消任务", systemImage: "xmark.circle") }
                         .disabled(cloudTaskStatuses[task.id] != nil)
+                }
+                if cloudTaskStatuses[task.id] == "waiting_approval" {
+                    Button { approveCloudTask(task) } label: {
+                        Label("允许本次执行", systemImage: "checkmark.shield")
+                    }
+                    .disabled(cloudTaskNextRunAt[task.id] == nil || isOperating)
                 }
                 Divider()
                 Button(role: .destructive) { pendingDeletion = task } label: { Label("删除", systemImage: "trash") }
@@ -1638,6 +1649,7 @@ struct AssistantTasksView: View {
                     pendingDeletes.remove(remote.id)
                     metadata.versions.removeValue(forKey: remote.id)
                     cloudTaskStatuses.removeValue(forKey: remote.id)
+                    cloudTaskNextRunAt.removeValue(forKey: remote.id)
                     continue
                 }
                 // A local deletion remains authoritative until the server has
@@ -1652,6 +1664,7 @@ struct AssistantTasksView: View {
                 }
                 metadata.versions[remote.id] = remote.version
                 cloudTaskStatuses[remote.id] = remote.status.lowercased()
+                cloudTaskNextRunAt[remote.id] = cloudDate(remote.nextRunAt)
                 if let existing = local.first(where: { $0.id == remote.id }) {
                     guard repository.updateTask(normalized) else { throw CloudTaskSyncError.invalidResponse }
                     if let index = local.firstIndex(of: existing) { local[index] = normalized }
@@ -1706,6 +1719,7 @@ struct AssistantTasksView: View {
                         metadata.versions[task.id] = saved.version
                         metadata.dirtyIDs.remove(task.id)
                         cloudTaskStatuses[task.id] = saved.status.lowercased()
+                        cloudTaskNextRunAt[task.id] = cloudDate(saved.nextRunAt)
                     } catch {
                         conflict = true
                     }
@@ -1719,6 +1733,7 @@ struct AssistantTasksView: View {
                 // while a local content edit is waiting for its conditional
                 // PATCH.
                 cloudTaskStatuses[task.id] = remote.status.lowercased()
+                cloudTaskNextRunAt[task.id] = cloudDate(remote.nextRunAt)
                 guard metadata.dirtyIDs.contains(task.id) else {
                     metadata.versions[task.id] = remote.version
                     continue
@@ -1736,6 +1751,7 @@ struct AssistantTasksView: View {
                     metadata.versions[task.id] = saved.version
                     metadata.dirtyIDs.remove(task.id)
                     cloudTaskStatuses[task.id] = saved.status.lowercased()
+                    cloudTaskNextRunAt[task.id] = cloudDate(saved.nextRunAt)
                 } catch {
                     conflict = true
                 }
@@ -1944,6 +1960,30 @@ struct AssistantTasksView: View {
                     reactivationTarget = snapshot
                 }
             } catch { if isCurrent(operation) { operationError = error.localizedDescription } }
+        }
+    }
+
+    private func approveCloudTask(_ task: AssistantTask) {
+        guard isCurrentPage,
+              cloudTaskStatuses[task.id] == "waiting_approval",
+              let nextRunAt = cloudTaskNextRunAt[task.id],
+              AssistantOwnerIdentity.matches(task.userId, userId),
+              let operation = beginOperation() else { return }
+        Task {
+            defer { finishOperation(operation) }
+            do {
+                let token = try await AuthService.shared.validAccessToken()
+                _ = try await APIService.shared.approveCloudTask(token: token, id: task.id, nextRunAt: nextRunAt)
+                guard isCurrent(operation) else { return }
+                let synced = await syncTasksFromCloud()
+                guard isCurrent(operation) else { return }
+                reload()
+                if !synced {
+                    operationError = AssistantLocalization.string("任务已批准，但状态同步失败；请下拉刷新确认执行状态。")
+                }
+            } catch {
+                if isCurrent(operation) { operationError = error.localizedDescription }
+            }
         }
     }
 
