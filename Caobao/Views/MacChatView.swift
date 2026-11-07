@@ -132,7 +132,7 @@ struct MacChatView: View {
             guard case .success(let urls) = result, let url = urls.first else { return }
             Task { @MainActor in
                 do {
-                    let data = try Data(contentsOf: url)
+                    let data = try readSecurityScopedData(from: url)
                     await chatViewModel.addImageData(data, ownerId: ownerId, conversationId: chatViewModel.conversationId)
                 } catch {
                     chatViewModel.error = error.localizedDescription
@@ -368,6 +368,16 @@ struct MacChatView: View {
               id != chatViewModel.conversationId,
               chatViewModel.archiveIsReady else { return }
         _ = await chatViewModel.requestOpenConversation(id: id, ownerId: ownerId)
+    }
+
+    private func readSecurityScopedData(from url: URL) throws -> Data {
+        let didStartAccessing = url.startAccessingSecurityScopedResource()
+        defer {
+            if didStartAccessing {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
+        return try Data(contentsOf: url)
     }
 }
 
