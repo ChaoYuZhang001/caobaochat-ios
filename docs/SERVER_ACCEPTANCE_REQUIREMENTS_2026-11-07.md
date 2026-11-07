@@ -20,6 +20,8 @@
 | `GET /api/v2/conversations/changes?cursor=0&limit=1` | `401 UNAUTHENTICATED` | 会话 change feed 兼容路由存在；需要真实账号和双设备验证 |
 | `GET /api/v2/tasks/changes?cursor=0&limit=1` | `401 UNAUTHENTICATED` | 任务 change feed 路由存在；需要真实账号验证重复规则和墓碑 |
 | `GET /api/v2/memories?cursor=0&limit=1` | `401 UNAUTHENTICATED` | 记忆路由存在；需要真实账号验证读写、冲突和删除同步 |
+| `POST /api/v2/feedback` | `404 Invalid URL` | 当前部署没有客户端旧反馈路径；若保留反馈，需新增认证 owner-scoped 契约，或明确匿名反馈并同步修改客户端 |
+| `POST /api/v2/proactive/runs/{runId}/snooze` | `404 Invalid URL` | 主动运行状态接口尚未部署；需补 read/snooze/dismiss/close-this-kind 的 owner-scoped 写接口和幂等版本校验 |
 
 ## 必须完成的服务端项目
 
@@ -87,6 +89,7 @@
 - 任务审批必须有客户端可调用的明确接口（例如 `/approve`），并返回一次性结果；不能让客户端把等待审批或失败任务误显示为 active。
 - 主动 profile 更新必须支持 `expectedVersion`；规则运行重试必须复用稳定幂等键，避免超时后重复执行。
 - APNs sender 必须保留 Worker 写入的 `ownerId`、`route`、`taskId`、`proactiveRunId` 等路由字段；否则客户端收到锁屏通知后无法完成 owner 校验和 conversation deep link。设备 DELETE handler 也必须实际挂载并清理旧 owner 的 outbox。
+- 当前服务端源码/路由审计还确认没有 `DELETE /api/v2/devices/{deviceId}` handler；客户端登出已经发起该调用，因此设备注销、旧 owner 失效和对应 outbox 清理必须先在服务端挂载，再用真实 token 验收。无认证请求返回 401 不能替代 handler 证据。
 
 ### 7. AI 群聊（新增功能）
 
