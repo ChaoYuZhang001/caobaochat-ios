@@ -112,7 +112,7 @@ class APIService {
                 .validate()
                 .serializingString()
                 .value
-            print("✅ 服务器连接成功: \(response.prefix(100))...")
+            print("✅ 服务器连接成功")
         } catch {
             print("❌ 服务器连接失败: \(error.localizedDescription)")
         }
@@ -183,15 +183,15 @@ class APIService {
                                     
                                     guard let jsonData = jsonStr.data(using: .utf8) else { continue }
                                     
-                                    // 调试：打印原始 JSON
-                                    print("📥 收到数据: \(jsonStr.prefix(200))")
+                                    // Streamed content can contain prompts, memories, or private replies.
+                                    print("📥 收到流式事件")
                                     
                                     do {
                                         let event = try JSONDecoder().decode(ChatStreamEvent.self, from: jsonData)
-                                        print("📦 解码成功: type=\(event.type ?? "nil"), content=\(event.content?.prefix(50) ?? "nil")")
+                                        print("📦 解码成功: type=\(event.type ?? "nil")")
                                         continuation.yield(event)
                                     } catch {
-                                        print("❌ JSON 解码错误: \(error), JSON: \(jsonStr.prefix(100))")
+                                        print("❌ JSON 解码错误: \(error.localizedDescription)")
                                     }
                                 }
                             }
@@ -373,12 +373,6 @@ class APIService {
             .response { response in
                 print("📥 收到响应，状态码: \(response.response?.statusCode ?? -1)")
                 
-                // 打印原始响应数据用于调试
-                if let data = response.data,
-                   let jsonString = String(data: data, encoding: .utf8) {
-                    print("📄 原始响应: \(jsonString.prefix(500))")
-                }
-                
                 switch response.result {
                 case .success(let data):
                     guard let data = data else {
@@ -418,10 +412,6 @@ class APIService {
                     
                 case .failure(let error):
                     print("❌ 请求失败: \(error.localizedDescription)")
-                    if let data = response.data,
-                       let errorString = String(data: data, encoding: .utf8) {
-                        print("📄 错误响应: \(errorString)")
-                    }
                     continuation.resume(throwing: error)
                 }
             }
@@ -1352,7 +1342,7 @@ class APIService {
                     request.httpBody = try? JSONSerialization.data(withJSONObject: parameters)
                     
                     print("📤 发送对话请求: \(url.absoluteString)")
-                    print("📤 参数: \(parameters)")
+                    print("📤 对话参数已准备（流式）")
                     
                     let (bytes, response) = try await URLSession.shared.bytes(for: request)
                     
@@ -1387,7 +1377,7 @@ class APIService {
                                     }
                                     
                                     guard let jsonData = jsonStr.data(using: .utf8) else {
-                                        print("❌ 无法转换为 Data: \(jsonStr.prefix(50))")
+                                        print("❌ 流事件无法转换为 Data")
                                         buffer.removeAll()
                                         continue
                                     }
@@ -1395,7 +1385,7 @@ class APIService {
                                     if let event = Self.decodeUnifiedStreamEvent(jsonData) {
                                         continuation.yield(event)
                                     } else {
-                                        print("⚠️ 无法解析统一事件: \(jsonStr.prefix(100))")
+                                        print("⚠️ 无法解析统一事件")
                                     }
                                 }
                             }
