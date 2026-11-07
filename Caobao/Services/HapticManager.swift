@@ -17,7 +17,7 @@ class HapticManager {
             hapticEngine = try CHHapticEngine()
             try hapticEngine?.start()
         } catch {
-            print("❌ 无法初始化触觉引擎: \(error)")
+            assistantDebugLog("❌ 无法初始化触觉引擎: \(error)")
         }
     }
 

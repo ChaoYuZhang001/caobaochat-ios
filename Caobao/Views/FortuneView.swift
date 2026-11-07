@@ -571,14 +571,14 @@ struct FortuneView: View {
             
             if response.success {
                 fortune = response.toFortuneData()
-                print("✅ 运势加载成功")
+                assistantDebugLog("✅ 运势加载成功")
             } else {
                 error = response.error ?? "获取运势失败"
-                print("❌ 获取运势失败: \(error ?? "")")
+                assistantDebugLog("❌ 获取运势失败: \(error ?? "")")
             }
         } catch {
             self.error = error.localizedDescription
-            print("❌ 网络错误: \(error)")
+            assistantDebugLog("❌ 网络错误: \(error)")
         }
         
         isLoading = false

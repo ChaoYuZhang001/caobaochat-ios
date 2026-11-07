@@ -64,7 +64,7 @@
 
 2026-11-08 watchOS 目标复测：`xcodebuild -scheme Caobao-watchOS -sdk watchsimulator -configuration Debug CODE_SIGNING_ALLOWED=NO` 退出 `65`，错误仍为 `Multiple commands produce .../Caobao-watchOS.app/Caobao-watchOS`。watchOS 按首发范围排除；若重新纳入，归因于客户端 target 构建和旧接口迁移，不计入当前首发完成度。
 
-2026-11-08 legacy 日志静态审计：`APIService` 及运势、金句、决策等二级页面仍存在未统一收口的 `print`，部分会输出 URL、类别或 `error.localizedDescription`/服务端错误文本；本轮未发现直接打印 Bearer/token 的语句。归因：客户端发布日志治理待修，且主要集中在旧 `/api/*` 二级兼容面；不能把日志存在当作生产验收通过，正式发布前应统一 DEBUG 门控并移除可能包含服务端正文的日志。
+2026-11-08 legacy 日志修复：`APIService` 及运势、金句、决策、昵称、媒体和触觉页面的诊断输出统一改为 `assistantDebugLog`，Release 包不再输出 URL、服务端错误文本或本地路径，Debug 包仍保留排障能力。协议 9/9+24/24、本地化 19/19、ChatViewModel 168/168、iOS/macOS Debug 构建均通过；二级旧接口本身的 404/认证/额度协议问题仍按兼容功能记录。
 
 2026-11-08 生产健康复核补充：`GET https://ciyuan2api.com/api/status` curl 退出 `0`、HTTP `200`，响应头 `X-New-Api-Version: v1.0.0-rc.48+ciyuan.reconstructed.20261106.1`，JSON 中 `setup=true` 且 `server_address=https://ciyuan2api.com`。本轮没有重复发送模型请求，避免无必要扣减真实额度；部署后真实 CN `started → delta → usage → completed` 证据沿用本文件既有记录。
 

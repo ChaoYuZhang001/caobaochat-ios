@@ -66,14 +66,14 @@ final class QuoteViewModel: ObservableObject {
         guard loadedOwnerId != ownerId else { return }
         loadedOwnerId = ownerId
         favorites = QuoteFavoritesStorage.load(ownerId: ownerId)
-        print("📚 已加载 \(favorites.count) 条本机收藏")
+        assistantDebugLog("📚 已加载 \(favorites.count) 条本机收藏")
     }
     
     // MARK: - Public Methods
     func generateQuote() async {
         let oldContent = currentQuote?.content
-        print("🔄 [生成金句] 开始请求...")
-        print("📋 [生成金句] 是否已有当前金句: \(oldContent != nil)")
+        assistantDebugLog("🔄 [生成金句] 开始请求...")
+        assistantDebugLog("📋 [生成金句] 是否已有当前金句: \(oldContent != nil)")
         
         loading = true
         errorMessage = nil
@@ -91,10 +91,10 @@ final class QuoteViewModel: ObservableObject {
                 
                 // 比较新旧金句
                 if oldContent == quoteText {
-                    print("⚠️  [生成金句] 返回了相同的金句")
+                    assistantDebugLog("⚠️  [生成金句] 返回了相同的金句")
                 } else {
-                    print("✅ [生成金句] 新金句生成成功")
-                    print("📝 [生成金句] 新内容已生成")
+                    assistantDebugLog("✅ [生成金句] 新金句生成成功")
+                    assistantDebugLog("📝 [生成金句] 新内容已生成")
                 }
                 
                 // 强制更新（即使内容相同，也创建新对象触发 UI 更新）
@@ -102,18 +102,18 @@ final class QuoteViewModel: ObservableObject {
             } else if response.fallback == true {
                 // 降级响应
                 errorMessage = response.error ?? "数据格式错误"
-                print("⚠️  [生成金句] 使用降级响应: \(errorMessage ?? "")")
+                assistantDebugLog("⚠️  [生成金句] 使用降级响应: \(errorMessage ?? "")")
             } else {
                 errorMessage = response.error ?? "获取金句失败"
-                print("❌ [生成金句] 获取金句失败: \(errorMessage ?? "")")
+                assistantDebugLog("❌ [生成金句] 获取金句失败: \(errorMessage ?? "")")
             }
         } catch {
             errorMessage = "网络错误: \(error.localizedDescription)"
-            print("❌ [生成金句] 网络请求失败: \(error)")
+            assistantDebugLog("❌ [生成金句] 网络请求失败: \(error)")
         }
         
         loading = false
-        print("🏁 [生成金句] 请求完成")
+        assistantDebugLog("🏁 [生成金句] 请求完成")
     }
     
     func copyQuote() {
@@ -127,7 +127,7 @@ final class QuoteViewModel: ObservableObject {
         #endif
         
         copied = true
-        print("✅ 已复制当前金句")
+        assistantDebugLog("✅ 已复制当前金句")
         
         // 2秒后重置复制状态
         Task {
@@ -141,10 +141,10 @@ final class QuoteViewModel: ObservableObject {
         
         if let index = favorites.firstIndex(where: { $0.content == quote.content }) {
             favorites.remove(at: index)
-            print("❌ 已取消收藏")
+            assistantDebugLog("❌ 已取消收藏")
         } else {
             favorites.append(quote)
-            print("❤️ 已收藏")
+            assistantDebugLog("❤️ 已收藏")
         }
         
         saveFavorites()
@@ -152,7 +152,7 @@ final class QuoteViewModel: ObservableObject {
     
     func selectCategory(_ categoryId: String) {
         category = categoryId
-        print("📂 切换分类: \(categoryId)")
+        assistantDebugLog("📂 切换分类: \(categoryId)")
         // 切换分类后自动生成新金句
         Task {
             await generateQuote()
@@ -162,13 +162,13 @@ final class QuoteViewModel: ObservableObject {
     func selectFavorite(_ quote: QuoteItem) {
         currentQuote = quote
         showFavorites = false
-        print("📖 已选择本机收藏")
+        assistantDebugLog("📖 已选择本机收藏")
     }
     
     // MARK: - Private Methods
     private func saveFavorites() {
         QuoteFavoritesStorage.save(favorites, ownerId: QuoteFavoritesStorage.ownerId())
-        print("💾 已保存 \(favorites.count) 条本机收藏")
+        assistantDebugLog("💾 已保存 \(favorites.count) 条本机收藏")
     }
     
     // MARK: - Computed Properties

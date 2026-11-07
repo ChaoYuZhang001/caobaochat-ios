@@ -2,6 +2,16 @@ import Foundation
 import Alamofire
 import Security
 
+#if DEBUG
+@inline(__always)
+func assistantDebugLog(_ message: @autoclosure () -> String) {
+    print(message())
+}
+#else
+@inline(__always)
+func assistantDebugLog(_ message: @autoclosure () -> String) {}
+#endif
+
 // MARK: - API Configuration
 struct APIConfig {
     // Production API server for the deployed CiYuan2API instance.
@@ -24,7 +34,7 @@ struct APIConfig {
     
     // 调试：打印当前配置
     static func printConfiguration() {
-        print("""
+        assistantDebugLog("""
         ===== API 配置 =====
         环境: 生产
         服务器: \(serverURL)
@@ -101,23 +111,23 @@ class APIService {
     
     // MARK: - 网络诊断
     func diagnoseNetwork() async {
-        print("🔍 开始网络诊断...")
+        assistantDebugLog("🔍 开始网络诊断...")
         APIConfig.printConfiguration()
         
         let url = "\(APIConfig.baseURL)/auth/guest/create"
-        print("📡 测试服务器: \(url)")
+        assistantDebugLog("📡 测试服务器: \(url)")
         
         do {
             _ = try await session.request(url, method: .post)
                 .validate()
                 .serializingString()
                 .value
-            print("✅ 服务器连接成功")
+            assistantDebugLog("✅ 服务器连接成功")
         } catch {
-            print("❌ 服务器连接失败: \(error.localizedDescription)")
+            assistantDebugLog("❌ 服务器连接失败: \(error.localizedDescription)")
         }
         
-        print("🔍 网络诊断完成")
+        assistantDebugLog("🔍 网络诊断完成")
     }
     
     // MARK: - Chat Stream (使用 URLSession 实现流式响应)
@@ -146,7 +156,7 @@ class APIService {
                     // 添加 Authorization header
                     if let token = token {
                         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-                        print("🔐 已添加 Authorization header")
+                        assistantDebugLog("🔐 已添加 Authorization header")
                     }
                     
                     request.httpBody = try? JSONSerialization.data(withJSONObject: parameters)
@@ -155,12 +165,12 @@ class APIService {
                     
                     guard let httpResponse = response as? HTTPURLResponse,
                           httpResponse.statusCode == 200 else {
-                        print("❌ HTTP 错误: \((response as? HTTPURLResponse)?.statusCode ?? -1)")
+                        assistantDebugLog("❌ HTTP 错误: \((response as? HTTPURLResponse)?.statusCode ?? -1)")
                         continuation.finish()
                         return
                     }
                     
-                    print("✅ 连接成功，开始读取流式数据...")
+                    assistantDebugLog("✅ 连接成功，开始读取流式数据...")
                     
                     // 按行读取，而不是按字节读取
                     var buffer = Data()
@@ -176,7 +186,7 @@ class APIService {
                                     let jsonStr = String(trimmedLine.dropFirst(6))
                                     
                                     if jsonStr == "[DONE]" {
-                                        print("✅ 流式数据读取完成")
+                                        assistantDebugLog("✅ 流式数据读取完成")
                                         continuation.finish()
                                         return
                                     }
@@ -184,14 +194,14 @@ class APIService {
                                     guard let jsonData = jsonStr.data(using: .utf8) else { continue }
                                     
                                     // Streamed content can contain prompts, memories, or private replies.
-                                    print("📥 收到流式事件")
+                                    assistantDebugLog("📥 收到流式事件")
                                     
                                     do {
                                         let event = try JSONDecoder().decode(ChatStreamEvent.self, from: jsonData)
-                                        print("📦 解码成功: type=\(event.type ?? "nil")")
+                                        assistantDebugLog("📦 解码成功: type=\(event.type ?? "nil")")
                                         continuation.yield(event)
                                     } catch {
-                                        print("❌ JSON 解码错误: \(error.localizedDescription)")
+                                        assistantDebugLog("❌ JSON 解码错误: \(error.localizedDescription)")
                                     }
                                 }
                             }
@@ -199,7 +209,7 @@ class APIService {
                         }
                     }
                     
-                    print("✅ 流式数据读取结束")
+                    assistantDebugLog("✅ 流式数据读取结束")
                     continuation.finish()
                 } catch {
                     continuation.finish(throwing: error)
@@ -236,7 +246,7 @@ class APIService {
                     // 添加 Authorization header
                     if let token = token {
                         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-                        print("🔐 已添加 Authorization header")
+                        assistantDebugLog("🔐 已添加 Authorization header")
                     }
                     
                     request.httpBody = try? JSONSerialization.data(withJSONObject: parameters)
@@ -245,7 +255,7 @@ class APIService {
                     
                     guard let httpResponse = response as? HTTPURLResponse,
                           httpResponse.statusCode == 200 else {
-                        print("❌ HTTP 错误: \((response as? HTTPURLResponse)?.statusCode ?? -1)")
+                        assistantDebugLog("❌ HTTP 错误: \((response as? HTTPURLResponse)?.statusCode ?? -1)")
                         continuation.finish()
                         return
                     }
@@ -272,7 +282,7 @@ class APIService {
                                         let event = try JSONDecoder().decode(ChatStreamEvent.self, from: jsonData)
                                         continuation.yield(event)
                                     } catch {
-                                        print("❌ JSON 解码错误: \(error)")
+                                        assistantDebugLog("❌ JSON 解码错误: \(error)")
                                     }
                                 }
                             }
@@ -358,9 +368,9 @@ class APIService {
     // MARK: - Quote
     func getQuote(category: String = "random") async throws -> QuoteResponse {
         let url = "\(APIConfig.baseURL)/caobao/quote"
-        print("🔄 请求扎心金句...")
-        print("📍 URL: \(url)")
-        print("📦 参数: category=\(category)")
+        assistantDebugLog("🔄 请求扎心金句...")
+        assistantDebugLog("📍 URL: \(url)")
+        assistantDebugLog("📦 参数: category=\(category)")
         
         return try await withCheckedThrowingContinuation { continuation in
             session.request(
@@ -371,7 +381,7 @@ class APIService {
             )
             .validate()
             .response { response in
-                print("📥 收到响应，状态码: \(response.response?.statusCode ?? -1)")
+                assistantDebugLog("📥 收到响应，状态码: \(response.response?.statusCode ?? -1)")
                 
                 switch response.result {
                 case .success(let data):
@@ -385,15 +395,15 @@ class APIService {
                     do {
                         let decoder = JSONDecoder()
                         let quoteResponse = try decoder.decode(QuoteResponse.self, from: data)
-                        print("✅ 解码成功: success=\(quoteResponse.success)")
+                        assistantDebugLog("✅ 解码成功: success=\(quoteResponse.success)")
                         continuation.resume(returning: quoteResponse)
                     } catch {
-                        print("❌ 解码失败: \(error)")
-                        print("📋 尝试手动解析...")
+                        assistantDebugLog("❌ 解码失败: \(error)")
+                        assistantDebugLog("📋 尝试手动解析...")
                         
                         // 尝试手动解析 JSON
                         if let jsonData = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-                            print("🔍 JSON 结构: \(jsonData.keys)")
+                            assistantDebugLog("🔍 JSON 结构: \(jsonData.keys)")
                             
                             // 如果格式不对，返回一个友好的错误响应
                             let fallbackResponse = QuoteResponse(
@@ -411,7 +421,7 @@ class APIService {
                     }
                     
                 case .failure(let error):
-                    print("❌ 请求失败: \(error.localizedDescription)")
+                    assistantDebugLog("❌ 请求失败: \(error.localizedDescription)")
                     continuation.resume(throwing: error)
                 }
             }
@@ -420,8 +430,8 @@ class APIService {
     
     // MARK: - Nickname
     func generateNickname(name: String = "", traits: String = "", style: String = "sharp") async throws -> NicknameResponse {
-        print("🔄 生成毒舌昵称...")
-        print("📍 API URL: \(APIConfig.baseURL)/caobao/nickname")
+        assistantDebugLog("🔄 生成毒舌昵称...")
+        assistantDebugLog("📍 API URL: \(APIConfig.baseURL)/caobao/nickname")
         
         return try await withCheckedThrowingContinuation { continuation in
             let parameters: [String: Any] = [
@@ -440,10 +450,10 @@ class APIService {
             .responseDecodable(of: NicknameResponse.self) { response in
                 switch response.result {
                 case .success(let result):
-                    print("✅ 昵称生成成功")
+                    assistantDebugLog("✅ 昵称生成成功")
                     continuation.resume(returning: result)
                 case .failure(let error):
-                    print("❌ 昵称生成失败: \(error.localizedDescription)")
+                    assistantDebugLog("❌ 昵称生成失败: \(error.localizedDescription)")
                     continuation.resume(throwing: error)
                 }
             }
@@ -485,12 +495,12 @@ class APIService {
                     
                     guard let httpResponse = response as? HTTPURLResponse,
                           httpResponse.statusCode == 200 else {
-                        print("❌ HTTP 错误: \((response as? HTTPURLResponse)?.statusCode ?? -1)")
+                        assistantDebugLog("❌ HTTP 错误: \((response as? HTTPURLResponse)?.statusCode ?? -1)")
                         continuation.finish()
                         return
                     }
                     
-                    print("✅ 吐槽连接成功，开始读取流式数据...")
+                    assistantDebugLog("✅ 吐槽连接成功，开始读取流式数据...")
                     
                     // 按行读取并解析 SSE 数据
                     var buffer = Data()
@@ -506,7 +516,7 @@ class APIService {
                                     let jsonStr = String(trimmedLine.dropFirst(6))
                                     
                                     if jsonStr == "[DONE]" {
-                                        print("✅ 吐槽流式数据读取完成")
+                                        assistantDebugLog("✅ 吐槽流式数据读取完成")
                                         continuation.finish()
                                         return
                                     }
@@ -523,7 +533,7 @@ class APIService {
                         }
                     }
                     
-                    print("✅ 吐槽流式数据读取结束")
+                    assistantDebugLog("✅ 吐槽流式数据读取结束")
                     continuation.finish()
                 } catch {
                     continuation.finish(throwing: error)
@@ -534,7 +544,7 @@ class APIService {
     
     // MARK: - Decision (决策助手)
     func makeDecision(question: String, options: [String]? = nil) async throws -> DecisionResponse {
-        print("🔄 决策助手...")
+        assistantDebugLog("🔄 决策助手...")
         
         return try await withCheckedThrowingContinuation { continuation in
             var parameters: [String: Any] = ["question": question]
@@ -562,7 +572,7 @@ class APIService {
     
     // MARK: - Rate (毒舌评分)
     func rate(content: String, type: String = "text") async throws -> RateResponse {
-        print("🔄 毒舌评分...")
+        assistantDebugLog("🔄 毒舌评分...")
         
         return try await withCheckedThrowingContinuation { continuation in
             let parameters: [String: Any] = [
@@ -580,10 +590,10 @@ class APIService {
             .responseDecodable(of: RateResponse.self) { response in
                 switch response.result {
                 case .success(let result):
-                    print("✅ 评分成功: \(result.score)分")
+                    assistantDebugLog("✅ 评分成功: \(result.score)分")
                     continuation.resume(returning: result)
                 case .failure(let error):
-                    print("❌ 评分失败: \(error.localizedDescription)")
+                    assistantDebugLog("❌ 评分失败: \(error.localizedDescription)")
                     continuation.resume(throwing: error)
                 }
             }
@@ -592,7 +602,7 @@ class APIService {
     
     // MARK: - Morning Report
     func getMorningReport() async throws -> MorningReportResponse {
-        print("🔄 获取早安报告...")
+        assistantDebugLog("🔄 获取早安报告...")
         
         return try await withCheckedThrowingContinuation { continuation in
             session.request("\(APIConfig.baseURL)/report/morning")
@@ -610,7 +620,7 @@ class APIService {
     
     // MARK: - Evening Report
     func getEveningReport() async throws -> EveningReportResponse {
-        print("🔄 获取晚安报告...")
+        assistantDebugLog("🔄 获取晚安报告...")
         
         return try await withCheckedThrowingContinuation { continuation in
             session.request("\(APIConfig.baseURL)/report/evening")
@@ -653,12 +663,12 @@ class APIService {
                     guard let httpResponse = response as? HTTPURLResponse,
                           httpResponse.statusCode == 200 else {
                         let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
-                        print("❌ 图片分析 HTTP 错误: \(statusCode)")
+                        assistantDebugLog("❌ 图片分析 HTTP 错误: \(statusCode)")
                         continuation.finish()
                         return
                     }
                     
-                    print("✅ 图片分析连接成功，开始读取流式数据...")
+                    assistantDebugLog("✅ 图片分析连接成功，开始读取流式数据...")
                     
                     // 按行读取并解析 SSE 数据
                     var buffer = Data()
@@ -674,7 +684,7 @@ class APIService {
                                     let jsonStr = String(trimmedLine.dropFirst(6))
                                     
                                     if jsonStr == "[DONE]" {
-                                        print("✅ 图片分析流式数据读取完成")
+                                        assistantDebugLog("✅ 图片分析流式数据读取完成")
                                         continuation.finish()
                                         return
                                     }
@@ -691,7 +701,7 @@ class APIService {
                         }
                     }
                     
-                    print("✅ 图片分析流式数据读取结束")
+                    assistantDebugLog("✅ 图片分析流式数据读取结束")
                     continuation.finish()
                 } catch {
                     continuation.finish(throwing: error)
@@ -702,7 +712,7 @@ class APIService {
     
     /// 使用imageURI分析图片
     func analyzeImage(userId: String, imageURI: String) async throws -> String {
-        print("📸 开始分析图片")
+        assistantDebugLog("📸 开始分析图片")
 
         let url = URL(string: "\(APIConfig.baseURL)/v1/chat/completions")!
         var request = URLRequest(url: url)
@@ -718,14 +728,14 @@ class APIService {
 
         request.httpBody = try JSONSerialization.data(withJSONObject: parameters)
 
-        print("📤 发送图片分析请求...")
+        assistantDebugLog("📤 发送图片分析请求...")
 
         let (bytes, response) = try await URLSession.shared.bytes(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse,
               httpResponse.statusCode == 200 else {
             let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
-            print("❌ 图片分析失败: HTTP \(statusCode)")
+            assistantDebugLog("❌ 图片分析失败: HTTP \(statusCode)")
             throw NSError(domain: "APIService", code: statusCode, userInfo: [NSLocalizedDescriptionKey: "图片分析失败: HTTP \(statusCode)"])
         }
 
@@ -735,18 +745,18 @@ class APIService {
             data.append(byte)
         }
 
-        print("📥 收集到 \(data.count) 字节")
+        assistantDebugLog("📥 收集到 \(data.count) 字节")
 
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
               let choices = json["choices"] as? [[String: Any]],
               let firstChoice = choices.first,
               let message = firstChoice["message"] as? [String: Any],
               let content = message["content"] as? String else {
-            print("❌ 无法解析响应")
+            assistantDebugLog("❌ 无法解析响应")
             throw NSError(domain: "APIService", code: -1, userInfo: [NSLocalizedDescriptionKey: "无法解析响应"])
         }
 
-        print("✅ 图片分析成功")
+        assistantDebugLog("✅ 图片分析成功")
         return content
     }
     
@@ -773,8 +783,8 @@ class APIService {
     
     // MARK: - Guest Login
     func guestLogin() async throws -> AuthResponse {
-        print("🔄 开始游客登录...")
-        print("📍 API URL: \(APIConfig.baseURL)/auth/guest/create")
+        assistantDebugLog("🔄 开始游客登录...")
+        assistantDebugLog("📍 API URL: \(APIConfig.baseURL)/auth/guest/create")
         
         return try await withCheckedThrowingContinuation { continuation in
             session.request(
@@ -784,7 +794,7 @@ class APIService {
             .validate()
             .response { response in
                 if let error = response.error {
-                    print("❌ 网络错误: \(error.localizedDescription)")
+                    assistantDebugLog("❌ 网络错误: \(error.localizedDescription)")
                     continuation.resume(throwing: error)
                     return
                 }
@@ -795,10 +805,10 @@ class APIService {
                         throw NSError(domain: "APIService", code: -1, userInfo: [NSLocalizedDescriptionKey: "无响应数据"])
                     }
                     let authResponse = try JSONDecoder().decode(AuthResponse.self, from: data)
-                    print("✅ 游客登录成功")
+                    assistantDebugLog("✅ 游客登录成功")
                     continuation.resume(returning: authResponse)
                 } catch {
-                    print("❌ 解码错误: \(error.localizedDescription)")
+                    assistantDebugLog("❌ 解码错误: \(error.localizedDescription)")
                     continuation.resume(throwing: error)
                 }
             }
@@ -813,8 +823,8 @@ class APIService {
         email: String?,
         fullName: String?
     ) async throws -> AuthResponse {
-        print("🔄 开始 Apple 登录...")
-        print("📍 API URL: \(APIConfig.baseURL)/auth/apple/native")
+        assistantDebugLog("🔄 开始 Apple 登录...")
+        assistantDebugLog("📍 API URL: \(APIConfig.baseURL)/auth/apple/native")
         
         return try await withCheckedThrowingContinuation { continuation in
             let parameters: [String: Any?] = [
@@ -834,7 +844,7 @@ class APIService {
             .validate()
             .response { response in
                 if let error = response.error {
-                    print("❌ Apple 登录网络错误: \(error.localizedDescription)")
+                    assistantDebugLog("❌ Apple 登录网络错误: \(error.localizedDescription)")
                     continuation.resume(throwing: error)
                     return
                 }
@@ -845,10 +855,10 @@ class APIService {
                         throw NSError(domain: "APIService", code: -1, userInfo: [NSLocalizedDescriptionKey: "无响应数据"])
                     }
                     let authResponse = try JSONDecoder().decode(AuthResponse.self, from: data)
-                    print("✅ Apple 登录成功")
+                    assistantDebugLog("✅ Apple 登录成功")
                     continuation.resume(returning: authResponse)
                 } catch {
-                    print("❌ Apple 登录解码错误: \(error.localizedDescription)")
+                    assistantDebugLog("❌ Apple 登录解码错误: \(error.localizedDescription)")
                     continuation.resume(throwing: error)
                 }
             }
@@ -861,8 +871,8 @@ class APIService {
         confirmation: String,
         reason: String?
     ) async throws -> DeleteAccountResponse {
-        print("🔄 开始注销账号...")
-        print("📍 API URL: \(APIConfig.baseURL)/auth/delete-account")
+        assistantDebugLog("🔄 开始注销账号...")
+        assistantDebugLog("📍 API URL: \(APIConfig.baseURL)/auth/delete-account")
         
         return try await withCheckedThrowingContinuation { continuation in
             let parameters: [String: Any] = [
@@ -885,7 +895,7 @@ class APIService {
             .response { response in
                 // 检查 HTTP 状态码
                 if let statusCode = response.response?.statusCode {
-                    print("📥 HTTP 状态码: \(statusCode)")
+                    assistantDebugLog("📥 HTTP 状态码: \(statusCode)")
                     
                     if statusCode == 401 {
                         // 未授权 - token 可能无效
@@ -1245,21 +1255,21 @@ class APIService {
                     if let token = token { request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
                     request.httpBody = try? JSONSerialization.data(withJSONObject: parameters)
                     
-                    print("📤 发送对话请求: \(url.absoluteString)")
-                    print("📤 对话参数已准备（流式）")
+                    assistantDebugLog("📤 发送对话请求: \(url.absoluteString)")
+                    assistantDebugLog("📤 对话参数已准备（流式）")
                     
                     let (bytes, response) = try await URLSession.shared.bytes(for: request)
                     
                     guard let httpResponse = response as? HTTPURLResponse else {
-                        print("❌ 响应类型错误")
+                        assistantDebugLog("❌ 响应类型错误")
                         continuation.finish()
                         return
                     }
                     
-                    print("📥 HTTP 状态码: \(httpResponse.statusCode)")
+                    assistantDebugLog("📥 HTTP 状态码: \(httpResponse.statusCode)")
                     
                     guard httpResponse.statusCode == 200 else {
-                        print("❌ HTTP 错误: \(httpResponse.statusCode)")
+                        assistantDebugLog("❌ HTTP 错误: \(httpResponse.statusCode)")
                         continuation.finish()
                         return
                     }
@@ -1275,13 +1285,13 @@ class APIService {
                                     let jsonStr = String(trimmedLine.dropFirst(6))
                                     
                                     if jsonStr == "[DONE]" {
-                                        print("✅ 流式传输完成")
+                                        assistantDebugLog("✅ 流式传输完成")
                                         continuation.finish()
                                         return
                                     }
                                     
                                     guard let jsonData = jsonStr.data(using: .utf8) else {
-                                        print("❌ 流事件无法转换为 Data")
+                                        assistantDebugLog("❌ 流事件无法转换为 Data")
                                         buffer.removeAll()
                                         continue
                                     }
@@ -1289,7 +1299,7 @@ class APIService {
                                     if let event = Self.decodeUnifiedStreamEvent(jsonData) {
                                         continuation.yield(event)
                                     } else {
-                                        print("⚠️ 无法解析统一事件")
+                                        assistantDebugLog("⚠️ 无法解析统一事件")
                                     }
                                 }
                             }
@@ -1297,10 +1307,10 @@ class APIService {
                         }
                     }
                     
-                    print("✅ 流读取完成")
+                    assistantDebugLog("✅ 流读取完成")
                     continuation.finish()
                 } catch {
-                    print("❌ 流式错误: \(error.localizedDescription)")
+                    assistantDebugLog("❌ 流式错误: \(error.localizedDescription)")
                     continuation.finish(throwing: error)
                 }
             }
@@ -1330,20 +1340,20 @@ class APIService {
                     if let token = token { request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
                     request.httpBody = try? JSONSerialization.data(withJSONObject: parameters)
                     
-                    print("📤 发送图片对话请求: \(url.absoluteString)")
+                    assistantDebugLog("📤 发送图片对话请求: \(url.absoluteString)")
                     
                     let (bytes, response) = try await URLSession.shared.bytes(for: request)
                     
                     guard let httpResponse = response as? HTTPURLResponse else {
-                        print("❌ 响应类型错误")
+                        assistantDebugLog("❌ 响应类型错误")
                         continuation.finish()
                         return
                     }
                     
-                    print("📥 HTTP 状态码: \(httpResponse.statusCode)")
+                    assistantDebugLog("📥 HTTP 状态码: \(httpResponse.statusCode)")
                     
                     guard httpResponse.statusCode == 200 else {
-                        print("❌ HTTP 错误: \(httpResponse.statusCode)")
+                        assistantDebugLog("❌ HTTP 错误: \(httpResponse.statusCode)")
                         continuation.finish()
                         return
                     }
@@ -1359,7 +1369,7 @@ class APIService {
                                     let jsonStr = String(trimmedLine.dropFirst(6))
                                     
                                     if jsonStr == "[DONE]" {
-                                        print("✅ 流式传输完成")
+                                        assistantDebugLog("✅ 流式传输完成")
                                         continuation.finish()
                                         return
                                     }
@@ -1378,10 +1388,10 @@ class APIService {
                         }
                     }
                     
-                    print("✅ 流读取完成")
+                    assistantDebugLog("✅ 流读取完成")
                     continuation.finish()
                 } catch {
-                    print("❌ 流式错误: \(error.localizedDescription)")
+                    assistantDebugLog("❌ 流式错误: \(error.localizedDescription)")
                     continuation.finish(throwing: error)
                 }
             }
