@@ -170,6 +170,8 @@
 
 - **watchOS**：当前工程有独立 watchOS target，但仍使用旧的 `/api` 运势/早报/吐槽/决策接口，没有 Bearer、owner 隔离或云同步；本轮 `xcodebuild -scheme Caobao-watchOS -sdk watchsimulator` 还因 `Multiple commands produce .../Caobao-watchOS.app/Caobao-watchOS` 失败。按产品计划暂不纳入首发；若恢复该范围，责任归类为客户端 watchOS 重做 + target 构建修复 + 服务端认证兼容，不能把现有 target 当作已完成。
 - **WidgetKit**：`CaobaoWidgets/CaobaoWidget.swift` 有实现文件，但工程没有 Widget target 引用，当前不可构建；若需要桌面/锁屏小组件，责任归类为客户端工程接入、签名和深链验收。
+
+2026-11-08 工程 target 审计：`xcodebuild -list` 当前仅列出 `Caobao`、`Caobao-macOS`、`Caobao-watchOS`，没有 WidgetKit target；watchOS 复测退出 `65`，错误仍为 `Multiple commands produce .../Caobao-watchOS.app/Caobao-watchOS`（`/tmp/caobao-watchos-audit-20261108.log`）。watchOS 按首发范围排除；若重新纳入，归类为客户端 target 构建修复。
 - **Optimized/**：其中的 Dynamic Island、Siri、推送管理、分享和图片上传等 Swift 文件没有加入 Xcode target；它们是未挂载代码，不能计入已完成功能。产品需要时应逐项接入并补真实系统验收，否则作为待清理的死代码。
 - **HapticManager**：虽然已加入 iOS target，但全仓没有调用点；当前不能把触觉反馈计入已完成能力。需要时接入消息发送、任务完成等明确交互，否则清理死代码。
 - **旧 APIService 方法**：旧收藏、旧聊天流、旧设置和旧云同步方法目前只有定义，没有核心页面调用；当前产品以 `Assistant*` v2 客户端为准。旧接口应标记兼容范围或删除，不能用静态方法存在证明功能完成。
