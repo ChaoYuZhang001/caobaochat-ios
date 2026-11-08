@@ -71,3 +71,4 @@
 - 主动运行打开关联对话后，客户端会在对话详情和继续对话页显示“由主动任务创建”来源标记；该标记只用于展示，不授予额外执行权限。iOS/macOS Debug 构建均通过，日志为 `/tmp/caobao-source-marker-ios-20261108.log` 与 `/tmp/caobao-source-marker-macos-20261108.log`。
 - 主动运行的“稍后”仍是本机状态，“关闭此类”仍提示服务端接口缺失；多设备阅读状态、关闭规则和 Worker 投递不计入已完成。
 - 自定义角色仍只完成 owner-scoped CRUD；对话请求没有 `characterId/version`，AI 群聊没有参与者/轮次/speaker 协议，因此这两项继续列为客户端+服务端新增功能。
+- 当前 iPhone 17 Pro Max Simulator 已安装本轮 Debug 包并启动，`simctl launch` 返回 PID，7 秒后截图成功；应用进程 crash/fatal 日志为空（`/tmp/caobao-source-marker-launch-20261108.png`、`/tmp/caobao-source-marker-launch-logs-20261108.txt`）。系统仍停在未登录 Apple 账户验证面板，不能计入 Apple 登录完成。
