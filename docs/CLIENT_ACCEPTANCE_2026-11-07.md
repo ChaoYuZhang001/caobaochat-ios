@@ -195,6 +195,7 @@
 - **WidgetKit**：`CaobaoWidgets/CaobaoWidget.swift` 有实现文件，但工程没有 Widget target 引用，当前不可构建；若需要桌面/锁屏小组件，责任归类为客户端工程接入、签名和深链验收。
 
 2026-11-08 工程 target 审计：`xcodebuild -list` 当前仅列出 `Caobao`、`Caobao-macOS`、`Caobao-watchOS`，没有 WidgetKit target；watchOS 复测退出 `65`，错误仍为 `Multiple commands produce .../Caobao-watchOS.app/Caobao-watchOS`（`/tmp/caobao-watchos-audit-20261108.log`）。watchOS 按首发范围排除；若重新纳入，归类为客户端 target 构建修复。
+2026-11-08 当前 checkout watchOS target 复测：`xcodebuild -scheme Caobao-watchOS -sdk watchsimulator` 明确退出 `65`，仍因重复产物 `Multiple commands produce .../Caobao-watchOS.app/Caobao-watchOS` 失败（`/tmp/caobao-watchos-acceptance-current-20261108.log`）。该 target 不在首发验收范围；若恢复 watchOS，责任归客户端工程 target 修复、旧 API 迁移和正式签名。
 2026-11-08 iPad Pro 13-inch Simulator 冷启动复测：启动 `81B65E72-F2C4-4916-9542-AE7D9CA503E7`，安装最新 iOS Debug 包并成功启动 `caobao.chat`；截图 `/tmp/caobao-ipad-acceptance-20261108.png` 显示中文登录页、Apple 登录、BYOK、协议开关和能力说明，Caobao 进程日志 `/tmp/caobao-ipad-logs-20261108.txt` 未发现 crash/fatal。该证据只覆盖大屏未登录冷启动可见性，不替代真实 iPad、签名、Apple、StoreKit 或 VoiceOver/Dynamic Type 验收。
 2026-11-08 当前 checkout 隔离构建复测：iOS Simulator Debug 和 macOS Debug 使用全新 `.build/acceptance-current-ios`、`.build/acceptance-current-macos` DerivedData，均明确返回 `** BUILD SUCCEEDED **`，退出码为 `0`（日志分别为 `/tmp/caobao-acceptance-current-ios-20261108.log`、`/tmp/caobao-acceptance-current-macos-20261108.log`）。这确认当前源码可编译，不替代正式签名、真机、TestFlight 或生产端到端验收。
 - **Optimized/**：其中的 Dynamic Island、Siri、推送管理、分享和图片上传等 Swift 文件没有加入 Xcode target；它们是未挂载代码，不能计入已完成功能。产品需要时应逐项接入并补真实系统验收，否则作为待清理的死代码。
