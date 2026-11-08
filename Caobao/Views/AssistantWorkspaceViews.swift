@@ -520,11 +520,11 @@ struct AssistantProactiveView: View {
                     .buttonStyle(.bordered)
                 Button("稍后") {
                     inboxStore.snooze(ownerId: userId, runId: run.id)
-                    savedMessage = "已将这条主动更新延后 1 小时（仅本设备）。"
+                    savedMessage = AssistantLocalization.string("已将这条主动更新延后 1 小时（仅本设备）。")
                 }
                 .buttonStyle(.bordered)
                 Button("关闭此类") {
-                    savedMessage = "服务端暂未提供关闭此类接口，请在主动规则中暂停或删除对应规则。"
+                    savedMessage = AssistantLocalization.string("服务端暂未提供关闭此类接口，请在主动规则中暂停或删除对应规则。")
                 }
                 .buttonStyle(.bordered)
             }
@@ -566,7 +566,7 @@ struct AssistantProactiveView: View {
         inboxStore.markRead(ownerId: userId, runId: run.id)
         appState.pendingAssistantProactiveRunId = nil
         guard let conversationId = run.conversationId, !conversationId.isEmpty else {
-            savedMessage = "已标记为已查看。此执行记录还没有关联对话。"
+            savedMessage = AssistantLocalization.string("已标记为已查看。此执行记录还没有关联对话。")
             return
         }
         let owner = userId
@@ -580,7 +580,7 @@ struct AssistantProactiveView: View {
                 return
             } catch {
                 guard isCurrentOwner else { return }
-                savedMessage = "无法打开关联对话，请刷新后重试。"
+                savedMessage = AssistantLocalization.string("无法打开关联对话，请刷新后重试。")
             }
         }
     }
@@ -608,13 +608,13 @@ struct AssistantProactiveView: View {
         if profile.mode == .off { profile.enabled = false }
         if profile.enabled, profile.mode == .off { profile.mode = .important }
         guard store.save(profile, for: userId) else {
-            savedMessage = "保存失败，请检查提醒设置。"
+            savedMessage = AssistantLocalization.string("保存失败，请检查提醒设置。")
             return
         }
         let level = profile.enabled ? profile.mode.rawValue : AssistantProactiveMode.off.rawValue
         appState.proactiveLevel = level
         appState.saveAssistantPreferences()
-        savedMessage = "已保存。主动消息仍取决于已启用的规则和系统通知权限。"
+        savedMessage = AssistantLocalization.string("已保存。主动消息仍取决于已启用的规则和系统通知权限。")
         syncServer(level: level)
     }
 
@@ -632,18 +632,18 @@ struct AssistantProactiveView: View {
                                                                          expectedVersion: expectedVersion)
             guard AssistantOwnerIdentity.matches(owner, AuthService.shared.user?.id ?? "local-device") else { return }
             if let expectedVersion, response.profile.version <= expectedVersion {
-                savedMessage = "服务器未确认主动任务版本，请刷新后重试。"
+                savedMessage = AssistantLocalization.string("服务器未确认主动任务版本，请刷新后重试。")
                 await loadRuns()
                 return
             }
             pausedAll = response.profile.pausedAll
             serverProfileVersion = response.profile.version
             UserDefaults.standard.set(response.profile.version, forKey: serverProfileVersionKey())
-            savedMessage = pausedAll ? "已暂停全部主动任务，规则仍保留。" : "已恢复全部主动任务。"
+            savedMessage = pausedAll ? AssistantLocalization.string("已暂停全部主动任务，规则仍保留。") : AssistantLocalization.string("已恢复全部主动任务。")
         } catch is CancellationError {
             return
         } catch {
-            savedMessage = "暂停状态同步失败，请稍后重试。"
+            savedMessage = AssistantLocalization.string("暂停状态同步失败，请稍后重试。")
         }
     }
 
@@ -674,11 +674,11 @@ struct AssistantProactiveView: View {
                         companionEnabled: profile.companionEnabled, pausedAll: nil, expectedVersion: serverProfileVersion))
                 serverProfileVersion = response.profile.version
                 UserDefaults.standard.set(response.profile.version, forKey: serverProfileVersionKey())
-                savedMessage = "已保存，已同步到账号。"
+                savedMessage = AssistantLocalization.string("已保存，已同步到账号。")
             } catch is CancellationError {
                 return
             } catch {
-                savedMessage = "已保存在设备，账号同步暂时失败，可稍后重试。"
+                savedMessage = AssistantLocalization.string("已保存在设备，账号同步暂时失败，可稍后重试。")
             }
         }
     }
