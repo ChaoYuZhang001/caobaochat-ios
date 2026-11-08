@@ -76,3 +76,4 @@
 - 主动对话来源标记新增中英文资源；本地化 19 组、iOS/macOS Debug 构建均通过（`/tmp/caobao-acceptance-localization-20261108.log`、`/tmp/caobao-acceptance-localization-ios-20261108.log`、`/tmp/caobao-acceptance-localization-macos-20261108.log`）。
 - 最终代码/资源状态再次执行 `Scripts/test-assistant.sh`，全部列出的套件退出 0，末尾为 `All 168 actual ChatViewModel integration suites passed`（`/tmp/caobao-acceptance-final-regression-20261108.log`）。
 - 2026-11-08 07:09 UTC 生产复核仍返回 `X-New-Api-Version: v1.0.0-rc.48+ciyuan.reconstructed.20261106.1`；AASA 仍为 HTTP 200 但 `webcredentials.apps=[]`、`applinks.details[].appIDs=[]`，只有旧 `/chat/*`、`/morning`、`/evening`、`/fortune`、`/roast` 路径。因此服务端修复尚未进入公开生产，Apple Associated Domains/Universal Links 仍未通过。
+- iPhone `iphoneos` Release 使用团队 `26CX9F23YL` 正式签名构建成功；`codesign` 显示 Apple Development、TeamIdentifier `26CX9F23YL`、Apple Sign In、APNs development 和 Associated Domains entitlement（`/tmp/caobao-final-device-release-signing-20261108.log`）。这证明 Release 配置可签名，但仍不是 Distribution/TestFlight 证据。
