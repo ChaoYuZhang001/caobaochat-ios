@@ -159,6 +159,7 @@
 2026-11-08 主动更新展示改动后的完整回归复跑：`Scripts/test-assistant.sh` 明确退出 `0`，日志为 `/tmp/caobao-final-regression-after-proactive-row-20261108.log`，末尾为 `All 168 actual ChatViewModel integration suites passed`；该回归仍使用隔离文件、mock 网络和 fake 通知，不替代真实 Apple、StoreKit、APNs、模型请求或双设备生产门禁。
 
 2026-11-08 自定义角色绑定专项审计：`AssistantMessageRequest`（`APIService.swift:1627-1670`）只有 `persona.level`，`ChatViewModel.prepare()`（`ChatViewModel.swift:1716-1725`）的平台请求和 BYOK 请求都没有 `characterId/version`；对话页也没有当前角色选择或会话绑定状态。角色 CRUD 通过不等于角色对话完成；此项归类为客户端 + 服务端新增功能，需先确定 `characterId`、版本/冲突和 memory scope 协议，再补客户端选择、持久化、请求字段和同步。
+2026-11-08 首发计划静态矩阵复核：当前 Xcode target 只有 `Caobao`、`Caobao-macOS`、`Caobao-watchOS`；`APIService` 已有角色 CRUD 和主动规则/运行 API，但 `AssistantMessageRequest` 仍没有角色绑定字段，工程没有群聊参与者、轮次或 speaker 编排模型。结论与真实验收一致：角色管理属于基础 CRUD 已有、角色对话仍是新增联调；AI 群聊属于客户端 + 服务端新增功能，不能用现有 persona 或单会话流代替。
 
 2026-11-08 主动/任务状态写入专项审计：客户端主动运行只有 owner-scoped 本机 read/snooze，明确不宣称跨设备；没有服务端 read/snooze/dismiss/close-kind API。客户端暂停全部会发送 `expectedVersion` 并拒绝不递增响应，但 checkout 服务端 `PauseAllProactive` 只读取 `paused`，`SetTaskStatus` 也没有版本条件；云任务页面因此禁用已有云任务的本地 pause/cancel。归类为服务端契约/Worker 缺口，客户端暂不补无效或不安全的写入。
 
