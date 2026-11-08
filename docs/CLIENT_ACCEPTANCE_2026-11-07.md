@@ -137,6 +137,7 @@
 
 2026-11-08 主动更新展示收口：执行记录现在显示本地化“生成于”时间、可用时显示“送达于”时间，并补齐“查看 / 稍后 / 关闭此类”操作。关闭此类目前只提示服务端接口尚未提供，引导用户到主动规则中暂停或删除，不伪造成功状态。iOS/macOS Debug 构建均明确返回 `BUILD SUCCEEDED`（`/tmp/caobao-proactive-row-ios-20261108.log`、`/tmp/caobao-proactive-row-macos-20261108.log`）。
 2026-11-08 主动更新反馈本地化收口：主动运行时间、来源和“关闭此类”提示，以及暂停/保存结果消息统一通过 AssistantLocalization 读取中英文资源，避免英文模式显示中文。`Scripts/test-assistant-localization.sh` 明确退出 `0`（19 组），iOS/macOS Debug 构建明确返回 `BUILD SUCCEEDED`（`/tmp/caobao-proactive-localized-ios-20261108.log`、`/tmp/caobao-proactive-localized-macos-20261108.log`）。
+2026-11-08 主动运行触发原因和未知状态本地化收口：触发原因、时间/来源动态文本和未知云端状态现在显式通过 AssistantLocalization 格式化，避免 `Text(String)`/隐式插值绕过语言资源。`Scripts/test-assistant-localization.sh` 明确退出 `0`（19 组），iOS/macOS Debug 构建明确返回 `BUILD SUCCEEDED`（`/tmp/caobao-proactive-trigger-localized-ios-20261108.log`、`/tmp/caobao-proactive-trigger-localized-macos-20261108.log`）。
 2026-11-08 主动更新展示改动后的完整回归复跑：`Scripts/test-assistant.sh` 明确退出 `0`，日志为 `/tmp/caobao-final-regression-after-proactive-row-20261108.log`，末尾为 `All 168 actual ChatViewModel integration suites passed`；该回归仍使用隔离文件、mock 网络和 fake 通知，不替代真实 Apple、StoreKit、APNs、模型请求或双设备生产门禁。
 
 2026-11-08 自定义角色绑定专项审计：`AssistantMessageRequest`（`APIService.swift:1627-1670`）只有 `persona.level`，`ChatViewModel.prepare()`（`ChatViewModel.swift:1716-1725`）的平台请求和 BYOK 请求都没有 `characterId/version`；对话页也没有当前角色选择或会话绑定状态。角色 CRUD 通过不等于角色对话完成；此项归类为客户端 + 服务端新增功能，需先确定 `characterId`、版本/冲突和 memory scope 协议，再补客户端选择、持久化、请求字段和同步。
