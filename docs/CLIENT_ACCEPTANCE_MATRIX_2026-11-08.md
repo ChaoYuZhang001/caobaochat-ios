@@ -88,3 +88,5 @@
 
 - macOS 团队签名补齐：`Caobao-macOS` Debug/Release 已配置 `DEVELOPMENT_TEAM=26CX9F23YL`；带 entitlements 的 Debug/Release 签名构建均通过，Release app 的 `codesign --verify --deep --strict` 通过，使用 `Mac Team Provisioning Profile: caobao.chat.mac`（`/tmp/caobao-macos-signing-provisioning-update-20261108.log`、`/tmp/caobao-macos-release-signing-after-fix-20261108.log`）。这是本地开发团队签名证据，不是 notarization、Distribution 或 TestFlight 证据。
 - macOS 团队签名变更后的完整回归退出 `0`，168 个 ChatViewModel 集成套件全部通过（`/tmp/caobao-acceptance-post-macos-signing-20261108.log`）；仍属于本地 mock/隔离回归，不替代 Apple、StoreKit、APNs、实体设备和 TestFlight。
+- 2026-11-08 10:04 UTC 生产复核仍为 HTTP 200、`v1.0.0-rc.48+ciyuan.reconstructed.20261106.1`；AASA 的 `appIDs`/`webcredentials.apps` 为空且没有新深链路径，服务端发布门禁未关闭。
+- 客户端深审未发现可独立修复且不依赖服务端契约的新增缺口；通知路由的 owner 校验是安全 fail-closed。macOS 虽有 APNs entitlement，但远程注册/点击实现仅在 iOS，按 iPhone 首发范围列为后续跨平台补齐项。
