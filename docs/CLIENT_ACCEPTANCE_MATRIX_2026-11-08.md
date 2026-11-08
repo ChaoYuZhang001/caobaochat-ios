@@ -31,7 +31,7 @@
 | StoreKit 订阅 | 服务端配置有 2 个 Product ID，但 StoreKit 商品数为 0 | App Store Connect、服务端配置、正式签名 |
 | APNs 锁屏投递 | 未验证真实 token、outbox、Worker、重试、锁屏和点击回流 | 服务端 + 真机 |
 | APNs 点击字段 | 客户端要求 owner 绑定的 `ownerId`、`route` 和任务/主动运行 ID；checkout 的 APNs sender 当前只把 `deepLink` 写入最终 JSON | 服务端 payload 契约/发布 |
-| 设备注销 | 客户端发送 DELETE；checkout 分支缺 DELETE，生产与分支漂移 | 服务端发布/契约 |
+| 设备注销 | 客户端发送 DELETE；生产无认证探针返回 401，路由已注册，但 owner 隔离、幂等、outbox 清理和重复注销仍未用真实 token 验证；checkout 分支静态代码仍缺 DELETE，存在分支/生产漂移 | 服务端发布/契约 + 真实账号 |
 | 主动任务执行 | profile/rule CRUD 通过，Worker、run、conversation 回流未闭环 | 服务端 |
 | 主动阅读/稍后/关闭此类 | 服务端没有多设备 read/snooze/dismiss/close-kind 接口 | 服务端新增 |
 | 云任务暂停/取消 | 服务端未消费 `expectedVersion`，客户端已 fail-closed | 服务端契约 |
@@ -90,3 +90,4 @@
 - macOS 团队签名变更后的完整回归退出 `0`，168 个 ChatViewModel 集成套件全部通过（`/tmp/caobao-acceptance-post-macos-signing-20261108.log`）；仍属于本地 mock/隔离回归，不替代 Apple、StoreKit、APNs、实体设备和 TestFlight。
 - 2026-11-08 10:04 UTC 生产复核仍为 HTTP 200、`v1.0.0-rc.48+ciyuan.reconstructed.20261106.1`；AASA 的 `appIDs`/`webcredentials.apps` 为空且没有新深链路径，服务端发布门禁未关闭。
 - 客户端深审未发现可独立修复且不依赖服务端契约的新增缺口；通知路由的 owner 校验是安全 fail-closed。macOS 虽有 APNs entitlement，但远程注册/点击实现仅在 iOS，按 iPhone 首发范围列为后续跨平台补齐项。
+- 生产契约探针（`/tmp/caobao-production-contract-probe-20261108.log`）显示客户端使用的 v2 路径在未授权时均返回 `401`；这只证明认证路由存在，不能替代真实 owner、幂等、StoreKit、APNs 和 Worker 验收。
