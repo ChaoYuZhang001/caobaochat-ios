@@ -87,3 +87,4 @@
 - 增量大历史降级后的最终回归：`Scripts/test-assistant.sh` 退出 `0`，末尾仍为 `All 168 actual ChatViewModel integration suites passed`（`/tmp/caobao-full-regression-after-resumable-sync-v4-20261108.log`）；最终 Release archive `.build/resumable-sync-final-v4-archive-20261108/Caobao.xcarchive` 通过 `codesign --verify --deep --strict`，TeamIdentifier `26CX9F23YL`（`/tmp/caobao-resumable-sync-final-v4-archive-20261108.log`）。
 
 - macOS 团队签名补齐：`Caobao-macOS` Debug/Release 已配置 `DEVELOPMENT_TEAM=26CX9F23YL`；带 entitlements 的 Debug/Release 签名构建均通过，Release app 的 `codesign --verify --deep --strict` 通过，使用 `Mac Team Provisioning Profile: caobao.chat.mac`（`/tmp/caobao-macos-signing-provisioning-update-20261108.log`、`/tmp/caobao-macos-release-signing-after-fix-20261108.log`）。这是本地开发团队签名证据，不是 notarization、Distribution 或 TestFlight 证据。
+- macOS 团队签名变更后的完整回归退出 `0`，168 个 ChatViewModel 集成套件全部通过（`/tmp/caobao-acceptance-post-macos-signing-20261108.log`）；仍属于本地 mock/隔离回归，不替代 Apple、StoreKit、APNs、实体设备和 TestFlight。
