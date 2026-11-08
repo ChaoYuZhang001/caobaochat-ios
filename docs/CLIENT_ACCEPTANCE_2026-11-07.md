@@ -27,6 +27,7 @@
 2026-11-08 云任务审批协议补充：客户端将 `taskId` 与 Unix 秒级 `nextRunAt` 的规范化 SHA-256 提取为共享函数，并加入固定向量回归；`Scripts/test-assistant-task-tool-protocol.sh` 当前 51 套通过，iOS Simulator 和 macOS Debug 构建均通过。真实 `waiting_approval → approve → Worker 执行` 尚未完成，因此这项证据只证明客户端哈希不会因重构漂移，不证明生产审批已消费。
 
 2026-11-08 云任务状态显示修复：服务端 `draft`、`waiting_approval`、`failed` 和未知状态不再被客户端映射为本地 `active`；`scheduled/running` 保持 active，终态保持原值，其余状态 fail closed 为 paused。102 套本地仓库测试、完整回归（含 168 个 ChatViewModel 套件）和 iOS/macOS 构建均通过；待审批和失败任务仍显示服务端状态标签，但不会进入首页“今天要处理”。
+2026-11-08 云任务状态写回复核：任务页的暂停、完成和取消先更新本机提醒状态；云端同步的 `CloudTaskUpsertRequest` 只提交标题、说明、时区、重复规则、审批标记和到期时间，没有提交 status。当前客户端 `APIService` 也没有调用 `/tasks/{taskId}/pause` 或 `/cancel`；服务端虽然挂载了这两个路由，但 `SetTaskStatus` 尚未接受 `expectedVersion`。因此本机状态通过不等于云端状态通过，不能把暂停/取消计入核心闭环；归类为服务端条件状态协议缺口，待服务端返回版本冲突语义后再补客户端安全写回。
 
 2026-11-08 首页云任务摘要补齐：首页在登录、归档同步完成后以及下拉刷新时读取 owner-scoped 云任务摘要，与本地任务按 ID 去重，只把 `scheduled/running` 映射为“今天要处理”；草稿、待审批、失败和未知状态保持 fail-closed，不会误显示为可执行任务。云端读取失败时保留本地任务，不显示假空态。对应改动为 `HomeView.swift`，iOS Simulator 和 macOS Debug 构建均通过。
 
