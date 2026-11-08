@@ -253,6 +253,7 @@ class AppState: ObservableObject {
     @Published var pendingAssistantConversationId: String?
     @Published var pendingAssistantTaskId: String?
     @Published var pendingAssistantProactiveRunId: String?
+    @Published var activeAssistantProactiveSource: AssistantProactiveConversationSource?
     @Published var assistantHomePath: [AssistantHomeRoute] = []
     @Published var isShowingAssistantSettings = false
 
@@ -375,6 +376,7 @@ class AppState: ObservableObject {
             }
             pendingAssistantTaskId = nil
             pendingAssistantProactiveRunId = nil
+            activeAssistantProactiveSource = nil
             selectedTab = .home
             loadUserSettings()
             loadUserStats()
@@ -828,6 +830,16 @@ enum AppTab: String, CaseIterable {
         case .profile: return "person.fill"
         }
     }
+}
+
+/// Presentation-only provenance for a conversation opened from an active
+/// assistant run. The server run remains authoritative; this marker is never
+/// used to authorize a new action.
+struct AssistantProactiveConversationSource: Equatable {
+    let runId: String
+    let ownerId: String
+    let conversationId: String
+    let triggerReason: String
 }
 
 // MARK: - User Settings

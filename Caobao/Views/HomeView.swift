@@ -96,7 +96,6 @@ struct HomeView: View {
                         .caobaoCard(padding: 14, cornerRadius: 18, hasShadow: false)
                     }
                     welcomeCard
-                    quotaCard
                     Text("快速开始").font(.headline)
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 12)], spacing: 12) {
                         quickAction("制定计划", icon: "checklist", prompt: "帮我制定今天的计划")
@@ -106,15 +105,6 @@ struct HomeView: View {
                             actionTile(title: "添加待办", subtitle: "记录并提醒", icon: "plus.circle.fill", tint: .orange)
                         }
                         .buttonStyle(.plain)
-                    }
-                    sectionHeader(title: "继续使用")
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                        NavigationLink(value: AssistantHomeRoute.memories) {
-                            actionTile(title: "我的记忆", subtitle: "查看与管理", icon: "brain.head.profile", tint: .purple)
-                        }
-                        NavigationLink(value: AssistantHomeRoute.tools) {
-                            actionTile(title: "更多工具", subtitle: "探索能力", icon: "square.grid.2x2.fill", tint: .blue)
-                        }
                     }
                     if AssistantOwnerIdentity.matches(chat.activeOwner, owner), !chat.conversations.isEmpty {
                         sectionHeader(title: "最近对话", actionTitle: "全部历史") { appState.assistantHomePath.append(.history) }
@@ -128,6 +118,19 @@ struct HomeView: View {
                                     if conversation.messageCount == 0 { Text("尚无已发送消息").font(.caption2).foregroundStyle(.secondary) }
                                 }.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
                             }.buttonStyle(.plain).caobaoCard().disabled(!canNavigate)
+                        }
+                    }
+                    // Keep the home feed focused on the work the user can do
+                    // now. Quota and secondary tools stay available below the
+                    // primary start-conversation and template actions.
+                    quotaCard
+                    sectionHeader(title: "继续使用")
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                        NavigationLink(value: AssistantHomeRoute.memories) {
+                            actionTile(title: "我的记忆", subtitle: "查看与管理", icon: "brain.head.profile", tint: .purple)
+                        }
+                        NavigationLink(value: AssistantHomeRoute.tools) {
+                            actionTile(title: "更多工具", subtitle: "探索能力", icon: "square.grid.2x2.fill", tint: .blue)
                         }
                     }
                     NavigationLink(value: AssistantHomeRoute.dataManagement) {

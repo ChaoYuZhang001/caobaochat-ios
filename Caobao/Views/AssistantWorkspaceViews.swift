@@ -575,6 +575,8 @@ struct AssistantProactiveView: View {
                 let localId = try await chat.localConversationId(
                     forServerConversationId: conversationId, ownerId: owner) ?? conversationId
                 guard isCurrentOwner else { return }
+                appState.activeAssistantProactiveSource = AssistantProactiveConversationSource(
+                    runId: run.id, ownerId: owner, conversationId: localId, triggerReason: run.triggerReason)
                 appState.assistantHomePath.append(.historyConversation(id: localId, ownerId: owner))
             } catch is CancellationError {
                 return

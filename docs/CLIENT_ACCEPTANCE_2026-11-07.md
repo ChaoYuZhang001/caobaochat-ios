@@ -231,3 +231,5 @@
 - 当前 iOS Release Simulator 包重新构建、安装并启动成功；iPad Pro 13-inch Simulator 的深色模式和 `accessibility-extra-extra-extra-large` 首屏均无 crash。登录页 Apple 按钮已按外观选择黑/白样式，并按可访问字号增高，证据为 `/tmp/caobao-ipad-dark-fix-stable-20261108.png` 和 `/tmp/caobao-ipad-a11y-fix-20261108.png`。
 - `Scripts/test-assistant.sh` 本轮所有列出的套件通过，最终日志为 `/tmp/caobao-final-test-assistant-20261108.log`，末尾为 `All 168 actual ChatViewModel integration suites passed`；测试仍使用 mock 网络、隔离存储和 fake 通知，不能替代真实 Apple、StoreKit、APNs、模型、双设备和 TestFlight。
 - 服务端 fresh checkout 与公开生产状态没有变化：`feat/caobao-server-v2`/origin 仍为 `f03f8be`，`/api/status` 仍为 `v1.0.0-rc.48+ciyuan.reconstructed.20261106.1`；AASA 的 app IDs 仍为空。因此设备 DELETE、APNs outbox、主动 Worker、多设备主动状态、AASA 和账号删除云端清理继续归类为服务端发布/联调未通过。
+
+2026-11-08 主动对话来源和首页顺序复核：首页已调整为主动更新、今日任务、开始对话、快速模板、最近对话，再显示额度和二级工具；主动运行打开关联对话后，详情和继续对话页显示“由主动任务创建”来源标记。该标记仅用于展示，不替代服务端执行历史。iOS/macOS Debug 构建退出 0（`/tmp/caobao-source-marker-ios-20261108.log`、`/tmp/caobao-source-marker-macos-20261108.log`）。

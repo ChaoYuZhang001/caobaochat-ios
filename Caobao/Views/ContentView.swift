@@ -669,6 +669,13 @@ struct ChatView: View {
                 .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
+                    if let source = appState.activeAssistantProactiveSource,
+                       AssistantOwnerIdentity.matches(source.ownerId, auth.user?.id ?? "local-device"),
+                       source.conversationId == viewModel.conversationId {
+                        AssistantProactiveSourceBanner(source: source)
+                            .padding(.horizontal)
+                            .padding(.top, 8)
+                    }
                     // Stable, owner-bound reading state survives width shell changes.
                     AssistantChatViewportScroll(ownerId: clipboardSource.ownerId, conversationId: clipboardSource.conversationId,
                         scopeId: clipboardSource.conversationScopeId, viewEpoch: clipboardSource.viewEpoch,

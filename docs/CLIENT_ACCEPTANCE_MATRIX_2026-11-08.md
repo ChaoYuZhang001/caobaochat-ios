@@ -64,3 +64,10 @@
 - 客户端工程当前 iOS Debug/Release 配置使用团队 `26CX9F23YL`；`security find-identity` 找到有效 Apple Development 证书，真机 generic `iphoneos` Debug 构建退出 0，包内 entitlement 和 provisioning profile 已由 `codesign` 验证。
 - `https://ciyuan2api.com/api/status` 仍返回 `v1.0.0-rc.48+ciyuan.reconstructed.20261106.1`；本地 `feat/caobao-server-v2` 与远程仍在 `f03f8be`。因此服务端“已修复”尚未反映到当前 checkout 或公开生产版本，本轮只把服务端路由探针作为鉴权可达性证据。
 - 生产 AASA 仍返回空 `appIDs`/`webcredentials.apps`，且没有 conversation/task/proactive 新路径；Universal Links 和真实 APNs 不能据此标记通过。
+
+## 本轮客户端闭环修复
+
+- 首页顺序已收敛为“主动更新 → 今日任务 → 开始对话 → 快速模板 → 最近对话 → 额度/二级工具 → 数据与隐私”，避免额度卡和工具入口打断主 CTA 与最近工作。
+- 主动运行打开关联对话后，客户端会在对话详情和继续对话页显示“由主动任务创建”来源标记；该标记只用于展示，不授予额外执行权限。iOS/macOS Debug 构建均通过，日志为 `/tmp/caobao-source-marker-ios-20261108.log` 与 `/tmp/caobao-source-marker-macos-20261108.log`。
+- 主动运行的“稍后”仍是本机状态，“关闭此类”仍提示服务端接口缺失；多设备阅读状态、关闭规则和 Worker 投递不计入已完成。
+- 自定义角色仍只完成 owner-scoped CRUD；对话请求没有 `characterId/version`，AI 群聊没有参与者/轮次/speaker 协议，因此这两项继续列为客户端+服务端新增功能。

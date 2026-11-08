@@ -300,6 +300,30 @@ struct ConversationRowView: View {
     }
 }
 
+struct AssistantProactiveSourceBanner: View {
+    let source: AssistantProactiveConversationSource
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "bell.badge.fill")
+                .foregroundStyle(Color.caobaoPrimary)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("由主动任务创建")
+                    .font(.subheadline.weight(.semibold))
+                Text("这段对话来自草包的主动更新，来源和触发原因可在主动更新中查看。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(Color.caobaoPrimary.opacity(0.10), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("由主动任务创建")
+    }
+}
+
 @MainActor
 struct ConversationDetailView: View {
     let conversationId: String
@@ -369,6 +393,11 @@ struct ConversationDetailView: View {
         ScrollView {
             LazyVStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 8) {
+                    if let source = appState.activeAssistantProactiveSource,
+                       AssistantOwnerIdentity.matches(source.ownerId, ownerId),
+                       source.conversationId == conversationId {
+                        AssistantProactiveSourceBanner(source: source)
+                    }
                     Button(action: continueConversation) {
                         Label("继续此对话", systemImage: "arrow.turn.up.right").frame(maxWidth: .infinity, minHeight: 44)
                     }
