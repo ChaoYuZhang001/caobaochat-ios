@@ -2,6 +2,8 @@
 
 这份清单只记录客户端已经实现、但无法在当前生产契约或发布环境完成验收的项目。客户端不以本地 mock、静态路由或随机资源探针替代真实服务端行为。
 
+当前服务端 checkout 已包含 `service/caobao/worker.go`、`service/caobao/proactive.go` 和 `service/caobao/apns.go`；因此主动 Worker、运行生成和 outbox 属于“代码存在但生产配置/真实投递未验收”，不是简单的“服务端未实现”。本机没有 Go 工具链（`go: command not found`），本轮未执行服务端 `go test`，该结果归类为验证环境限制。
+
 | 优先级 | 服务端要求 | 当前证据 | 通过标准 |
 | --- | --- | --- | --- |
 | P0 | `DELETE /api/v2/devices/{deviceId}` owner-scoped、幂等，并返回 `{status:"unregistered"}` | 客户端已串行化旧账号 DELETE 与新账号 POST；checkout 分支只注册 POST | 旧账号设备立即失效；重复 DELETE 不报错；outbox 不再向旧 owner 投递；新账号同设备注册不被旧 DELETE 覆盖 |
