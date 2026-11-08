@@ -20,7 +20,7 @@
 | 主动规则与角色 CRUD | 基础页面和真实 CRUD 已验证 | 服务端真实 CRUD；角色对话仍未接入 |
 | 本地化、深链解析、冷启动 | 本地测试和 Simulator smoke 通过 | 本地化 19、深链 8 组；真机深链未验收 |
 | iPad UI 适配 smoke | 当前 Release 包在 Dynamic Type `accessibility-extra-extra-extra-large` 和深色模式下首屏启动无 crash；登录按钮在两种模式下保持可见 | `/tmp/caobao-ipad-a11y-fix-20261108.png`、`/tmp/caobao-ipad-dark-fix-stable-20261108.png`；不替代 VoiceOver/真机验收 |
-| iOS/macOS Debug/Release 编译 | 当前 checkout 全新 DerivedData 均退出 0；最终 iPhone 真机 Debug 签名包 `codesign` 校验通过，TeamIdentifier 为 `26CX9F23YL` | `/tmp/caobao-final-device-signing-20261108.log`、`/tmp/caobao-resume-macos-darkfix-build-20261108.log` |
+| iOS/macOS Debug/Release 编译 | 当前 checkout 全新 DerivedData 均退出 0；iPhone 与 macOS Release/Debug 的团队签名包均可由 `codesign` 校验，TeamIdentifier 为 `26CX9F23YL` | `/tmp/caobao-final-device-signing-20261108.log`、`/tmp/caobao-macos-signing-provisioning-update-20261108.log`、`/tmp/caobao-macos-release-signing-after-fix-20261108.log` |
 | 登录页外观与可访问性 | Apple 按钮按系统外观选择黑/白样式；超大字体使用可增长高度，按钮背景和点击区域保持可见 | `Caobao/Services/AuthService.swift`、上述两张 Simulator 截图 |
 
 ## 未通过或等待服务端/发布环境
