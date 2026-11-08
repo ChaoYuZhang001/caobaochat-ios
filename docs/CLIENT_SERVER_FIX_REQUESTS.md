@@ -8,6 +8,7 @@
 | --- | --- | --- | --- |
 | P0 | `DELETE /api/v2/devices/{deviceId}` owner-scoped、幂等，并返回 `{status:"unregistered"}` | 客户端已串行化旧账号 DELETE 与新账号 POST；checkout 分支只注册 POST | 旧账号设备立即失效；重复 DELETE 不报错；outbox 不再向旧 owner 投递；新账号同设备注册不被旧 DELETE 覆盖 |
 | P0 | APNs transactional outbox、Worker 重试/死信、安静时段和 owner 频率限制 | 客户端已有 token 注册、通知路由和通用锁屏标题 | 真实 token 注册后锁屏送达；点击进入正确 conversation/task/proactive；失败可重试且不重复投递 |
+| P0 | APNs 自定义点击字段必须进入最终 JSON payload：`ownerId`、`route`、`taskId`/`proactiveRunId`（并保留通用锁屏标题） | checkout 的 `PushPayload` 定义了字段，但 `APNsSender.Send` 当前只写入 `deepLink`；客户端无 `ownerId` 时会安全丢弃冷启动路由 | 对任务和主动更新各发送一条真实通知，锁屏不泄露正文，点击冷启动后只进入当前 owner 的正确页面；服务端单测和生产抓包/日志证明字段存在 |
 | P0 | 账号删除清理会话、记忆、任务、主动规则、执行记录、设备和 outbox，并保留墓碑防止旧任务复活 | 客户端本地清理和删除队列已通过；云端清理未验收 | 删除后旧 token、旧设备、旧任务和旧通知全部失效；重新登录不能恢复已删除数据 |
 | P0 | AASA 正式配置 `webcredentials.apps`、`applinks.details[].appIDs`，覆盖 `/conversation/*`、`/task/*`、`/proactive/*` | 当前 AASA HTTP 200，但 `appIDs=[]` 且只有旧路径 | 正式签名真机点击三类链接均进入 App，并在登录恢复后打开 owner 正确页面 |
 | P0 | App Store Connect 商品、服务端 Apple 交易验签和 quota ledger 完成配置 | `/subscriptions/apple/config` 有 2 个 Product ID；当前 StoreKit 商品数为 0 | 沙盒购买、恢复、退款、撤销均由服务端确认；客户端只在 confirmed entitlement 后显示额度 |
