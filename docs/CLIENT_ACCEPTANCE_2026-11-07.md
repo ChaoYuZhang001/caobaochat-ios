@@ -50,6 +50,7 @@
 
 2026-11-08 图片分析选图修复：`AnalyzeView` 在已有图片时的“相册”按钮此前只切换未绑定的 `showingImagePicker`，iOS 不会打开系统 PhotosPicker；客户端现将 picker 绑定到页面根部，并统一处理首次选择与更换图片。`db7be41`，iOS Simulator Debug 构建退出 `0`；旧 `/api/analyze` 的认证、owner 和额度协议仍未验收，继续按二级兼容功能记录。
 2026-11-08 旧图片分析入口收口：`AnalyzeView` 原先点击“开始分析”会调用生产不存在的 `/api/analyze` 并得到 404；客户端现在改为显示“服务端接口待迁移”，不再发起无效请求，并引导用户在 Assistant v2 对话中添加图片。提交 `390b1d5`；iOS/macOS Debug 构建均明确返回 `BUILD SUCCEEDED`（`/tmp/caobao-legacy-analyze-ios-20261108.log`、`/tmp/caobao-legacy-analyze-macos-20261108.log`）。完整回归随后明确退出 `0`（`/tmp/caobao-final-regression-after-legacy-analyze-20261108.log`，168 个 ChatViewModel 套件通过）。归类为客户端防误导修复；旧功能仍等待服务端迁移，不计入核心图片分析完成。
+2026-11-08 旧工具提示本地化收口：新增的“功能暂未启用”“服务端接口待迁移”和旧图片分析迁移说明已加入中英文 Localizable.strings；`Scripts/test-assistant-localization.sh` 明确退出 `0`（19 组），iOS/macOS Debug 构建明确返回 `BUILD SUCCEEDED`（`/tmp/caobao-localized-legacy-image-ios-20261108.log`、`/tmp/caobao-localized-legacy-image-macos-20261108.log`）。
 
 2026-11-08 macOS 图片导入修复：`fileImporter` 返回的安全作用域 URL 现在显式开启访问，读取受控 Data 后构造 `NSImage` 并释放作用域，避免直接 `NSImage(contentsOf:)` 在沙盒下失败。`b029f29`；媒体测试明确退出 `0`，macOS Debug 构建明确退出 `0`。真实大文件、权限拒绝和网络上传仍未验收。
 
