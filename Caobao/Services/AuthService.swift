@@ -427,6 +427,8 @@ struct ExportDataResult: Codable {
 struct AppleSignInButton: View {
     let onSuccess: () -> Void
     let onError: (String) -> Void
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     
     var body: some View {
         SignInWithAppleButton(
@@ -456,8 +458,13 @@ struct AppleSignInButton: View {
                 }
             }
         )
-        .signInWithAppleButtonStyle(.black)
-        .frame(height: 50)
+        // Keep the native button readable in both appearances. A fixed black
+        // style becomes indistinguishable from the dark login background.
+        .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
+        // SignInWithAppleButton clips its background when accessibility text
+        // is taller than the default control height. Give it room to grow so
+        // the hit target and contrast remain visible at every content size.
+        .frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 72 : 50)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }

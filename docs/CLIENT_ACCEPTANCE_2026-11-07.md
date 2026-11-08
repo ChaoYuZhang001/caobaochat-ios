@@ -224,3 +224,10 @@
 1. 若要跨设备收藏，服务端补 owner-scoped v2 API（含认证、删除墓碑和同步）；当前客户端已明确使用本机金句收藏，不阻塞其他验收。
 2. 在真实账号和真实设备上验收 Apple、StoreKit、APNs、图片/语音、双设备同步（会话 change feed、记忆 change feed、任务 change feed、删除墓碑）、账号删除和 TestFlight。
 3. 完善主动更新剩余交互，完成真实角色 CRUD 验收，再实现 AI 群聊协议/编排。
+
+## 2026-11-08 重验补充
+
+- Xcode 当前 iOS target 已写入团队 `26CX9F23YL`。本机有效 Apple Development 证书可用；generic `iphoneos` Debug 构建退出 `0`，`codesign` 验证通过，包内包含 Apple Sign In、APNs development 和 Associated Domains entitlement。该结果移除了此前“本地没有开发签名”的阻塞，但不等于生产分发签名或真实设备验收。
+- 当前 iOS Release Simulator 包重新构建、安装并启动成功；iPad Pro 13-inch Simulator 的深色模式和 `accessibility-extra-extra-extra-large` 首屏均无 crash。登录页 Apple 按钮已按外观选择黑/白样式，并按可访问字号增高，证据为 `/tmp/caobao-ipad-dark-fix-stable-20261108.png` 和 `/tmp/caobao-ipad-a11y-fix-20261108.png`。
+- `Scripts/test-assistant.sh` 本轮所有列出的套件通过，最终日志为 `/tmp/caobao-final-test-assistant-20261108.log`，末尾为 `All 168 actual ChatViewModel integration suites passed`；测试仍使用 mock 网络、隔离存储和 fake 通知，不能替代真实 Apple、StoreKit、APNs、模型、双设备和 TestFlight。
+- 服务端 fresh checkout 与公开生产状态没有变化：`feat/caobao-server-v2`/origin 仍为 `f03f8be`，`/api/status` 仍为 `v1.0.0-rc.48+ciyuan.reconstructed.20261106.1`；AASA 的 app IDs 仍为空。因此设备 DELETE、APNs outbox、主动 Worker、多设备主动状态、AASA 和账号删除云端清理继续归类为服务端发布/联调未通过。

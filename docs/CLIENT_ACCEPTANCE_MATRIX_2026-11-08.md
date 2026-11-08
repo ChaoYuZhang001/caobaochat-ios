@@ -4,7 +4,7 @@
 
 ## 结论
 
-当前 iPhone、iPad 和 macOS 客户端源码可编译，本地协议、数据隔离、任务工具、提醒、同步和 ChatViewModel 回归已通过；整体仍未达到生产完成标准。Apple、StoreKit、APNs、正式签名、双设备、账号删除、主动 Worker 和 TestFlight 尚未通过真实门禁。
+当前 iPhone、iPad 和 macOS 客户端源码可编译，本地协议、数据隔离、任务工具、提醒、同步和 ChatViewModel 回归已通过；iPhone 真机开发签名已经通过，深色模式和超大字体下的登录页也已复测。整体仍未达到生产完成标准。Apple 账号登录、StoreKit、APNs、双设备、账号删除、主动 Worker 和 TestFlight 尚未通过真实门禁。
 
 ## 已通过或客户端已处理
 
@@ -19,14 +19,15 @@
 | 任务工具审批 | 提案、哈希、receipt、继续执行安全边界通过 | 协议 51、执行 48、导出 13 组 |
 | 主动规则与角色 CRUD | 基础页面和真实 CRUD 已验证 | 服务端真实 CRUD；角色对话仍未接入 |
 | 本地化、深链解析、冷启动 | 本地测试和 Simulator smoke 通过 | 本地化 19、深链 8 组；真机深链未验收 |
-| iPad UI 适配 smoke | Release 包在 Dynamic Type `accessibility-extra-extra-extra-large` 和深色模式下首屏启动无 crash | `/tmp/caobao-ipad-release-dynamic-type-20261108.png`、`/tmp/caobao-ipad-release-dark-mode-20261108.png`；不替代 VoiceOver/真机验收 |
-| iOS/macOS Debug/Release 编译 | 当前 checkout 全新 DerivedData 均退出 0 | Debug/Release 构建日志 |
+| iPad UI 适配 smoke | 当前 Release 包在 Dynamic Type `accessibility-extra-extra-extra-large` 和深色模式下首屏启动无 crash；登录按钮在两种模式下保持可见 | `/tmp/caobao-ipad-a11y-fix-20261108.png`、`/tmp/caobao-ipad-dark-fix-stable-20261108.png`；不替代 VoiceOver/真机验收 |
+| iOS/macOS Debug/Release 编译 | 当前 checkout 全新 DerivedData 均退出 0；最终 iPhone 真机 Debug 签名包 `codesign` 校验通过，TeamIdentifier 为 `26CX9F23YL` | `/tmp/caobao-final-device-signing-20261108.log`、`/tmp/caobao-resume-macos-darkfix-build-20261108.log` |
+| 登录页外观与可访问性 | Apple 按钮按系统外观选择黑/白样式；超大字体使用可增长高度，按钮背景和点击区域保持可见 | `Caobao/Services/AuthService.swift`、上述两张 Simulator 截图 |
 
 ## 未通过或等待服务端/发布环境
 
 | 能力 | 当前失败/缺口 | 责任 |
 | --- | --- | --- |
-| Apple 登录全生命周期 | Simulator 未登录 Apple 账户；工程 `DEVELOPMENT_TEAM` 为空，验收包未签名 | 正式签名、系统环境、服务端 |
+| Apple 登录全生命周期 | iPhone 真机 Debug 签名已通过；当前只有开发证书，未连接真实 iPhone，Simulator 也未登录 Apple 账户，完整登录/刷新/撤销仍未通过 | 真实设备、Apple 账号、服务端 |
 | StoreKit 订阅 | 服务端配置有 2 个 Product ID，但 StoreKit 商品数为 0 | App Store Connect、服务端配置、正式签名 |
 | APNs 锁屏投递 | 未验证真实 token、outbox、Worker、重试、锁屏和点击回流 | 服务端 + 真机 |
 | 设备注销 | 客户端发送 DELETE；checkout 分支缺 DELETE，生产与分支漂移 | 服务端发布/契约 |
@@ -36,7 +37,7 @@
 | 账号删除云端清理 | 未证明旧设备、任务、通知和墓碑全部清理 | 服务端真实验收 |
 | Universal Links | AASA `appIDs=[]`，没有新 conversation/task/proactive 路径 | 服务端发布配置 |
 | 双设备同步 | 本地 merge/tombstone 通过，真实双设备未完成 | 服务端 + 真机 |
-| VoiceOver/Dynamic Type | 未在真实 iPhone/iPad/macOS 完成辅助功能验收 | 真机发布门禁 |
+| VoiceOver/Dynamic Type | Simulator 的 iPad 深色模式与超大字体已复测；VoiceOver 和真实设备仍未验收 | 真机发布门禁 |
 
 ## 首发去处或新增功能
 
@@ -57,3 +58,9 @@
 4. 完成主动 Worker 实际执行、角色绑定对话和 TestFlight 安装后，才能重新评估“客户端和服务端全部完成”。
 
 详细证据见 [CLIENT_ACCEPTANCE_2026-11-07.md](CLIENT_ACCEPTANCE_2026-11-07.md) 和 [CLIENT_SERVER_FIX_REQUESTS.md](CLIENT_SERVER_FIX_REQUESTS.md)。
+
+## 本轮重验环境
+
+- 客户端工程当前 iOS Debug/Release 配置使用团队 `26CX9F23YL`；`security find-identity` 找到有效 Apple Development 证书，真机 generic `iphoneos` Debug 构建退出 0，包内 entitlement 和 provisioning profile 已由 `codesign` 验证。
+- `https://ciyuan2api.com/api/status` 仍返回 `v1.0.0-rc.48+ciyuan.reconstructed.20261106.1`；本地 `feat/caobao-server-v2` 与远程仍在 `f03f8be`。因此服务端“已修复”尚未反映到当前 checkout 或公开生产版本，本轮只把服务端路由探针作为鉴权可达性证据。
+- 生产 AASA 仍返回空 `appIDs`/`webcredentials.apps`，且没有 conversation/task/proactive 新路径；Universal Links 和真实 APNs 不能据此标记通过。
