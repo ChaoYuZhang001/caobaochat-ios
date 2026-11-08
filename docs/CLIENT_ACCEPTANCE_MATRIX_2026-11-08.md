@@ -4,7 +4,7 @@
 
 ## 结论
 
-当前 iPhone、iPad 和 macOS 客户端源码可编译，本地协议、数据隔离、任务工具、提醒、同步和 ChatViewModel 回归已通过；iPhone 真机开发签名已经通过，深色模式和超大字体下的登录页也已复测。整体仍未达到生产完成标准。Apple 账号登录、StoreKit、APNs、双设备、账号删除、主动 Worker 和 TestFlight 尚未通过真实门禁。
+当前 iPhone、iPad 和 macOS 客户端源码可编译，本地协议、数据隔离、任务工具、提醒、同步和 ChatViewModel 回归已通过；iPhone Release archive 和开发签名已经通过，深色模式和超大字体下的登录页也已复测。整体仍未达到生产完成标准。Apple 账号登录、StoreKit、APNs、双设备、账号删除、主动 Worker 和 TestFlight 尚未通过真实门禁。
 
 ## 已通过或客户端已处理
 
@@ -37,6 +37,7 @@
 | 账号删除云端清理 | 未证明旧设备、任务、通知和墓碑全部清理 | 服务端真实验收 |
 | Universal Links | AASA `appIDs=[]`，没有新 conversation/task/proactive 路径 | 服务端发布配置 |
 | 双设备同步 | 本地 merge/tombstone 通过，真实双设备未完成 | 服务端 + 真机 |
+| 大规模历史完整恢复 | 全量回退路径单轮最多导入 200 个会话、每个会话 1,000 条消息，超出部分没有截断提示；现行协议把后续分页列为专门策略 | 客户端能力边界/P1；需补分页或明确 UI 状态 |
 | VoiceOver/Dynamic Type | Simulator 的 iPad 深色模式与超大字体已复测；VoiceOver 和真实设备仍未验收 | 真机发布门禁 |
 
 ## 首发去处或新增功能
@@ -77,3 +78,5 @@
 - 最终代码/资源状态再次执行 `Scripts/test-assistant.sh`，全部列出的套件退出 0，末尾为 `All 168 actual ChatViewModel integration suites passed`（`/tmp/caobao-acceptance-final-regression-20261108.log`）。
 - 2026-11-08 07:09 UTC 生产复核仍返回 `X-New-Api-Version: v1.0.0-rc.48+ciyuan.reconstructed.20261106.1`；AASA 仍为 HTTP 200 但 `webcredentials.apps=[]`、`applinks.details[].appIDs=[]`，只有旧 `/chat/*`、`/morning`、`/evening`、`/fortune`、`/roast` 路径。因此服务端修复尚未进入公开生产，Apple Associated Domains/Universal Links 仍未通过。
 - iPhone `iphoneos` Release 使用团队 `26CX9F23YL` 正式签名构建成功；`codesign` 显示 Apple Development、TeamIdentifier `26CX9F23YL`、Apple Sign In、APNs development 和 Associated Domains entitlement（`/tmp/caobao-final-device-release-signing-20261108.log`）。这证明 Release 配置可签名，但仍不是 Distribution/TestFlight 证据。
+- 2026-11-08 07:19 UTC 追加 generic iOS Release archive：`xcodebuild archive` 退出 `0`，归档位于 `.build/final-release-archive-20261108-1519/Caobao.xcarchive`，日志为 `/tmp/caobao-final-release-archive-20261108.log`；归档使用 `Apple Development: ChaoYu Zhang (QW34KDM365)`。因此“可归档/开发安装”已通过，但钥匙串仍没有 Apple Distribution 身份，TestFlight/生产分发仍未通过。
+- 2026-11-08 07:18 UTC 生产状态再次返回 HTTP 200 和 `X-New-Api-Version: v1.0.0-rc.48+ciyuan.reconstructed.20261106.1`；当前电脑没有连接真实 iPhone，`xcrun xctrace list devices` 仅列出 Mac 和 Simulator。真机 Apple、StoreKit、APNs 和 Universal Links 验收继续保持未通过。
