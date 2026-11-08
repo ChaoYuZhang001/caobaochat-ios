@@ -19,6 +19,7 @@
 | 任务工具审批 | 提案、哈希、receipt、继续执行安全边界通过 | 协议 51、执行 48、导出 13 组 |
 | 主动规则与角色 CRUD | 基础页面和真实 CRUD 已验证 | 服务端真实 CRUD；角色对话仍未接入 |
 | 本地化、深链解析、冷启动 | 本地测试和 Simulator smoke 通过 | 本地化 19、深链 8 组；真机深链未验收 |
+| iPad UI 适配 smoke | Release 包在 Dynamic Type `accessibility-extra-extra-extra-large` 和深色模式下首屏启动无 crash | `/tmp/caobao-ipad-release-dynamic-type-20261108.png`、`/tmp/caobao-ipad-release-dark-mode-20261108.png`；不替代 VoiceOver/真机验收 |
 | iOS/macOS Debug/Release 编译 | 当前 checkout 全新 DerivedData 均退出 0 | Debug/Release 构建日志 |
 
 ## 未通过或等待服务端/发布环境
