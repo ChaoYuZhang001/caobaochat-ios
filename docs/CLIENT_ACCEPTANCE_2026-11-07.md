@@ -59,6 +59,7 @@
 2026-11-08 Apple/订阅/账号专项客户端审计：`Scripts/test-assistant-identity.sh` 明确退出 `0`（17 个身份套件），`Scripts/test-assistant-entitlements.sh` 明确退出 `0`（14 个权益套件）。代码已复核 nonce/state、JWT/授权码原文、刷新 owner 校验、Keychain 会话、撤销、删除状态能力、StoreKit `appAccountToken`、服务器验证后交易 finish 和账号切换取消任务；未发现可独立修复的客户端缺陷。有效签名身份仍为 0，真实 Apple/APNs/TestFlight 未验收；StoreKit 商品为 0，归 App Store Connect/StoreKit 配置和真实账号环境；账号删除服务端清理仍未验收。
 
 2026-11-08 最新 iPhone Simulator 冷启动：将当前 Debug 包安装到 iPhone 17 Pro Max `15AFDF2E-A189-48E0-BD56-DC18BD7AC926`，启动截图 `/tmp/caobao-ui-acceptance-home-20261108.png` 显示登录页、Apple 登录、BYOK 入口和协议入口；进程日志未发现 Caobao crash/fatal。该证据只证明未登录首屏可见性，不能替代 Apple 认证、登录后 Home、真实设备或签名验收。
+2026-11-08 官方矩阵本地化构建后的 iPhone 冷启动复测：最新 `.build/official-matrix-localized-ios` 安装并启动成功，`simctl launch` 返回进程 PID `82689`，截图 `/tmp/caobao-official-matrix-coldstart-20261108.png`，最近 2 分钟 Caobao 进程日志未发现 crash/fatal。该证据仍只覆盖 Simulator 未登录首屏可见性，不替代真实设备和签名验收。
 
 2026-11-08 macOS Debug 冷启动：当前 `Caobao-macOS.app` 构建明确退出 `0`，实际打开窗口并显示中文登录页、Apple 登录和 BYOK 入口；截图 `/tmp/caobao-macos-ui-smoke-20261108.png`，系统日志未发现 Caobao crash/fatal。该证据只覆盖本机 macOS 未登录首屏，不替代 VoiceOver、Dynamic Type、真实账号、签名和订阅验收。
 
