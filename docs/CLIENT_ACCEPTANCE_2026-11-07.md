@@ -130,6 +130,7 @@
 同一改动的 Release 构建也已通过：iOS Simulator 和 macOS Release 均明确返回 `BUILD SUCCEEDED`（`/tmp/caobao-legacy-tools-disabled-release-ios-20261108.log`、`/tmp/caobao-legacy-tools-disabled-release-macos-20261108.log`）。这仍是未签名 Release 编译证据，不替代正式 archive、TestFlight 和真机验收。
 
 2026-11-08 生产状态复核：`https://ciyuan2api.com/api/status` 返回 HTTP 200，`X-New-Api-Version: v1.0.0-rc.48+ciyuan.reconstructed.20261106.1`；`/api/caobao/fortune`、`/api/report/morning`、`/api/analyze` 仍返回 HTTP 404。`https://caobao.chat/.well-known/apple-app-site-association` 返回 HTTP 200，但 `webcredentials.apps` 和 `applinks.details[0].appIDs` 仍为空，components 仍只有旧工具路径。结论未变：旧工具兼容/AASA 属于服务端发布项，客户端已阻断无效调用。
+2026-11-08 00:16 UTC 生产探针复测：`/api/status` 仍为 HTTP 200、版本 `v1.0.0-rc.48+ciyuan.reconstructed.20261106.1`；`/api/caobao/fortune`、`/api/report/morning`、`/api/analyze` 仍为 HTTP 404；AASA 仍为 HTTP 200 但 `webcredentials.apps`、`applinks.details[0].appIDs` 为空且未声明 conversation/task/proactive 路径。该结果再次确认剩余项属于服务端兼容路由和发布配置，客户端继续保持阻断无效旧请求。
 
 2026-11-08 客户端接口覆盖审计：核心首页、对话、任务、记忆、主动规则和订阅页面调用 `/api/v2` 契约；旧 `/api/caobao/*`、`/api/report/*`、`/api/analyze` 只存在于二级兼容页面或未挂载代码，未发现核心导航直接调用旧路径。该审计支持将旧工具从首发核心范围移出，而不是把静态 API 方法存在误判为功能完成。
 
