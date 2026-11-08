@@ -60,6 +60,7 @@
 
 2026-11-08 最新 iPhone Simulator 冷启动：将当前 Debug 包安装到 iPhone 17 Pro Max `15AFDF2E-A189-48E0-BD56-DC18BD7AC926`，启动截图 `/tmp/caobao-ui-acceptance-home-20261108.png` 显示登录页、Apple 登录、BYOK 入口和协议入口；进程日志未发现 Caobao crash/fatal。该证据只证明未登录首屏可见性，不能替代 Apple 认证、登录后 Home、真实设备或签名验收。
 2026-11-08 官方矩阵本地化构建后的 iPhone 冷启动复测：最新 `.build/official-matrix-localized-ios` 安装并启动成功，`simctl launch` 返回进程 PID `82689`，截图 `/tmp/caobao-official-matrix-coldstart-20261108.png`，最近 2 分钟 Caobao 进程日志未发现 crash/fatal。该证据仍只覆盖 Simulator 未登录首屏可见性，不替代真实设备和签名验收。
+2026-11-08 当前 checkout 定向协议复测：身份 17/17、权益 14/14、设备注册、媒体 12/12、安静时段 31 组、提醒协调 88/88、深链 8/8、协议 9+24 均退出 `0`；日志分别为 `/tmp/caobao-IDENTITY-current-20261108.log`、`/tmp/caobao-ENTITLEMENTS-current-20261108.log`、`/tmp/caobao-DEVICE_REGISTRATION-current-20261108.log`、`/tmp/caobao-MEDIA-current-20261108.log`、`/tmp/caobao-QUIET_HOURS-current-20261108.log`、`/tmp/caobao-REMINDER_COORDINATOR-current-20261108.log`、`/tmp/caobao-DEEP_LINK-current-20261108.log`、`/tmp/caobao-PROTOCOL-current-20261108.log`。这些测试全部使用 mock/隔离文件/fake 通知，不替代真实 Apple、StoreKit、APNs、系统权限和生产模型请求。
 
 2026-11-08 macOS Debug 冷启动：当前 `Caobao-macOS.app` 构建明确退出 `0`，实际打开窗口并显示中文登录页、Apple 登录和 BYOK 入口；截图 `/tmp/caobao-macos-ui-smoke-20261108.png`，系统日志未发现 Caobao crash/fatal。该证据只覆盖本机 macOS 未登录首屏，不替代 VoiceOver、Dynamic Type、真实账号、签名和订阅验收。
 
