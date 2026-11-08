@@ -499,16 +499,16 @@ struct AssistantProactiveView: View {
                     .foregroundStyle(.secondary)
             }
             if let createdAt = formattedProactiveDate(run.createdAt) {
-                Text("生成于 \(createdAt)").font(.caption).foregroundStyle(.secondary)
+                Text(verbatim: String(format: AssistantLocalization.string("生成于 %@"), createdAt)).font(.caption).foregroundStyle(.secondary)
             } else {
-                Text("生成于 \(run.createdAt)").font(.caption).foregroundStyle(.secondary)
+                Text(verbatim: String(format: AssistantLocalization.string("生成于 %@"), run.createdAt)).font(.caption).foregroundStyle(.secondary)
             }
             if let deliveredAt = run.deliveredAt,
                let delivered = formattedProactiveDate(deliveredAt) {
-                Text("送达于 \(delivered)").font(.caption2).foregroundStyle(.tertiary)
+                Text(verbatim: String(format: AssistantLocalization.string("送达于 %@"), delivered)).font(.caption2).foregroundStyle(.tertiary)
             }
             if let refs = run.sourceRefs, !refs.isEmpty {
-                Text("来源：\(refs.joined(separator: "、"))")
+                Text(verbatim: String(format: AssistantLocalization.string("来源：%@"), refs.joined(separator: "、")))
                     .font(.caption2).foregroundStyle(.tertiary)
             }
             if appState.pendingAssistantProactiveRunId == run.id {
@@ -534,13 +534,13 @@ struct AssistantProactiveView: View {
 
     private func proactiveTriggerTitle(_ reason: String) -> String {
         switch reason {
-        case "scheduled", "schedule": return "按计划运行"
-        case "task_due", "due": return "任务即将到期"
-        case "task_overdue", "overdue": return "任务已逾期"
-        case "follow_up", "conversation_follow_up": return "对话后续跟进"
-        case "inactivity": return "一段时间未互动"
-        case "manual", "": return "手动运行"
-        default: return "主动事件：\(reason)"
+        case "scheduled", "schedule": return AssistantLocalization.string("按计划运行")
+        case "task_due", "due": return AssistantLocalization.string("任务即将到期")
+        case "task_overdue", "overdue": return AssistantLocalization.string("任务已逾期")
+        case "follow_up", "conversation_follow_up": return AssistantLocalization.string("对话后续跟进")
+        case "inactivity": return AssistantLocalization.string("一段时间未互动")
+        case "manual", "": return AssistantLocalization.string("手动运行")
+        default: return String(format: AssistantLocalization.string("主动事件：%@"), reason)
         }
     }
 
@@ -557,7 +557,7 @@ struct AssistantProactiveView: View {
         case "failed": return Text("云端执行失败")
         case "paused": return Text("云端已暂停")
         case "cancelled", "canceled": return Text("云端已取消")
-        default: return Text(verbatim: "云端状态：\(status)")
+        default: return Text(verbatim: String(format: AssistantLocalization.string("云端状态：%@"), status))
         }
     }
 
