@@ -137,7 +137,7 @@ struct FeaturesView: View {
             .alert("功能暂未启用", isPresented: $showingUnavailableTool) {
                 Button("知道了", role: .cancel) { }
             } message: {
-                Text(verbatim: "\(unavailableToolTitle) 当前调用的旧接口尚未在生产服务端提供，请使用对话工作区。")
+                Text(verbatim: String(format: AssistantLocalization.string("%@ 当前调用的旧接口尚未在生产服务端提供，请使用对话工作区。"), unavailableToolTitle))
             }
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)

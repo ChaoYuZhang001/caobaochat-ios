@@ -176,7 +176,7 @@ struct OfficialView: View {
                 
                 productCard(
                     name: "草根社区",
-                    desc: "AI原生内容社区（开发中）",
+                    desc: "AI原生内容社区",
                     features: ["AI创作分享", "提示词市场", "Agent工坊"],
                     color: .purple,
                     isComingSoon: true
@@ -208,7 +208,7 @@ struct OfficialView: View {
                 }
             }
             
-            Text(desc)
+            Text(LocalizedStringKey(desc))
                 .font(.subheadline)
                 .foregroundColor(.secondary)
             

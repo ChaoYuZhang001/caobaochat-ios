@@ -469,9 +469,9 @@ private struct MacOfficialView: View {
                                     .frame(width: 22)
                                 VStack(alignment: .leading, spacing: 3) {
                                     HStack {
-                                        Text(product.0).font(.headline)
+                                        Text(LocalizedStringKey(product.0)).font(.headline)
                                         if product.3 {
-                                            Text("开发中")
+                                            Text(LocalizedStringKey("开发中"))
                                                 .font(.caption2)
                                                 .padding(.horizontal, 6)
                                                 .padding(.vertical, 3)
@@ -479,8 +479,8 @@ private struct MacOfficialView: View {
                                                 .foregroundStyle(.purple)
                                         }
                                     }
-                                    Text(product.1).font(.subheadline)
-                                    Text(product.2).font(.caption).foregroundStyle(.secondary)
+                                    Text(LocalizedStringKey(product.1)).font(.subheadline)
+                                    Text(LocalizedStringKey(product.2)).font(.caption).foregroundStyle(.secondary)
                                 }
                                 Spacer(minLength: 0)
                             }
@@ -825,7 +825,7 @@ struct MacToolsView: View {
             .alert("功能暂未启用", isPresented: $showingUnavailableTool) {
                 Button("知道了", role: .cancel) { }
             } message: {
-                Text(verbatim: "\(unavailableToolTitle) 当前调用的旧接口尚未在生产服务端提供，请使用对话工作区。")
+                Text(verbatim: String(format: AssistantLocalization.string("%@ 当前调用的旧接口尚未在生产服务端提供，请使用对话工作区。"), unavailableToolTitle))
             }
             .navigationDestination(for: MacFeature.self) { feature in
                 MacToolDestination(feature: feature)
