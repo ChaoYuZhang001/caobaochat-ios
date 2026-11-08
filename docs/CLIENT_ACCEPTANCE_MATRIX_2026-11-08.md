@@ -73,3 +73,4 @@
 - 自定义角色仍只完成 owner-scoped CRUD；对话请求没有 `characterId/version`，AI 群聊没有参与者/轮次/speaker 协议，因此这两项继续列为客户端+服务端新增功能。
 - 当前 iPhone 17 Pro Max Simulator 已安装本轮 Debug 包并启动，`simctl launch` 返回 PID，7 秒后截图成功；应用进程 crash/fatal 日志为空（`/tmp/caobao-source-marker-launch-20261108.png`、`/tmp/caobao-source-marker-launch-logs-20261108.txt`）。系统仍停在未登录 Apple 账户验证面板，不能计入 Apple 登录完成。
 - 本轮主动来源标记改动后的 iOS Simulator Release 与 macOS Release 均在全新 DerivedData 构建成功；Release 包安装到 iPhone 17 Pro Max Simulator 后启动成功，应用 crash/fatal 日志为空（`/tmp/caobao-acceptance-final-release-ios-20261108.log`、`/tmp/caobao-acceptance-final-release-macos-20261108.log`、`/tmp/caobao-acceptance-final-release-launch-20261108.png`）。这仍不替代正式分发签名、真机和 TestFlight。
+- 主动对话来源标记新增中英文资源；本地化 19 组、iOS/macOS Debug 构建均通过（`/tmp/caobao-acceptance-localization-20261108.log`、`/tmp/caobao-acceptance-localization-ios-20261108.log`、`/tmp/caobao-acceptance-localization-macos-20261108.log`）。
