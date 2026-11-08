@@ -49,6 +49,7 @@
 2026-11-08 01:28 UTC 生产门禁复核：`https://ciyuan2api.com/api/status` curl 退出 `0`、HTTP `200`，版本仍为 `v1.0.0-rc.48+ciyuan.reconstructed.20261106.1`；AASA 虽返回 HTTP `200`，但 `webcredentials.apps` 和 `applinks.details[].appIDs` 仍为空，且仍未声明 `/conversation/*`、`/task/*`、`/proactive/*`，因此 Universal Link 仍归服务端发布配置失败。
 
 2026-11-08 客户端/服务端设备注销契约复核：客户端 `AssistantDeviceRegistrationClient.unregister()` 发送 `DELETE /api/v2/devices/{deviceId}` 并要求 `status=unregistered`；当前 `feat/caobao-server-v2` 路由源码只注册 `POST /api/v2/devices`，未发现 DELETE handler。此前生产对随机设备 ID 的 DELETE 探针返回成功，和 checkout 不一致，不能继续作为通过证据；必须完成 production-versus-branch 比较并确认正式注销响应、旧账号失效和 outbox 清理。归类为服务端发布/契约核对。
+2026-11-08 01:29 UTC 设备路由补充探针：生产 `GET /api/v2/devices/{id}` 返回 `404 Invalid URL`，同一随机 ID 的无认证 `DELETE` 返回 `401 UNAUTHENTICATED`，说明生产确实挂载了 DELETE 路由并受 NativeAuth 保护；但当前 `feat/caobao-server-v2` checkout 仍只注册 POST，形成 production-versus-branch 漂移。该探针不能证明 owner 隔离、幂等、旧账号失效或 outbox 清理，仍保留 P0 服务端源码/部署核对项。
 
 2026-11-08 二级图片分析复核：`AnalyzeView` 仍调用旧 `APIService.analyzeImage`，请求 `/api/analyze`，未携带 Bearer、owner 或额度协议；现代聊天图片附件走 Assistant v2，两者不能混为一谈。归类为客户端 + 服务端协议未验收的二级功能，后续迁移到 Assistant v2 或补齐旧接口契约。
 
