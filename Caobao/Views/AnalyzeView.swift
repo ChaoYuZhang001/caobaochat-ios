@@ -17,6 +17,7 @@ struct AnalyzeView: View {
     @State private var loading = false
     @State private var result = ""
     @State private var copied = false
+    @State private var showingUnavailableNotice = false
     
     #if os(iOS)
     @State private var selectedItem: PhotosPickerItem?
@@ -214,16 +215,14 @@ struct AnalyzeView: View {
                         
                         // 分析按钮
                         Button {
-                            analyzeImage()
+                            // The legacy image-analysis endpoint is not part of
+                            // the production v2 contract. Keep this secondary
+                            // screen honest instead of issuing a guaranteed 404.
+                            showingUnavailableNotice = true
                         } label: {
                             HStack {
-                                if loading {
-                                    ProgressView()
-                                        .tint(.white)
-                                } else {
-                                    Image(systemName: "sparkles")
-                                }
-                                Text(loading ? "分析中..." : "开始分析")
+                                Image(systemName: "info.circle")
+                                Text("服务端接口待迁移")
                                     .fontWeight(.semibold)
                             }
                             .frame(maxWidth: .infinity)
@@ -241,7 +240,7 @@ struct AnalyzeView: View {
                             .foregroundStyle(.white)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
-                        .disabled(loading || selectedImage == nil)
+                        .disabled(selectedImage == nil)
                         .opacity(selectedImage == nil ? 0.5 : 1)
                         
                         // 分析结果
@@ -281,6 +280,11 @@ struct AnalyzeView: View {
                 }
             }
             .navigationTitle("图片分析")
+            .alert("功能暂未启用", isPresented: $showingUnavailableNotice) {
+                Button("知道了", role: .cancel) { }
+            } message: {
+                Text("图片分析的旧服务端接口尚未迁移到助理 v2。请在对话工作区添加图片并发送请求。")
+            }
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             .photosPicker(isPresented: $showingImagePicker, selection: $selectedItem, matching: .images)
@@ -319,42 +323,6 @@ struct AnalyzeView: View {
         "分析图片情感",
         "这张图片想表达什么",
     ]
-    
-    // MARK: - Actions
-    private func analyzeImage() {
-        guard let image = selectedImage else { return }
-        #if os(iOS)
-        guard let imageData = image.jpegData(compressionQuality: 0.8) else { return }
-        #else
-        guard let tiffData = image.tiffRepresentation,
-              let bitmap = NSBitmapImageRep(data: tiffData),
-              let imageData = bitmap.representation(using: .jpeg, properties: [:]) else { return }
-        #endif
-        
-        loading = true
-        result = ""
-        
-        Task {
-            do {
-                let stream = try await APIService.shared.analyzeImage(imageData: imageData, prompt: prompt)
-                
-                for try await chunk in stream {
-                    await MainActor.run {
-                        result += chunk
-                    }
-                }
-                
-                await MainActor.run {
-                    loading = false
-                }
-            } catch {
-                await MainActor.run {
-                    loading = false
-                    result = "分析失败，请重试"
-                }
-            }
-        }
-    }
     
     private func copyResult() {
         #if os(iOS)
