@@ -46,6 +46,7 @@
 2026-11-08 内容举报同样改为邮件反馈：消息气泡的举报表单不再调用旧 `/feedback`，改为生成包含原因和截断消息正文的系统邮件；`allowsReporting` 仍默认关闭，避免未授权的举报入口出现在核心对话路径。
 
 2026-11-08 生产配置复核：`https://ciyuan2api.com/api/status` 返回 HTTP 200，版本头仍为 `v1.0.0-rc.48+ciyuan.reconstructed.20261106.1`；`https://caobao.chat/.well-known/apple-app-site-association` 和根路径均返回 HTTP 200，但 `appIDs` 为空且仍只声明旧工具路径，新的 conversation/task/proactive 深链仍不能验收。
+2026-11-08 01:28 UTC 生产门禁复核：`https://ciyuan2api.com/api/status` curl 退出 `0`、HTTP `200`，版本仍为 `v1.0.0-rc.48+ciyuan.reconstructed.20261106.1`；AASA 虽返回 HTTP `200`，但 `webcredentials.apps` 和 `applinks.details[].appIDs` 仍为空，且仍未声明 `/conversation/*`、`/task/*`、`/proactive/*`，因此 Universal Link 仍归服务端发布配置失败。
 
 2026-11-08 客户端/服务端设备注销契约复核：客户端 `AssistantDeviceRegistrationClient.unregister()` 发送 `DELETE /api/v2/devices/{deviceId}` 并要求 `status=unregistered`；当前 `feat/caobao-server-v2` 路由源码只注册 `POST /api/v2/devices`，未发现 DELETE handler。此前生产对随机设备 ID 的 DELETE 探针返回成功，和 checkout 不一致，不能继续作为通过证据；必须完成 production-versus-branch 比较并确认正式注销响应、旧账号失效和 outbox 清理。归类为服务端发布/契约核对。
 
