@@ -30,6 +30,7 @@
 | Apple 登录全生命周期 | iPhone 真机 Debug 签名已通过；当前只有开发证书，未连接真实 iPhone，Simulator 也未登录 Apple 账户，完整登录/刷新/撤销仍未通过 | 真实设备、Apple 账号、服务端 |
 | StoreKit 订阅 | 服务端配置有 2 个 Product ID，但 StoreKit 商品数为 0 | App Store Connect、服务端配置、正式签名 |
 | APNs 锁屏投递 | 未验证真实 token、outbox、Worker、重试、锁屏和点击回流 | 服务端 + 真机 |
+| APNs 点击字段 | 客户端要求 owner 绑定的 `ownerId`、`route` 和任务/主动运行 ID；checkout 的 APNs sender 当前只把 `deepLink` 写入最终 JSON | 服务端 payload 契约/发布 |
 | 设备注销 | 客户端发送 DELETE；checkout 分支缺 DELETE，生产与分支漂移 | 服务端发布/契约 |
 | 主动任务执行 | profile/rule CRUD 通过，Worker、run、conversation 回流未闭环 | 服务端 |
 | 主动阅读/稍后/关闭此类 | 服务端没有多设备 read/snooze/dismiss/close-kind 接口 | 服务端新增 |
@@ -65,6 +66,7 @@
 - 客户端工程当前 iOS Debug/Release 配置使用团队 `26CX9F23YL`；`security find-identity` 找到有效 Apple Development 证书，真机 generic `iphoneos` Debug 构建退出 0，包内 entitlement 和 provisioning profile 已由 `codesign` 验证。
 - `https://ciyuan2api.com/api/status` 仍返回 `v1.0.0-rc.48+ciyuan.reconstructed.20261106.1`；本地 `feat/caobao-server-v2` 与远程仍在 `f03f8be`。因此服务端“已修复”尚未反映到当前 checkout 或公开生产版本，本轮只把服务端路由探针作为鉴权可达性证据。
 - 生产 AASA 仍返回空 `appIDs`/`webcredentials.apps`，且没有 conversation/task/proactive 新路径；Universal Links 和真实 APNs 不能据此标记通过。
+- 2026-11-08 09:20 UTC 公网复核仍为 `X-New-Api-Version: v1.0.0-rc.48+ciyuan.reconstructed.20261106.1`；AASA 仍为 `appIDs=[]`、`webcredentials.apps=[]`。服务端修复声明尚未形成可验证的公网版本变化。
 
 ## 本轮客户端闭环修复
 
