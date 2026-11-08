@@ -191,14 +191,14 @@ struct OfficialView: View {
     private func productCard(name: String, desc: String, features: [String], color: Color, isComingSoon: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text(name)
+                Text(LocalizedStringKey(name))
                     .font(.headline)
                     .foregroundColor(color)
                 
                 Spacer()
                 
                 if isComingSoon {
-                    Text("Coming Soon")
+                    Text(LocalizedStringKey("开发中"))
                         .font(.caption2)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
@@ -214,7 +214,7 @@ struct OfficialView: View {
             
             HStack(spacing: 8) {
                 ForEach(features, id: \.self) { feature in
-                    Text(feature)
+                    Text(LocalizedStringKey(feature))
                         .font(.caption)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
