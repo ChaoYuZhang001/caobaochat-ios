@@ -26,7 +26,7 @@ final class AssistantCloudConversationSync {
         let headSeq: Int64
         let resyncRequired: Bool
     }
-    private struct RemoteConversation: Decodable {
+    private struct RemoteConversation: Codable {
         let id: String; let clientConversationId: String; let title: String?; let locale: String?
         let status: String?; let createdAt: String; let updatedAt: String
     }
@@ -46,7 +46,30 @@ final class AssistantCloudConversationSync {
         let status: String
         let updatedAt: String
     }
-    private struct SyncState: Codable { var cursor: Int64 = 0 }
+    private struct SnapshotState: Codable {
+        var nextPageCursor: String? = nil
+        var pending: [RemoteConversation] = []
+        var active: RemoteConversation? = nil
+        var messageCursor: String? = nil
+        var endReached = false
+        var pageCount = 0
+    }
+    private struct SyncState: Codable {
+        var cursor: Int64 = 0
+        var snapshot: SnapshotState? = nil
+
+        init(cursor: Int64 = 0, snapshot: SnapshotState? = nil) {
+            self.cursor = cursor
+            self.snapshot = snapshot
+        }
+
+        // State written by older client versions only contained `cursor`.
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            cursor = try container.decodeIfPresent(Int64.self, forKey: .cursor) ?? 0
+            snapshot = try container.decodeIfPresent(SnapshotState.self, forKey: .snapshot)
+        }
+    }
 
     private final class RedirectBlocker: NSObject, URLSessionTaskDelegate {
         func urlSession(_ session: URLSession, task: URLSessionTask,
@@ -83,6 +106,22 @@ final class AssistantCloudConversationSync {
             throw AssistantCloudConversationSyncError.invalidConfiguration
         }
         var state = loadState(ownerId: ownerId)
+        if state.snapshot != nil {
+            do {
+                let complete = try await fullSnapshot(ownerId: ownerId, token: token, archive: archive, state: &state)
+                saveState(state, ownerId: ownerId)
+                if complete {
+                    state.snapshot = nil
+                    saveState(state, ownerId: ownerId)
+                }
+            } catch {
+                // Preserve the active conversation/page cursor so a transient
+                // network or cancellation failure resumes without restarting.
+                saveState(state, ownerId: ownerId)
+                throw error
+            }
+            return
+        }
         var cursor = state.cursor
         var changePages = 0
         while true {
@@ -92,8 +131,15 @@ final class AssistantCloudConversationSync {
             if changes.resyncRequired {
                 state = SyncState()
                 cursor = 0
+                state.snapshot = SnapshotState()
                 saveState(state, ownerId: ownerId)
-                try await fullSnapshot(ownerId: ownerId, token: token, archive: archive)
+                do {
+                    _ = try await fullSnapshot(ownerId: ownerId, token: token, archive: archive, state: &state)
+                    saveState(state, ownerId: ownerId)
+                } catch {
+                    saveState(state, ownerId: ownerId)
+                    throw error
+                }
                 return
             }
             guard changes.nextCursor >= cursor, changes.headSeq >= changes.nextCursor else {
@@ -114,7 +160,14 @@ final class AssistantCloudConversationSync {
             // A zero head means the server predates the change feed. Preserve
             // compatibility by importing the existing snapshot once.
             if changes.items.isEmpty && cursor == 0 && changes.headSeq == 0 {
-                try await fullSnapshot(ownerId: ownerId, token: token, archive: archive)
+                state.snapshot = SnapshotState()
+                do {
+                    _ = try await fullSnapshot(ownerId: ownerId, token: token, archive: archive, state: &state)
+                    saveState(state, ownerId: ownerId)
+                } catch {
+                    saveState(state, ownerId: ownerId)
+                    throw error
+                }
                 return
             }
             if changes.items.isEmpty || cursor >= changes.headSeq { return }
@@ -140,16 +193,36 @@ final class AssistantCloudConversationSync {
         }
     }
 
-    private func fullSnapshot(ownerId: String, token: String, archive: AssistantChatArchive) async throws {
-        var cursor: String?
-        var seenCursors = Set<String>()
-        var pageCount = 0
+    private func fullSnapshot(ownerId: String, token: String, archive: AssistantChatArchive,
+                             state: inout SyncState) async throws -> Bool {
+        var snapshot = state.snapshot ?? SnapshotState()
         var imported = 0
-        repeat {
-            pageCount += 1
-            guard pageCount <= 100 else { throw AssistantCloudConversationSyncError.invalidResponse }
-            let page: Page<RemoteConversation> = try await get(path: "conversations", cursor: cursor, limit: 50, token: token)
-            for remote in page.items {
+        while imported < 200 {
+            if snapshot.active == nil && snapshot.pending.isEmpty {
+                guard !snapshot.endReached else {
+                    state.snapshot = nil
+                    return true
+                }
+                snapshot.pageCount += 1
+                guard snapshot.pageCount <= 1_000 else { throw AssistantCloudConversationSyncError.invalidResponse }
+                let requestedCursor = snapshot.nextPageCursor
+                let page: Page<RemoteConversation> = try await get(path: "conversations", cursor: requestedCursor, limit: 50, token: token)
+                let nextCursor = normalizedCursor(page.nextCursor)
+                guard nextCursor == nil || nextCursor != requestedCursor else {
+                    throw AssistantCloudConversationSyncError.invalidResponse
+                }
+                snapshot.nextPageCursor = nextCursor
+                snapshot.endReached = nextCursor == nil
+                snapshot.pending = page.items
+                if page.items.isEmpty { continue }
+            }
+
+            if snapshot.active == nil {
+                snapshot.active = snapshot.pending.removeFirst()
+                snapshot.messageCursor = nil
+            }
+            guard let remote = snapshot.active else { throw AssistantCloudConversationSyncError.invalidResponse }
+            do {
                 try Task.checkCancellation()
                 guard validServerConversationId(remote.id) else { throw AssistantCloudConversationSyncError.invalidResponse }
                 guard validClientConversationId(remote.clientConversationId) else {
@@ -158,21 +231,30 @@ final class AssistantCloudConversationSync {
                 guard date(remote.createdAt) != nil, date(remote.updatedAt) != nil else {
                     throw AssistantCloudConversationSyncError.invalidResponse
                 }
-                let messages = try await fetchMessages(remote.id, token: token)
-                guard messages.allSatisfy({ date($0.createdAt) != nil }) else {
+                let result = try await fetchMessagePage(remote.id, token: token, cursor: snapshot.messageCursor)
+                guard result.messages.allSatisfy({ date($0.createdAt) != nil }) else {
                     throw AssistantCloudConversationSyncError.invalidResponse
                 }
-                try await merge(remote: remote, messages: messages, ownerId: ownerId, archive: archive)
+                try await merge(remote: remote, messages: result.messages, ownerId: ownerId, archive: archive)
+                if let next = result.nextCursor {
+                    guard next != snapshot.messageCursor else { throw AssistantCloudConversationSyncError.invalidResponse }
+                    snapshot.messageCursor = next
+                    state.snapshot = snapshot
+                    return false
+                }
+                snapshot.active = nil
+                snapshot.messageCursor = nil
                 imported += 1
-                if imported >= 200 { return }
+                state.snapshot = snapshot
+            } catch {
+                // Keep the active conversation and cursor in state. A retry is
+                // safe because merge() is idempotent by message identity.
+                state.snapshot = snapshot
+                throw error
             }
-            if let next = normalizedCursor(page.nextCursor) {
-                guard seenCursors.insert(next).inserted else { throw AssistantCloudConversationSyncError.invalidResponse }
-                cursor = next
-            } else {
-                cursor = nil
-            }
-        } while cursor != nil
+        }
+        state.snapshot = snapshot
+        return false
     }
 
     private func getChanges(cursor: Int64, limit: Int, token: String) async throws -> ChangePage {
@@ -227,14 +309,30 @@ final class AssistantCloudConversationSync {
     }
 
     private func fetchMessages(_ id: String, token: String) async throws -> [RemoteMessage] {
+        let result = try await fetchMessagePage(id, token: token, cursor: nil)
+        guard result.nextCursor == nil else { throw AssistantCloudConversationSyncError.invalidResponse }
+        return result.messages
+    }
+
+    private struct MessagePageResult {
+        let messages: [RemoteMessage]
+        let nextCursor: String?
+    }
+
+    private func fetchMessagePage(_ id: String, token: String, cursor initialCursor: String?) async throws -> MessagePageResult {
         guard validServerConversationId(id) else { throw AssistantCloudConversationSyncError.invalidResponse }
-        var cursor: String?
+        var cursor = normalizedCursor(initialCursor)
         var seenCursors = Set<String>()
         var pageCount = 0
         var result: [RemoteMessage] = []
         repeat {
+            // Keep each invocation within the existing 1,000-message budget
+            // (five pages at the server's maximum page size). A non-nil
+            // cursor is returned so full snapshots resume on the next sync.
+            if pageCount >= 5 {
+                return MessagePageResult(messages: result, nextCursor: cursor)
+            }
             pageCount += 1
-            guard pageCount <= 20 else { throw AssistantCloudConversationSyncError.invalidResponse }
             let page: Page<RemoteMessage> = try await get(path: "conversations/\(escaped(id))/messages", cursor: cursor, limit: 200, token: token)
             result.append(contentsOf: page.items)
             if let next = normalizedCursor(page.nextCursor) {
@@ -243,9 +341,8 @@ final class AssistantCloudConversationSync {
             } else {
                 cursor = nil
             }
-            if result.count >= 1_000 { break }
         } while cursor != nil
-        return result
+        return MessagePageResult(messages: result, nextCursor: cursor)
     }
 
     private func get<T: Decodable>(path: String, cursor: String?, limit: Int, token: String) async throws -> T {

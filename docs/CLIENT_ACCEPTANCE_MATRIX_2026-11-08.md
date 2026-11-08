@@ -37,7 +37,7 @@
 | 账号删除云端清理 | 未证明旧设备、任务、通知和墓碑全部清理 | 服务端真实验收 |
 | Universal Links | AASA `appIDs=[]`，没有新 conversation/task/proactive 路径 | 服务端发布配置 |
 | 双设备同步 | 本地 merge/tombstone 通过，真实双设备未完成 | 服务端 + 真机 |
-| 大规模历史完整恢复 | 全量回退路径单轮最多导入 200 个会话、每个会话 1,000 条消息，超出部分没有截断提示；现行协议把后续分页列为专门策略 | 客户端能力边界/P1；需补分页或明确 UI 状态 |
+| 大规模历史完整恢复 | 客户端已把全量回退的会话页、活动会话和消息游标按 owner 持久化，后续同步可继续导入 200 个以上会话及 1,000 条以上消息；定向大数据分页测试通过 | 客户端修复通过；完整生产双设备仍待真机/服务端验收 |
 | VoiceOver/Dynamic Type | Simulator 的 iPad 深色模式与超大字体已复测；VoiceOver 和真实设备仍未验收 | 真机发布门禁 |
 
 ## 首发去处或新增功能
@@ -80,3 +80,5 @@
 - iPhone `iphoneos` Release 使用团队 `26CX9F23YL` 正式签名构建成功；`codesign` 显示 Apple Development、TeamIdentifier `26CX9F23YL`、Apple Sign In、APNs development 和 Associated Domains entitlement（`/tmp/caobao-final-device-release-signing-20261108.log`）。这证明 Release 配置可签名，但仍不是 Distribution/TestFlight 证据。
 - 2026-11-08 07:19 UTC 追加 generic iOS Release archive：`xcodebuild archive` 退出 `0`，归档位于 `.build/final-release-archive-20261108-1519/Caobao.xcarchive`，日志为 `/tmp/caobao-final-release-archive-20261108.log`；归档使用 `Apple Development: ChaoYu Zhang (QW34KDM365)`。因此“可归档/开发安装”已通过，但钥匙串仍没有 Apple Distribution 身份，TestFlight/生产分发仍未通过。
 - 2026-11-08 07:18 UTC 生产状态再次返回 HTTP 200 和 `X-New-Api-Version: v1.0.0-rc.48+ciyuan.reconstructed.20261106.1`；当前电脑没有连接真实 iPhone，`xcrun xctrace list devices` 仅列出 Mac 和 Simulator。真机 Apple、StoreKit、APNs 和 Universal Links 验收继续保持未通过。
+- 会话同步游标修复后的最终回归：`Scripts/test-assistant.sh` 退出 `0`，末尾为 `All 168 actual ChatViewModel integration suites passed`（`/tmp/caobao-full-regression-after-resumable-sync-v3-20261108.log`）；定向同步测试覆盖 201 个会话、1,001 条消息和 HTTP 503 后恢复（`/tmp/caobao-cloud-conversation-final-v3-20261108.log`）。最终 iOS/macOS Debug 构建均 `BUILD SUCCEEDED`（`/tmp/caobao-resumable-sync-v3-ios-20261108.log`、`/tmp/caobao-resumable-sync-v3-macos-20261108.log`）。
+- 最终同步修复 Release archive：`xcodebuild archive` 退出 `0`，`.build/resumable-sync-final-archive-20261108/Caobao.xcarchive` 通过 `codesign --verify --deep --strict`，TeamIdentifier `26CX9F23YL`、身份仍为 Apple Development（`/tmp/caobao-resumable-sync-final-archive-20261108.log`）。这证明最终代码可归档和开发签名，不证明 Distribution/TestFlight。

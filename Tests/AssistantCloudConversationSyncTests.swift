@@ -86,6 +86,118 @@ struct AssistantCloudConversationSyncTests {
         try expect(CloudConversationFixtureURLProtocol.captured.first?.httpMethod == "DELETE", "conversation delete did not use DELETE")
         try expect(CloudConversationFixtureURLProtocol.captured.first?.url?.path.hasSuffix("/conversations/cnv_9") == true, "conversation delete path was not encoded safely")
         try expect(CloudConversationFixtureURLProtocol.captured.first?.value(forHTTPHeaderField: "Authorization") == "Bearer fixture-token", "conversation delete lost bearer authorization")
+
+        // A legacy server can force a full snapshot. The client processes a
+        // bounded batch and persists the remaining page cursor, so a retry
+        // continues from the pending page instead of silently dropping the
+        // 201st conversation.
+        var bulkPlans: [CloudConversationFixtureURLProtocol.Plan] = [
+            .init(status: 200, body: json(["items": [], "nextCursor": 0, "headSeq": 0, "resyncRequired": true]))
+        ]
+        for pageIndex in 0..<5 {
+            let start = pageIndex * 50 + 1
+            let end = min(start + 49, 201)
+            var items: [[String: Any]] = []
+            for number in start...end {
+                items.append(["id": "cnv_\(10_000 + number)",
+                              "clientConversationId": "bulk-\(number)",
+                              "title": "Bulk \(number)", "locale": "en-US", "status": "active",
+                              "createdAt": "2026-10-30T00:00:01Z", "updatedAt": "2026-10-30T00:00:01Z"])
+            }
+            var page: [String: Any] = ["items": items]
+            if end < 201 { page["nextCursor"] = String(end) }
+            bulkPlans.append(.init(status: 200, body: json(page)))
+            for _ in items {
+                bulkPlans.append(.init(status: 200, body: json(["items": []])))
+            }
+        }
+        CloudConversationFixtureURLProtocol.reset(bulkPlans)
+        try await sync.sync(ownerId: "owner", token: "fixture-token", archive: archive)
+        let firstBulkPassRequests = CloudConversationFixtureURLProtocol.captured.count
+        try expect(firstBulkPassRequests == 205, "snapshot did not stop at the bounded 200-conversation batch")
+        let resumeConversation: [String: Any] = ["id": "cnv_10201",
+                                                   "clientConversationId": "bulk-201",
+                                                   "title": "Bulk 201", "locale": "en-US", "status": "active",
+                                                   "createdAt": "2026-10-30T00:00:01Z", "updatedAt": "2026-10-30T00:00:01Z"]
+        CloudConversationFixtureURLProtocol.reset([
+            .init(status: 200, body: json(["items": [resumeConversation]])),
+            .init(status: 200, body: json(["items": []]))
+        ])
+        try await sync.sync(ownerId: "owner", token: "fixture-token", archive: archive)
+        try expect(CloudConversationFixtureURLProtocol.captured.count == 2, "snapshot cursor did not resume the pending page")
+        let completedBulk = try archive.load(userId: "owner").filter { $0.id.hasPrefix("bulk-") }
+        try expect(completedBulk.count == 201, "resumable snapshot did not import every conversation")
+
+        // Five message pages are the per-request safety budget. With the
+        // production page size of 200, page 6 represents a conversation over
+        // 1,000 messages and must resume from messageCursor on the next sync.
+        var longPlans: [CloudConversationFixtureURLProtocol.Plan] = [
+            .init(status: 200, body: json(["items": [], "nextCursor": 0, "headSeq": 0, "resyncRequired": true]))
+        ]
+        let longConversation: [String: Any] = ["id": "cnv_20001",
+                                                "clientConversationId": "long-history",
+                                                "title": "Long history", "locale": "en-US", "status": "active",
+                                                "createdAt": "2026-10-30T00:00:01Z", "updatedAt": "2026-10-30T00:00:01Z"]
+        longPlans.append(.init(status: 200, body: json(["items": [longConversation]])))
+        for page in 1...6 {
+            var pageItems: [[String: Any]] = []
+            for item in 1...(page == 6 ? 1 : 200) {
+                let sequence = (page - 1) * 200 + item
+                pageItems.append(["id": "msg-long-\(sequence)",
+                                  "conversationId": "cnv_20001", "clientMessageId": "long-\(sequence)",
+                                  "role": "assistant", "content": [["type": "text", "text": "message \(sequence)" ]],
+                                  "status": "completed", "createdAt": "2026-10-30T00:00:\(String(format: "%02d", min(item, 59)))Z"])
+            }
+            var pageBody: [String: Any] = ["items": pageItems]
+            if page < 6 { pageBody["nextCursor"] = String(page) }
+            longPlans.append(.init(status: 200, body: json(pageBody)))
+        }
+        CloudConversationFixtureURLProtocol.reset(longPlans)
+        try await sync.sync(ownerId: "owner", token: "fixture-token", archive: archive)
+        try expect(CloudConversationFixtureURLProtocol.captured.count == 7, "message page budget did not persist the pending cursor")
+        CloudConversationFixtureURLProtocol.reset([
+            .init(status: 200, body: json(["items": [["id": "msg-long-1001", "conversationId": "cnv_20001",
+                                                        "clientMessageId": "long-1001", "role": "assistant",
+                                                        "content": [["type": "text", "text": "message 1001"]],
+                                                        "status": "completed", "createdAt": "2026-10-30T00:00:01Z"]]]))
+        ])
+        try await sync.sync(ownerId: "owner", token: "fixture-token", archive: archive)
+        try expect(CloudConversationFixtureURLProtocol.captured.count == 1, "message cursor did not resume the final page")
+        let longHistory = try archive.load(userId: "owner").first { $0.id == "long-history" }
+        try expect(longHistory?.messages.count == 1001, "resumed message pages were not merged completely")
+
+        // A transient failure after the snapshot page is accepted must retain
+        // the active conversation cursor so the next sync resumes safely.
+        let retryRoot = root.appendingPathComponent("retry", isDirectory: true)
+        let retryArchive = AssistantChatArchive(directory: retryRoot)
+        try retryArchive.prepare(userId: "retry-owner")
+        let retrySuite = "conversation-sync-retry-" + UUID().uuidString
+        let retryDefaults = UserDefaults(suiteName: retrySuite)!
+        let retrySync = AssistantCloudConversationSync(baseURL: APIConfig.assistantBaseURL,
+                                                        sessionConfiguration: configuration,
+                                                        defaults: retryDefaults)
+        let retryConversation: [String: Any] = ["id": "cnv_30001",
+                                                   "clientConversationId": "retry-conversation",
+                                                   "title": "Retry", "locale": "en-US", "status": "active",
+                                                   "createdAt": "2026-10-30T00:00:01Z", "updatedAt": "2026-10-30T00:00:01Z"]
+        CloudConversationFixtureURLProtocol.reset([
+            .init(status: 200, body: json(["items": [], "nextCursor": 0, "headSeq": 0, "resyncRequired": true])),
+            .init(status: 200, body: json(["items": [retryConversation]])),
+            .init(status: 503, body: Data())
+        ])
+        do {
+            try await retrySync.sync(ownerId: "retry-owner", token: "fixture-token", archive: retryArchive)
+            throw ConversationSyncTestFailure.failed("transient snapshot failure was swallowed")
+        } catch AssistantCloudConversationSyncError.httpStatus(503) {
+            // Expected: the owner-scoped snapshot state is persisted before rethrow.
+        }
+        CloudConversationFixtureURLProtocol.reset([
+            .init(status: 200, body: json(["items": []]))
+        ])
+        try await retrySync.sync(ownerId: "retry-owner", token: "fixture-token", archive: retryArchive)
+        let retryValues = try retryArchive.load(userId: "retry-owner")
+        try expect(retryValues.contains(where: { $0.id == "retry-conversation" }), "snapshot state was not resumable after transient failure")
+        retryDefaults.removePersistentDomain(forName: retrySuite)
         print("All conversation cloud sync suites passed")
     }
 }
