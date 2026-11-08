@@ -4,7 +4,7 @@ import Foundation
 /// mutations are consumed from the append-only change feed, including delete
 /// tombstones. Local pending/streaming messages are retained until recovery.
 enum AssistantCloudConversationSyncError: LocalizedError, Equatable {
-    case invalidConfiguration, invalidResponse, responseTooLarge, ownerChanged
+    case invalidConfiguration, invalidResponse, responseTooLarge, ownerChanged, historyRequiresSnapshot
     case httpStatus(Int)
 
     var errorDescription: String? {
@@ -13,6 +13,7 @@ enum AssistantCloudConversationSyncError: LocalizedError, Equatable {
         case .invalidResponse: return AssistantLocalization.string("会话同步响应无效。")
         case .responseTooLarge: return AssistantLocalization.string("会话同步数据超过安全大小限制。")
         case .ownerChanged: return AssistantLocalization.string("账号已变化，会话同步已停止。")
+        case .historyRequiresSnapshot: return AssistantLocalization.string("会话历史需要完整快照同步。")
         case .httpStatus(let status): return AssistantLocalization.string("会话同步失败（HTTP \(status)）。")
         }
     }
@@ -57,10 +58,12 @@ final class AssistantCloudConversationSync {
     private struct SyncState: Codable {
         var cursor: Int64 = 0
         var snapshot: SnapshotState? = nil
+        var snapshotTargetCursor: Int64? = nil
 
-        init(cursor: Int64 = 0, snapshot: SnapshotState? = nil) {
+        init(cursor: Int64 = 0, snapshot: SnapshotState? = nil, snapshotTargetCursor: Int64? = nil) {
             self.cursor = cursor
             self.snapshot = snapshot
+            self.snapshotTargetCursor = snapshotTargetCursor
         }
 
         // State written by older client versions only contained `cursor`.
@@ -68,6 +71,7 @@ final class AssistantCloudConversationSync {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             cursor = try container.decodeIfPresent(Int64.self, forKey: .cursor) ?? 0
             snapshot = try container.decodeIfPresent(SnapshotState.self, forKey: .snapshot)
+            snapshotTargetCursor = try container.decodeIfPresent(Int64.self, forKey: .snapshotTargetCursor)
         }
     }
 
@@ -112,6 +116,10 @@ final class AssistantCloudConversationSync {
                 saveState(state, ownerId: ownerId)
                 if complete {
                     state.snapshot = nil
+                    if let target = state.snapshotTargetCursor {
+                        state.cursor = max(state.cursor, target)
+                        state.snapshotTargetCursor = nil
+                    }
                     saveState(state, ownerId: ownerId)
                 }
             } catch {
@@ -151,7 +159,32 @@ final class AssistantCloudConversationSync {
                 guard change.seq > previousSeq, change.seq <= changes.nextCursor else {
                     throw AssistantCloudConversationSyncError.invalidResponse
                 }
-                try await apply(change: change, ownerId: ownerId, token: token, archive: archive)
+                do {
+                    try await apply(change: change, ownerId: ownerId, token: token, archive: archive)
+                } catch AssistantCloudConversationSyncError.historyRequiresSnapshot {
+                    // A large incremental history cannot be safely applied a
+                    // page at a time without losing the change cursor. Fall
+                    // back to the complete snapshot and advance the cursor
+                    // only after that snapshot is durable.
+                    state.snapshot = SnapshotState()
+                    state.snapshotTargetCursor = changes.nextCursor
+                    do {
+                        let complete = try await fullSnapshot(ownerId: ownerId, token: token, archive: archive, state: &state)
+                        saveState(state, ownerId: ownerId)
+                        if complete {
+                            state.snapshot = nil
+                            if let target = state.snapshotTargetCursor {
+                                state.cursor = max(state.cursor, target)
+                                state.snapshotTargetCursor = nil
+                            }
+                            saveState(state, ownerId: ownerId)
+                        }
+                    } catch {
+                        saveState(state, ownerId: ownerId)
+                        throw error
+                    }
+                    return
+                }
                 previousSeq = change.seq
             }
             cursor = changes.nextCursor
@@ -310,7 +343,7 @@ final class AssistantCloudConversationSync {
 
     private func fetchMessages(_ id: String, token: String) async throws -> [RemoteMessage] {
         let result = try await fetchMessagePage(id, token: token, cursor: nil)
-        guard result.nextCursor == nil else { throw AssistantCloudConversationSyncError.invalidResponse }
+        guard result.nextCursor == nil else { throw AssistantCloudConversationSyncError.historyRequiresSnapshot }
         return result.messages
     }
 

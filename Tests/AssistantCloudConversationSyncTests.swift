@@ -128,6 +128,63 @@ struct AssistantCloudConversationSyncTests {
         let completedBulk = try archive.load(userId: "owner").filter { $0.id.hasPrefix("bulk-") }
         try expect(completedBulk.count == 201, "resumable snapshot did not import every conversation")
 
+        // An oversized incremental change must fall back to a snapshot and
+        // only advance the change cursor after that snapshot completes.
+        let overflowRoot = root.appendingPathComponent("incremental-overflow", isDirectory: true)
+        let overflowArchive = AssistantChatArchive(directory: overflowRoot)
+        try overflowArchive.prepare(userId: "overflow-owner")
+        let overflowSuite = "conversation-sync-overflow-" + UUID().uuidString
+        let overflowDefaults = UserDefaults(suiteName: overflowSuite)!
+        let overflowSync = AssistantCloudConversationSync(baseURL: APIConfig.assistantBaseURL,
+                                                           sessionConfiguration: configuration,
+                                                           defaults: overflowDefaults)
+        let overflowConversation: [String: Any] = ["id": "cnv_15001",
+                                                      "clientConversationId": "overflow-conversation",
+                                                      "title": "Overflow", "locale": "en-US", "status": "active",
+                                                      "createdAt": "2026-10-30T00:00:01Z", "updatedAt": "2026-10-30T00:00:01Z"]
+        var overflowPlans: [CloudConversationFixtureURLProtocol.Plan] = [
+            .init(status: 200, body: json(["items": [["seq": 1, "event": "upsert", "id": "cnv_15001",
+                                                       "clientConversationId": "overflow-conversation", "title": "Overflow",
+                                                       "locale": "en-US", "status": "active", "updatedAt": "2026-10-30T00:00:01Z"]],
+                                           "nextCursor": 1, "headSeq": 1, "resyncRequired": false]))
+        ]
+        for page in 1...5 {
+            overflowPlans.append(.init(status: 200, body: json(["items": [["id": "inc-\(page)",
+                                                                                  "conversationId": "cnv_15001",
+                                                                                  "clientMessageId": "inc-\(page)",
+                                                                                  "role": "assistant", "content": [["type": "text", "text": "incremental \(page)"]],
+                                                                                  "status": "completed", "createdAt": "2026-10-30T00:00:0\(page)Z"]],
+                                                               "nextCursor": String(page)])))
+        }
+        overflowPlans.append(.init(status: 200, body: json(["items": [overflowConversation]])))
+        for page in 1...5 {
+            overflowPlans.append(.init(status: 200, body: json(["items": [["id": "snap-\(page)",
+                                                                                  "conversationId": "cnv_15001",
+                                                                                  "clientMessageId": "snap-\(page)",
+                                                                                  "role": "assistant", "content": [["type": "text", "text": "snapshot \(page)"]],
+                                                                                  "status": "completed", "createdAt": "2026-10-30T00:00:1\(page)Z"]],
+                                                               "nextCursor": String(page)])))
+        }
+        CloudConversationFixtureURLProtocol.reset(overflowPlans)
+        try await overflowSync.sync(ownerId: "overflow-owner", token: "fixture-token", archive: overflowArchive)
+        try expect(CloudConversationFixtureURLProtocol.captured.count == 12, "oversized incremental history did not fall back to a snapshot")
+        CloudConversationFixtureURLProtocol.reset([
+            .init(status: 200, body: json(["items": [["id": "snap-6", "conversationId": "cnv_15001",
+                                                        "clientMessageId": "snap-6", "role": "assistant",
+                                                        "content": [["type": "text", "text": "snapshot 6"]],
+                                                        "status": "completed", "createdAt": "2026-10-30T00:00:16Z"]]]))
+        ])
+        try await overflowSync.sync(ownerId: "overflow-owner", token: "fixture-token", archive: overflowArchive)
+        let overflowValues = try overflowArchive.load(userId: "overflow-owner")
+        try expect(overflowValues.first(where: { $0.id == "overflow-conversation" })?.messages.count == 6,
+                   "snapshot did not finish after oversized incremental history")
+        CloudConversationFixtureURLProtocol.reset([
+            .init(status: 200, body: json(["items": [], "nextCursor": 1, "headSeq": 1, "resyncRequired": false]))
+        ])
+        try await overflowSync.sync(ownerId: "overflow-owner", token: "fixture-token", archive: overflowArchive)
+        try expect(CloudConversationFixtureURLProtocol.captured.count == 1, "snapshot completion did not advance the change cursor")
+        overflowDefaults.removePersistentDomain(forName: overflowSuite)
+
         // Five message pages are the per-request safety budget. With the
         // production page size of 200, page 6 represents a conversation over
         // 1,000 messages and must resume from messageCursor on the next sync.
